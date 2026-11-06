@@ -63,7 +63,7 @@ tasks:
       "{{.CARGO}}" build --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)"
 
   desktop:run:
-    desc: Build and run the desktop app (Windows)
+    desc: "Build and run the desktop app (Windows), e.g. task desktop:run -- <headset-ip>"
     cmd: >-
       cd /mnt/c && CARGO_TARGET_DIR='{{.CARGO_TARGET_DIR}}' WSLENV=CARGO_TARGET_DIR
       "{{.CARGO}}" run --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)" -- {{.CLI_ARGS}}

@@ -5,9 +5,10 @@ earlier prototype measured about 20 ms behind the headset's own speakers over US
 over Wi-Fi (estimates, see [Measurements](#measurements)). The headset keeps playing while it
 streams. Setu means "bridge"; audio is the first thing it carries.
 
-**Status: work in progress.** The capture server and the protocol work. The agent's start flow,
-the desktop app and the installers are being built, so parts of "How it works" describe the
-design rather than finished code.
+**Status: work in progress.** The capture server, the protocol and the desktop receiver work;
+the receiver runs from the command line until its UI lands. The agent's start flow and the
+installers are being built, so parts of "How it works" describe the design rather than finished
+code.
 
 ## How it works
 
@@ -125,7 +126,7 @@ their own, so play to a hardware output for the lowest latency.
 
 ## Receiver design notes
 
-These come from the prototype receiver and guide the desktop app.
+These come from the prototype receiver; the desktop app's playout follows them.
 
 - **The jitter buffer controls its minimum, not its average.** Block arrivals make the buffer
   level a sawtooth, and latency is set by its bottom. Playback rate is nudged (±0.5 %, linear
@@ -133,7 +134,11 @@ These come from the prototype receiver and guide the desktop app.
 - **Deadband of min(block, output period).** The measured minimum moves by up to that much as
   arrivals drift against the output's pull grid; without the deadband the controller oscillates.
 - **Margin** = configured margin + min(block, period). It grows 2 ms per underrun and decays
-  0.5 ms after each 15 s without one. Defaults: 1.5 ms over USB, 4 ms over Wi-Fi.
+  0.5 ms after each 15 s without one. The default is 4 ms over Wi-Fi (the prototype used
+  1.5 ms over USB).
+- **The controller is proportional**, so an output whose clock drifts settles above the margin
+  by about 20 ms per 1 % of drift: 0.2 ms for a typical 100 ppm, but several ms for a virtual
+  device that runs 0.3 % slow.
 - **After an underrun, refill to one block plus the margin**, not a fixed amount.
 - **UDP over Wi-Fi.** Each datagram carries its frame position, so a lost datagram becomes
   silence of the right length instead of a retransmit stall. The receiver sends HELLO and the
@@ -144,7 +149,7 @@ These come from the prototype receiver and guide the desktop app.
 | Path | What |
 |---|---|
 | `apps/agent` | The agent app; `src/main/java/dev/trugamr/setu/server` is the capture server and `.../protocol` the shared protocol module. |
-| `apps/desktop` | The desktop app, a member of the root Cargo workspace. |
+| `apps/desktop` | The desktop app, a member of the root Cargo workspace. `Receiver` wires `link` (UDP to the server), `playout` (jitter buffer) and `output` (the device, WASAPI on Windows). |
 | `protocol` | Protocol spec ([protocol/README.md](protocol/README.md)) and byte fixtures. |
 
 ## Build
@@ -159,7 +164,8 @@ task build                    # agent APK and desktop app
 task test                     # JVM and Rust tests
 task agent:install            # install the agent on a USB-connected headset
 task agent:server -- probe 6  # run the server's latency probe from the installed APK
-task desktop:run
+task desktop:run -- --list-devices
+task desktop:run -- <headset-ip>   # play the headset's audio; --help lists the options
 ```
 
 Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames]`,
@@ -169,7 +175,7 @@ Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames]`,
 ## Roadmap
 
 1. Agent: home and settings, start and stop the server, show its status.
-2. Desktop app: receiver (protocol, jitter buffer, WASAPI output), tray.
+2. Desktop app: UI and tray on top of the receiver.
 3. Installers: setup routine in the APK, then the PC installer, then the browser installer.
 4. Discovery and receiver approval, start at login, a Linux backend.
 5. VBAN output, so any VBAN receiver can listen without the desktop app.

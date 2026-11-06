@@ -184,28 +184,35 @@ impl Reader<'_> {
     }
 }
 
+/// Parses a commented-hex fixture from `protocol/fixtures`.
+#[cfg(test)]
+pub(crate) fn parse_fixture(text: &str) -> Vec<u8> {
+    text.lines()
+        .map(|line| line.split('#').next().unwrap_or_default())
+        .flat_map(str::split_whitespace)
+        .map(|b| u8::from_str_radix(b, 16).expect("fixture byte is hex"))
+        .collect()
+}
+
+/// The bytes of a fixture, e.g. `fixture!("format")`.
+#[cfg(test)]
+macro_rules! fixture {
+    ($name:literal) => {
+        $crate::protocol::parse_fixture(include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../protocol/fixtures/",
+            $name,
+            ".hex"
+        )))
+    };
+}
+
+#[cfg(test)]
+pub(crate) use fixture;
+
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    /// Parses a commented-hex fixture from `protocol/fixtures`.
-    fn fixture(text: &str) -> Vec<u8> {
-        text.lines()
-            .map(|line| line.split('#').next().unwrap_or_default())
-            .flat_map(str::split_whitespace)
-            .map(|b| u8::from_str_radix(b, 16).expect("fixture byte is hex"))
-            .collect()
-    }
-
-    macro_rules! fixture {
-        ($name:literal) => {
-            fixture(include_str!(concat!(
-                "../../../protocol/fixtures/",
-                $name,
-                ".hex"
-            )))
-        };
-    }
 
     #[test]
     fn hello() {
