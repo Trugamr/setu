@@ -145,9 +145,12 @@ differs, which covers a server that restarts. From a PC, `task agent:server -- u
 
 Compared with the desktop app:
 
-- **Delay is set by the receiver.** VBAN receivers keep a fixed network buffer (Voicemeeter's
-  Net Quality setting), while Setu's playout adapts to the jitter it measures and corrects clock
-  drift. On Wi-Fi, expect to raise the buffer above the lowest setting to avoid crackles.
+- **Delay is set by the receiver.** VBAN receivers keep a fixed network buffer, while Setu's
+  playout adapts to the jitter it measures and corrects clock drift. Voicemeeter's buffer is 3 ×
+  max(its audio buffer, the Net Quality floor), and at least 1536 samples (32 ms at 48 kHz); the
+  Optimal floor is 512 samples. So the lowest delay needs Net Quality at Optimal, Voicemeeter's
+  output buffer at 512 samples or less, and Voicemeeter at 48 kHz to skip resampling. Raise Net
+  Quality only if the stream crackles.
 - **Unicast only.** Send to the PC's own address: Wi-Fi delivers broadcast and multicast at a low
   rate and without retries.
 - **No audience check.** The server captures for as long as VBAN is on, whether anyone listens or
