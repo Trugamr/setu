@@ -1,5 +1,8 @@
 package dev.trugamr.setu.protocol;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -32,6 +35,7 @@ public final class StreamProtocol {
     public static final int STATUS_REQUEST = 4;
     public static final int STATUS = 5;
     public static final int STOP = 6;
+    public static final int SET_VBAN = 7;
 
     private static final int HEADER_BYTES = 4;
     private static final byte MAGIC_0 = 'S';
@@ -171,36 +175,73 @@ public final class StreamProtocol {
         }
     }
 
-    /** What the server is doing, sent in STATUS. */
-    public static final class Status {
-        public final int blockFrames;
-        public final List<Receiver> receivers;
+    /** Where the server sends VBAN: a receiver's address and the stream name it listens for. */
+    public static final class VbanTarget {
+        public final InetSocketAddress address;
+        public final String streamName;
 
-        public Status(int blockFrames, List<Receiver> receivers) {
-            this.blockFrames = blockFrames;
-            this.receivers = Collections.unmodifiableList(new ArrayList<>(receivers));
+        /** Throws {@link IllegalArgumentException} for a name VBAN cannot carry ({@link Vban#checkStreamName}). */
+        public VbanTarget(InetSocketAddress address, String streamName) {
+            if (address.isUnresolved()) {
+                throw new IllegalArgumentException("unresolved VBAN address: " + address);
+            }
+            this.address = address;
+            this.streamName = Vban.checkStreamName(streamName);
         }
 
         @Override
         public boolean equals(Object o) {
-            return o instanceof Status && blockFrames == ((Status) o).blockFrames
-                    && receivers.equals(((Status) o).receivers);
+            return o instanceof VbanTarget && address.equals(((VbanTarget) o).address)
+                    && streamName.equals(((VbanTarget) o).streamName);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(blockFrames, receivers);
+            return Objects.hash(address, streamName);
         }
 
         @Override
         public String toString() {
-            return "block " + blockFrames + ", receivers " + receivers;
+            return "\"" + streamName + "\" to " + address.getAddress().getHostAddress() + ":" + address.getPort();
+        }
+    }
+
+    /** What the server is doing, sent in STATUS. */
+    public static final class Status {
+        public final int blockFrames;
+        public final List<Receiver> receivers;
+        /** Null when VBAN is off. */
+        public final VbanTarget vban;
+
+        public Status(int blockFrames, List<Receiver> receivers, VbanTarget vban) {
+            this.blockFrames = blockFrames;
+            this.receivers = Collections.unmodifiableList(new ArrayList<>(receivers));
+            this.vban = vban;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Status)) {
+                return false;
+            }
+            Status s = (Status) o;
+            return blockFrames == s.blockFrames && receivers.equals(s.receivers) && Objects.equals(vban, s.vban);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(blockFrames, receivers, vban);
+        }
+
+        @Override
+        public String toString() {
+            return "block " + blockFrames + ", receivers " + receivers + ", VBAN " + (vban == null ? "off" : vban);
         }
     }
 
     public static byte[] status(Status status) {
         List<byte[]> strings = new ArrayList<>();
-        int size = 6;
+        int size = 6 + vbanTargetBytes(status.vban);
         for (Receiver receiver : status.receivers) {
             byte[] name = receiver.name.getBytes(StandardCharsets.UTF_8);
             byte[] address = receiver.address.getBytes(StandardCharsets.UTF_8);
@@ -212,7 +253,7 @@ public final class StreamProtocol {
         for (byte[] s : strings) {
             w.string(s);
         }
-        return w.bytes();
+        return w.vbanTarget(status.vban).bytes();
     }
 
     public static Status parseStatus(byte[] data, int length) {
@@ -223,7 +264,25 @@ public final class StreamProtocol {
         for (int i = 0; i < count; i++) {
             receivers.add(new Receiver(r.string(), r.string()));
         }
-        return new Status(blockFrames, receivers);
+        return new Status(blockFrames, receivers, r.vbanTarget());
+    }
+
+    /** SET_VBAN: send VBAN to {@code target}, or stop sending it when null. */
+    public static byte[] setVban(VbanTarget target) {
+        return new Writer(new byte[HEADER_BYTES + vbanTargetBytes(target)], SET_VBAN).vbanTarget(target).bytes();
+    }
+
+    /** The target a SET_VBAN carries; null turns VBAN off. */
+    public static VbanTarget parseSetVban(byte[] data, int length) {
+        return new Reader(data, length, SET_VBAN).vbanTarget();
+    }
+
+    private static int vbanTargetBytes(VbanTarget target) {
+        if (target == null) {
+            return 1;
+        }
+        return 1 + target.address.getAddress().getAddress().length + 2 + 2
+                + target.streamName.getBytes(StandardCharsets.US_ASCII).length;
     }
 
     /** Writes a message into a buffer sized for it, header first. */
@@ -257,6 +316,17 @@ public final class StreamProtocol {
             u16(utf8.length);
             b.put(utf8);
             return this;
+        }
+
+        Writer vbanTarget(VbanTarget target) {
+            if (target == null) {
+                b.put((byte) 0);
+                return this;
+            }
+            byte[] address = target.address.getAddress().getAddress();
+            b.put((byte) address.length).put(address);
+            u16(target.address.getPort());
+            return string(target.streamName.getBytes(StandardCharsets.US_ASCII));
         }
 
         byte[] bytes() {
@@ -308,6 +378,37 @@ public final class StreamProtocol {
             String s = new String(b.array(), b.position(), n, StandardCharsets.UTF_8);
             b.position(b.position() + n);
             return s;
+        }
+
+        VbanTarget vbanTarget() {
+            int addressLength = u8();
+            if (addressLength == 0) {
+                return null;
+            }
+            if (addressLength != 4 && addressLength != 16) {
+                throw new IllegalArgumentException("VBAN address of " + addressLength + " bytes");
+            }
+            byte[] address = new byte[addressLength];
+            try {
+                b.get(address);
+            } catch (BufferUnderflowException e) {
+                throw truncated();
+            }
+            int port = u16();
+            try {
+                // From raw bytes, so no name lookup happens.
+                return new VbanTarget(new InetSocketAddress(InetAddress.getByAddress(address), port), string());
+            } catch (UnknownHostException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        int u8() {
+            try {
+                return b.get() & 0xff;
+            } catch (BufferUnderflowException e) {
+                throw truncated();
+            }
         }
 
         private IllegalArgumentException truncated() {

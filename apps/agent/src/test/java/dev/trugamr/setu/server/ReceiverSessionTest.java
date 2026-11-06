@@ -12,6 +12,9 @@ import dev.trugamr.setu.protocol.StreamProtocol;
 import java.io.IOException;
 import dev.trugamr.setu.server.Transport.Datagram;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
@@ -33,6 +36,9 @@ public class ReceiverSessionTest {
     private static final InetSocketAddress PC = new InetSocketAddress("10.0.0.2", 5000);
     private static final InetSocketAddress OTHER_PC = new InetSocketAddress("10.0.0.3", 5000);
     private static final InetSocketAddress AGENT = new InetSocketAddress("127.0.0.1", 6000);
+    private static final InetSocketAddress VBAN_PC = new InetSocketAddress("10.0.0.4", 6980);
+    private static final StreamProtocol.VbanTarget VBAN = new StreamProtocol.VbanTarget(VBAN_PC, "Quest");
+    private static final int VBAN_HEADER_BYTES = 28;
 
     private final FakeTransport transport = new FakeTransport();
     private final AtomicLong clock = new AtomicLong(1_000_000);
@@ -129,7 +135,7 @@ public class ReceiverSessionTest {
         transport.deliver(StreamProtocol.empty(StreamProtocol.STATUS_REQUEST), AGENT);
         Datagram idle = transport.next(StreamProtocol.STATUS);
         assertEquals(AGENT, idle.from);
-        assertEquals(new StreamProtocol.Status(BLOCK_FRAMES, Collections.emptyList()),
+        assertEquals(new StreamProtocol.Status(BLOCK_FRAMES, Collections.emptyList(), null),
                 StreamProtocol.parseStatus(idle.data, idle.data.length));
 
         transport.deliver(StreamProtocol.hello("studio-pc"), PC);
@@ -183,7 +189,7 @@ public class ReceiverSessionTest {
         assertTrue(status().receivers.isEmpty());
         assertTrue(thread.isAlive());
 
-        transport.failSendType = -1;
+        transport.failSendType = 0;
         transport.deliver(StreamProtocol.hello("studio-pc"), PC);
         assertEquals(PC, transport.next(StreamProtocol.AUDIO).from);
     }
@@ -209,6 +215,103 @@ public class ReceiverSessionTest {
         thread.join(2000);
         assertFalse(thread.isAlive());
         assertTrue(thrown instanceof IOException);
+    }
+
+    @Test
+    public void vbanStreamsWithoutAHello() throws Exception {
+        start();
+        transport.deliver(StreamProtocol.setVban(VBAN), AGENT);
+        for (int i = 0; i < 3; i++) {
+            Datagram packet = transport.nextTo(VBAN_PC);
+            assertEquals("VBAN", new String(packet.data, 0, 4, StandardCharsets.US_ASCII));
+            assertEquals("frames - 1", BLOCK_FRAMES - 1, packet.data[5] & 0xff);
+            assertEquals("Quest", new String(packet.data, 8, 5, StandardCharsets.US_ASCII));
+            assertEquals(i, vbanCounter(packet));
+            assertEquals(VBAN_HEADER_BYTES + BLOCK_FRAMES * FORMAT.frameBytes(), packet.data.length);
+        }
+        assertEquals(VBAN, status().vban);
+    }
+
+    @Test
+    public void vbanAndASetuReceiverShareOneCapture() throws Exception {
+        start();
+        transport.deliver(StreamProtocol.setVban(VBAN), AGENT);
+        transport.nextTo(VBAN_PC);
+        transport.deliver(StreamProtocol.hello("studio-pc"), PC);
+        assertEquals(PC, transport.next(StreamProtocol.AUDIO).from);
+        transport.nextTo(VBAN_PC);
+        assertEquals(1, captures.opened.get());
+
+        // The Setu receiver goes quiet; VBAN keeps the capture.
+        clock.addAndGet(StreamProtocol.STALE_RECEIVER_MS + 1);
+        transport.nextTo(VBAN_PC);
+        transport.sent.clear();
+        for (int i = 0; i < 5; i++) {
+            assertEquals(VBAN_PC, transport.nextTo(VBAN_PC).from);
+        }
+        assertTrue(status().receivers.isEmpty());
+        assertEquals(0, captures.closed.get());
+    }
+
+    @Test
+    public void turningVbanOffReleasesTheCapture() throws Exception {
+        start();
+        transport.deliver(StreamProtocol.setVban(VBAN), AGENT);
+        transport.nextTo(VBAN_PC);
+        transport.deliver(StreamProtocol.setVban(null), AGENT);
+        awaitTrue(() -> captures.closed.get() == 1);
+        assertNull(status().vban);
+    }
+
+    @Test
+    public void unreachableVbanTargetIsKept() throws Exception {
+        transport.failSendTo = VBAN_PC;
+        start();
+        transport.deliver(StreamProtocol.setVban(VBAN), AGENT);
+        awaitTrue(() -> captures.opened.get() == 1);
+        Thread.sleep(20);
+        assertEquals(VBAN, status().vban);
+        assertEquals(0, captures.closed.get());
+
+        transport.failSendTo = null;
+        assertEquals(VBAN_PC, transport.nextTo(VBAN_PC).from);
+    }
+
+    @Test
+    public void changingTheVbanTargetMovesTheStream() throws Exception {
+        start();
+        transport.deliver(StreamProtocol.setVban(VBAN), AGENT);
+        transport.nextTo(VBAN_PC);
+        StreamProtocol.VbanTarget other = new StreamProtocol.VbanTarget(OTHER_PC, "Left eye");
+        transport.deliver(StreamProtocol.setVban(other), AGENT);
+        Datagram packet = transport.nextTo(OTHER_PC);
+        assertEquals("Left eye", new String(packet.data, 8, 8, StandardCharsets.US_ASCII));
+        assertEquals(other, status().vban);
+    }
+
+    @Test
+    public void largeBlocksAreSplitToFitVban() throws Exception {
+        captures.readFrames = 600;
+        start();
+        transport.deliver(StreamProtocol.setVban(VBAN), AGENT);
+        int[] frames = {256, 256, 600 - 2 * 256};
+        for (int i = 0; i < frames.length; i++) {
+            Datagram packet = transport.nextTo(VBAN_PC);
+            assertEquals(i, vbanCounter(packet));
+            assertEquals(VBAN_HEADER_BYTES + frames[i] * FORMAT.frameBytes(), packet.data.length);
+        }
+    }
+
+    @Test
+    public void setVbanIsIgnoredFromTheNetwork() throws Exception {
+        start();
+        transport.deliver(StreamProtocol.setVban(VBAN), PC);
+        assertNull(status().vban);
+        assertEquals(0, captures.opened.get());
+    }
+
+    private static int vbanCounter(Datagram packet) {
+        return ByteBuffer.wrap(packet.data, 24, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
     }
 
     private StreamProtocol.Status status() throws InterruptedException {
@@ -243,8 +346,10 @@ public class ReceiverSessionTest {
     private static final class FakeTransport implements Transport {
         final BlockingQueue<Datagram> inbound = new LinkedBlockingQueue<>();
         final BlockingQueue<Datagram> sent = new LinkedBlockingQueue<>();
-        /** Sends of this message type throw, as if the destination were unreachable. */
-        volatile int failSendType = -1;
+        /** Sends of this Setu message type throw, as if the destination were unreachable; 0 is none. */
+        volatile int failSendType = 0;
+        /** Sends to this address throw. */
+        volatile InetSocketAddress failSendTo;
 
         void deliver(byte[] data, InetSocketAddress from) {
             inbound.add(new Datagram(data, from));
@@ -272,9 +377,22 @@ public class ReceiverSessionTest {
             }
         }
 
+        /** The next datagram sent to {@code to}, skipping others; fails after 2 s. */
+        Datagram nextTo(InetSocketAddress to) throws InterruptedException {
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            while (true) {
+                long left = deadline - System.nanoTime();
+                Datagram s = sent.poll(Math.max(0, left), TimeUnit.NANOSECONDS);
+                assertNotNull("nothing sent to " + to, s);
+                if (s.from.equals(to)) {
+                    return s;
+                }
+            }
+        }
+
         @Override
         public void send(byte[] data, int length, InetSocketAddress to) throws IOException {
-            if (StreamProtocol.type(data, length) == failSendType) {
+            if (to.equals(failSendTo) || StreamProtocol.type(data, length) == failSendType) {
                 throw new IOException("network unreachable");
             }
             sent.add(new Datagram(Arrays.copyOf(data, length), to));

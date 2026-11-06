@@ -1,0 +1,10 @@
+# VBAN audio packet: stream "Quest", 48000 Hz, 2 channels, 16-bit PCM, packet counter 7, two frames
+56 42 41 4e                    # "VBAN"
+03                             # audio sub-protocol, sample rate index 3 (48000 Hz)
+01                             # 2 frames (stored as frames - 1)
+01                             # 2 channels (stored as channels - 1)
+01                             # 16-bit integer, PCM
+51 75 65 73 74 00 00 00 00 00 00 00 00 00 00 00   # stream name "Quest", zero-padded to 16 bytes
+07 00 00 00                    # packet counter 7
+01 00 ff ff                    # frame 0: left 1, right -1
+00 01 00 ff                    # frame 1: left 256, right -256

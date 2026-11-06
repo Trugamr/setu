@@ -4,11 +4,15 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import java.net.InetSocketAddress;
 import java.util.Collections;
 
 import org.junit.Test;
 
 public class StreamProtocolTest {
+
+    private static final StreamProtocol.VbanTarget QUEST =
+            new StreamProtocol.VbanTarget(new InetSocketAddress("192.168.1.20", 6980), "Quest");
 
     @Test
     public void hello() throws Exception {
@@ -42,9 +46,33 @@ public class StreamProtocolTest {
     public void status() throws Exception {
         byte[] fixture = Fixtures.read("status");
         StreamProtocol.Status status = new StreamProtocol.Status(96,
-                Collections.singletonList(new StreamProtocol.Receiver("studio-pc", "192.168.1.20:50000")));
+                Collections.singletonList(new StreamProtocol.Receiver("studio-pc", "192.168.1.20:50000")), QUEST);
         assertArrayEquals(fixture, StreamProtocol.status(status));
         assertEquals(status, StreamProtocol.parseStatus(fixture, fixture.length));
+    }
+
+    @Test
+    public void setVban() throws Exception {
+        byte[] fixture = Fixtures.read("set-vban");
+        assertArrayEquals(fixture, StreamProtocol.setVban(QUEST));
+        assertEquals(StreamProtocol.SET_VBAN, StreamProtocol.type(fixture, fixture.length));
+        assertEquals(QUEST, StreamProtocol.parseSetVban(fixture, fixture.length));
+
+        byte[] off = Fixtures.read("set-vban-off");
+        assertArrayEquals(off, StreamProtocol.setVban(null));
+        assertEquals(null, StreamProtocol.parseSetVban(off, off.length));
+    }
+
+    @Test
+    public void vbanTargetsAreIpAddresses() throws Exception {
+        StreamProtocol.VbanTarget v6 = new StreamProtocol.VbanTarget(new InetSocketAddress("fe80::1", 6980), "Quest");
+        byte[] message = StreamProtocol.setVban(v6);
+        assertEquals(v6, StreamProtocol.parseSetVban(message, message.length));
+
+        byte[] badLength = {'S', 'T', 1, StreamProtocol.SET_VBAN, 5, 1, 2, 3, 4, 5};
+        assertThrows(IllegalArgumentException.class, () -> StreamProtocol.parseSetVban(badLength, badLength.length));
+        assertThrows(IllegalArgumentException.class,
+                () -> new StreamProtocol.VbanTarget(InetSocketAddress.createUnresolved("studio-pc", 6980), "Quest"));
     }
 
     @Test
@@ -66,6 +94,8 @@ public class StreamProtocolTest {
         assertThrows(IllegalArgumentException.class, () -> StreamProtocol.parseStatus(status, status.length - 1));
         byte[] format = Fixtures.read("format");
         assertThrows(IllegalArgumentException.class, () -> StreamProtocol.parseFormat(format, format.length - 1));
+        byte[] setVban = Fixtures.read("set-vban");
+        assertThrows(IllegalArgumentException.class, () -> StreamProtocol.parseSetVban(setVban, 6));
     }
 
     @Test

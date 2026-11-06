@@ -4,21 +4,22 @@ import dev.trugamr.setu.protocol.StreamProtocol;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.LongSupplier;
 
 /**
- * Serves receivers over a {@link Transport} (protocol/README.md, "UDP"):
+ * Serves receivers over a {@link Transport} (protocol/README.md, "UDP" and "VBAN"):
  *
- * - answers each HELLO with FORMAT and streams AUDIO to the receiver that said hello most
+ * - answers each HELLO with FORMAT and streams AUDIO to the Setu receiver that said hello most
  *   recently;
- * - holds a capture open only while that receiver keeps saying hello, and releases it
- *   {@link StreamProtocol#STALE_RECEIVER_MS} after the hellos stop;
- * - answers STATUS_REQUEST and obeys STOP, from loopback senders only.
+ * - sends VBAN to the target the agent set, alongside;
+ * - holds a capture open only while it has someone to stream to ({@link Routes});
+ * - answers STATUS_REQUEST and obeys STOP and SET_VBAN, from loopback senders only.
  *
- * A receiver that cannot be sent to is dropped until its next HELLO; network errors never end
- * the session. {@link #run()} returns after STOP, or throws when the capture fails.
+ * Network errors never end the session. {@link #run()} returns after STOP, or throws when the
+ * capture fails.
  */
 final class ReceiverSession {
 
@@ -29,25 +30,25 @@ final class ReceiverSession {
 
     private final Transport transport;
     private final Capture.Source captures;
-    private final LongSupplier clockMs;
-    private final StreamProtocol.Format format;
+    private final Routes routes;
     private final byte[] formatMessage;
-    private final byte[] packet;
 
     // Guarded by this.
-    private InetSocketAddress receiver;
-    private String receiverName;
-    private long lastHelloMs;
-    private boolean stopped;
     private IOException failure;
 
     ReceiverSession(Transport transport, Capture.Source captures, LongSupplier clockMs) {
         this.transport = transport;
         this.captures = captures;
-        this.clockMs = clockMs;
-        this.format = captures.format();
-        this.formatMessage = StreamProtocol.format(format);
-        this.packet = StreamProtocol.newAudioPacket(format);
+        this.routes = new Routes(captures.format(), clockMs);
+        this.formatMessage = StreamProtocol.format(captures.format());
+    }
+
+    /**
+     * Sends VBAN to {@code target}, or stops when null; the agent does the same with SET_VBAN.
+     * Throws {@link IllegalArgumentException} for a target the stream cannot be sent to.
+     */
+    void setVban(StreamProtocol.VbanTarget target) {
+        routes.setVban(target);
     }
 
     void run() throws IOException, InterruptedException {
@@ -56,14 +57,14 @@ final class ReceiverSession {
         streamer.setDaemon(true);
         streamer.start();
         try {
-            while (!isStopped()) {
+            while (!routes.isStopped()) {
                 Transport.Datagram datagram = transport.receive(POLL_MS);
                 if (datagram != null) {
                     handle(datagram);
                 }
             }
         } finally {
-            stop();
+            routes.stop();
             streamer.join(STOP_TIMEOUT_MS);
             if (streamer.isAlive()) {
                 Log.info("receivers: capture read did not return; stopping without releasing it");
@@ -77,29 +78,37 @@ final class ReceiverSession {
     }
 
     private void handle(Transport.Datagram d) {
-        boolean local = d.from.getAddress().isLoopbackAddress();
-        switch (StreamProtocol.type(d.data, d.data.length)) {
-            case StreamProtocol.HELLO:
-                String name;
-                try {
-                    name = StreamProtocol.parseHello(d.data, d.data.length);
-                } catch (IllegalArgumentException e) {
-                    return;
-                }
-                // FORMAT goes out before the streamer is woken, so it precedes the first AUDIO.
-                if (reply(formatMessage, d.from)) {
-                    hello(d.from, name);
-                }
-                break;
+        int type = StreamProtocol.type(d.data, d.data.length);
+        if (type == StreamProtocol.HELLO) {
+            String name;
+            try {
+                name = StreamProtocol.parseHello(d.data, d.data.length);
+            } catch (IllegalArgumentException e) {
+                return;
+            }
+            // FORMAT goes out before the streamer is woken, so it precedes the first AUDIO.
+            if (reply(formatMessage, d.from)) {
+                routes.hello(d.from, name);
+            }
+            return;
+        }
+        // The rest is the agent's, on this headset.
+        if (!d.from.getAddress().isLoopbackAddress()) {
+            return;
+        }
+        switch (type) {
             case StreamProtocol.STATUS_REQUEST:
-                if (local) {
-                    reply(StreamProtocol.status(status()), d.from);
-                }
+                reply(StreamProtocol.status(routes.status()), d.from);
                 break;
             case StreamProtocol.STOP:
-                if (local) {
-                    Log.info("receivers: stop requested");
-                    stop();
+                Log.info("receivers: stop requested");
+                routes.stop();
+                break;
+            case StreamProtocol.SET_VBAN:
+                try {
+                    routes.setVban(StreamProtocol.parseSetVban(d.data, d.data.length));
+                } catch (IllegalArgumentException e) {
+                    Log.info("receivers: ignoring SET_VBAN: " + e.getMessage());
                 }
                 break;
             default:
@@ -118,107 +127,37 @@ final class ReceiverSession {
         }
     }
 
-    private synchronized void hello(InetSocketAddress from, String name) {
-        if (current() == null || !from.equals(receiver)) {
-            Log.info("receivers: streaming to " + name + " (" + from + ")");
-        }
-        receiver = from;
-        receiverName = name;
-        lastHelloMs = clockMs.getAsLong();
-        notifyAll();
-    }
-
-    private synchronized StreamProtocol.Status status() {
-        InetSocketAddress current = current();
-        List<StreamProtocol.Receiver> receivers = current == null
-                ? Collections.emptyList()
-                : Collections.singletonList(new StreamProtocol.Receiver(receiverName, address(current)));
-        return new StreamProtocol.Status(format.blockFrames, receivers);
-    }
-
-    private static String address(InetSocketAddress a) {
-        return a.getAddress().getHostAddress() + ":" + a.getPort();
-    }
-
-    /** The receiver to stream to, or null when stopped or nobody has said hello recently. */
-    private synchronized InetSocketAddress current() {
-        if (stopped || receiver == null || clockMs.getAsLong() - lastHelloMs > StreamProtocol.STALE_RECEIVER_MS) {
-            return null;
-        }
-        return receiver;
-    }
-
-    /** Stops streaming to {@code target} until it says hello again. */
-    private synchronized void forget(InetSocketAddress target) {
-        if (target.equals(receiver)) {
-            receiver = null;
-        }
-    }
-
-    private synchronized boolean isStopped() {
-        return stopped;
-    }
-
-    private synchronized void stop() {
-        stopped = true;
-        notifyAll();
-    }
-
-    /** Waits for a hello or a stop; both notify. Returns null when stopped. */
-    private synchronized InetSocketAddress awaitReceiver() throws InterruptedException {
-        InetSocketAddress target;
-        while ((target = current()) == null && !stopped) {
-            wait();
-        }
-        return target;
-    }
-
     private void stream() {
         try {
-            InetSocketAddress target;
-            while ((target = awaitReceiver()) != null) {
+            List<Route> targets;
+            while (!(targets = routes.awaitActive()).isEmpty()) {
                 try (Capture capture = captures.open()) {
-                    int sequence = 0;
-                    while (target != null) {
+                    // Datagrams sent to each route during this capture, which numbers the next one.
+                    Map<Route, Integer> sent = new HashMap<>();
+                    while (!targets.isEmpty()) {
                         Capture.Block block = capture.read();
-                        target = current();
-                        if (target == null) {
-                            continue;
-                        }
-                        try {
-                            sequence = send(block, target, sequence);
-                        } catch (IOException e) {
-                            Log.info("receivers: cannot reach " + target + ", dropping it: " + e.getMessage());
-                            forget(target);
-                            target = null;
+                        targets = routes.active();
+                        for (Route route : targets) {
+                            try {
+                                sent.put(route, route.send(transport, block, sent.getOrDefault(route, 0)));
+                            } catch (IOException e) {
+                                routes.unreachable(route, e);
+                            }
                         }
                     }
                 }
-                if (!isStopped()) {
-                    Log.info("receivers: no receiver, released capture");
+                if (!routes.isStopped()) {
+                    Log.info("receivers: nobody to stream to, released capture");
                 }
             }
         } catch (IOException e) {
             synchronized (this) {
                 failure = e;
             }
-            stop();
+            routes.stop();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            stop();
+            routes.stop();
         }
-    }
-
-    /** Splits a block into AUDIO datagrams; returns the next sequence number. */
-    private int send(Capture.Block block, InetSocketAddress target, int sequence) throws IOException {
-        int frameBytes = format.frameBytes();
-        int maxBytes = StreamProtocol.maxAudioPcmBytes(format);
-        for (int off = 0; off < block.length; off += maxBytes) {
-            int chunk = Math.min(block.length - off, maxBytes);
-            int length = StreamProtocol.audio(packet, sequence++, block.framePosition + off / frameBytes,
-                    block.data, off, chunk);
-            transport.send(packet, length, target);
-        }
-        return sequence;
     }
 }

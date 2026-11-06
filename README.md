@@ -3,12 +3,14 @@
 Setu streams a Meta Quest 3's audio to a PC with as little delay as the headset allows. An
 earlier prototype measured about 20 ms behind the headset's own speakers over USB and 25–35 ms
 over Wi-Fi (estimates, see [Measurements](#measurements)). The headset keeps playing while it
-streams. Setu means "bridge"; audio is the first thing it carries.
+streams. Play it with Setu's desktop app, or with any [VBAN](#vban) receiver such as Voicemeeter.
+Setu means "bridge"; audio is the first thing it carries.
 
-**Status: work in progress.** The capture server, the protocol and the desktop receiver work;
-the receiver runs from the command line until its UI lands. The agent's start flow and the
-installers are being built, so parts of "How it works" describe the design rather than finished
-code.
+**Status: work in progress.** The capture server, the protocol, VBAN output and the desktop
+receiver work; the receiver runs from the command line until its UI lands. The agent shows the
+server's status and holds the VBAN settings, but cannot start the server yet. The agent's start
+flow and the installers are being built, so parts of "How it works" describe the design rather
+than finished code.
 
 ## How it works
 
@@ -30,8 +32,8 @@ start. Setu sets that up once over USB, after which the headset can start it on 
 
 | Piece | What it is |
 |---|---|
-| Agent (`apps/agent`) | Android app, Kotlin and Compose. Starts the capture server and shows its status and settings. |
-| Capture server (`apps/agent/.../server`) | Java, shipped inside the agent's APK, run with `app_process` using the APK as its classpath. Captures playback and serves receivers. |
+| Agent (`apps/agent`) | Android app, Kotlin and Compose. Starts the capture server, shows its status and keeps it in step with the settings, such as where to send VBAN. |
+| Capture server (`apps/agent/.../server`) | Java, shipped inside the agent's APK, run with `app_process` using the APK as its classpath. Captures playback and streams it to the desktop app and to a VBAN receiver. |
 | Desktop app (`apps/desktop`) | Rust. Finds the headset, receives the stream and plays it. Windows first, then Linux. |
 | Installers (planned) | A PC installer inside the desktop app, and a browser installer over WebUSB. Both only install the APK and run the setup routine it contains, so they cannot drift apart. |
 | Protocol (`protocol`) | The wire format, with byte fixtures that the Java and Rust sides both test against. |
@@ -124,6 +126,33 @@ their own, so play to a hardware output for the lowest latency.
 | An ordinary app with MediaProjection | Needs consent each session; whether it gets small capture blocks is untested. |
 | A 3.5 mm cable to line-in | Lowest latency, and the fallback. |
 
+## VBAN
+
+[VBAN](https://vb-audio.com/Voicemeeter/VBANProtocol_Specifications.pdf) is VB-Audio's protocol for audio over UDP. With
+it, a PC needs no Setu software: Voicemeeter, VBAN Receptor or any other VBAN receiver can play
+the headset. VBAN has no handshake, so the headset sends to an address it is given:
+
+1. In the agent, turn on "Send to a VBAN receiver" and enter the PC's IP address. The port (6980)
+   and stream name ("Quest") can stay as they are.
+2. On the PC, add an incoming VBAN stream with the stream name and the "IP address from" that the
+   agent shows. In Voicemeeter that is Menu → VBAN.
+3. Allow the receiver through the PC's firewall for UDP on that port.
+
+The server sends VBAN from the same capture as the Setu stream, so both can play at once. The
+agent sends its settings to the server (SET_VBAN) and corrects the server whenever its status
+differs, which covers a server that restarts. From a PC, `task agent:server -- udp --vban
+<pc-ip>` does the same.
+
+Compared with the desktop app:
+
+- **Delay is set by the receiver.** VBAN receivers keep a fixed network buffer (Voicemeeter's
+  Net Quality setting), while Setu's playout adapts to the jitter it measures and corrects clock
+  drift. On Wi-Fi, expect to raise the buffer above the lowest setting to avoid crackles.
+- **Unicast only.** Send to the PC's own address: Wi-Fi delivers broadcast and multicast at a low
+  rate and without retries.
+- **No audience check.** The server captures for as long as VBAN is on, whether anyone listens or
+  not.
+
 ## Receiver design notes
 
 These come from the prototype receiver; the desktop app's playout follows them.
@@ -148,7 +177,7 @@ These come from the prototype receiver; the desktop app's playout follows them.
 
 | Path | What |
 |---|---|
-| `apps/agent` | The agent app; `src/main/java/dev/trugamr/setu/server` is the capture server and `.../protocol` the shared protocol module. |
+| `apps/agent` | The agent app: `Agent` is the screen's logic, with the server and settings behind `CaptureServer` and `SettingsStore`. `.../server` is the capture server, where `ReceiverSession` sends each block to every route in `Routes` (the Setu receiver, the VBAN target) in its `PacketFormat`. `.../protocol` holds the shared protocol module and the VBAN encoder. |
 | `apps/desktop` | The desktop app, a member of the root Cargo workspace. `Receiver` wires `link` (UDP to the server), `playout` (jitter buffer) and `output` (the device, WASAPI on Windows). |
 | `protocol` | Protocol spec ([protocol/README.md](protocol/README.md)) and byte fixtures. |
 
@@ -168,17 +197,19 @@ task desktop:run -- --list-devices
 task desktop:run -- <headset-ip>   # play the headset's audio; --help lists the options
 ```
 
-Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames]`,
+Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames] [--vban
+host[:port][/name]]`,
 `adb [blockFrames]`, `probe [clicks] [blockFrames]`, `bursts [seconds] [blockFrames]`,
 `adb-wifi-trust <bssid>`, `adb-revoke-keys`.
 
 ## Roadmap
 
-1. Agent: home and settings, start and stop the server, show its status.
+1. Agent: start and stop the server itself. With the browser installer, this makes VBAN work
+   with no Setu software on the PC.
 2. Desktop app: UI and tray on top of the receiver.
 3. Installers: setup routine in the APK, then the PC installer, then the browser installer.
-4. Discovery and receiver approval, start at login, a Linux backend.
-5. VBAN output, so any VBAN receiver can listen without the desktop app.
+4. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
+   address from the last Setu receiver, and find VBAN receivers with VBAN's PING0 service.
 
 Open questions:
 

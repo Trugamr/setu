@@ -1,4 +1,4 @@
-# STATUS: 96-frame blocks, one receiver "studio-pc" at 192.168.1.20:50000
+# STATUS: 96-frame blocks, one receiver "studio-pc" at 192.168.1.20:50000, VBAN to 192.168.1.20:6980 as "Quest"
 53 54 01 05                    # "ST", version 1, type STATUS
 60 00 00 00                    # block frames 96
 01 00                          # receiver count 1
@@ -6,3 +6,8 @@
 73 74 75 64 69 6f 2d 70 63     # "studio-pc"
 12 00                          # address length 18
 31 39 32 2e 31 36 38 2e 31 2e 32 30 3a 35 30 30 30 30   # "192.168.1.20:50000"
+04                             # VBAN target: IPv4 address
+c0 a8 01 14                    # 192.168.1.20
+44 1b                          # port 6980
+05 00                          # stream name length 5
+51 75 65 73 74                 # "Quest"

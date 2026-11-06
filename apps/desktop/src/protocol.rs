@@ -3,6 +3,7 @@
 //! [`decode`] reads any message; the receiver only ever sends HELLO, so that is the one encoder.
 
 use std::fmt;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 pub const VERSION: u8 = 1;
 pub const UDP_PORT: u16 = 27184;
@@ -18,6 +19,7 @@ const AUDIO: u8 = 3;
 const STATUS_REQUEST: u8 = 4;
 const STATUS: u8 = 5;
 const STOP: u8 = 6;
+const SET_VBAN: u8 = 7;
 
 /// Sample format of the stream.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -56,20 +58,33 @@ pub struct Receiver {
     pub address: String,
 }
 
+/// Where the server sends VBAN: a receiver's address and the stream name it listens for.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VbanTarget {
+    pub address: SocketAddr,
+    pub stream_name: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Status {
     pub block_frames: u32,
     pub receivers: Vec<Receiver>,
+    /// `None` when VBAN is off.
+    pub vban: Option<VbanTarget>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Message<'a> {
-    Hello { name: String },
+    Hello {
+        name: String,
+    },
     Format(Format),
     Audio(Audio<'a>),
     StatusRequest,
     Status(Status),
     Stop,
+    /// Send VBAN to this target, or stop sending it.
+    SetVban(Option<VbanTarget>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -79,6 +94,8 @@ pub enum DecodeError {
     UnknownType(u8),
     Truncated,
     InvalidUtf8,
+    /// An address that is neither 4 (IPv4) nor 16 (IPv6) bytes long.
+    InvalidAddress(u8),
 }
 
 impl fmt::Display for DecodeError {
@@ -88,6 +105,7 @@ impl fmt::Display for DecodeError {
             DecodeError::UnknownType(t) => write!(f, "unknown message type {t}"),
             DecodeError::Truncated => write!(f, "message truncated"),
             DecodeError::InvalidUtf8 => write!(f, "string is not UTF-8"),
+            DecodeError::InvalidAddress(len) => write!(f, "address of {len} bytes"),
         }
     }
 }
@@ -130,9 +148,11 @@ pub fn decode(data: &[u8]) -> Result<Message<'_>, DecodeError> {
             Ok(Message::Status(Status {
                 block_frames,
                 receivers,
+                vban: r.vban_target()?,
             }))
         }
         STOP => Ok(Message::Stop),
+        SET_VBAN => Ok(Message::SetVban(r.vban_target()?)),
         other => Err(DecodeError::UnknownType(other)),
     }
 }
@@ -166,6 +186,10 @@ impl Reader<'_> {
         Ok(bytes.try_into().expect("slice has length N"))
     }
 
+    fn u8(&mut self) -> Result<u8, DecodeError> {
+        self.take().map(u8::from_le_bytes)
+    }
+
     fn u16(&mut self) -> Result<u16, DecodeError> {
         self.take().map(u16::from_le_bytes)
     }
@@ -186,6 +210,19 @@ impl Reader<'_> {
             .ok_or(DecodeError::Truncated)?;
         self.pos += len;
         String::from_utf8(bytes.to_vec()).map_err(|_| DecodeError::InvalidUtf8)
+    }
+
+    fn vban_target(&mut self) -> Result<Option<VbanTarget>, DecodeError> {
+        let ip = match self.u8()? {
+            0 => return Ok(None),
+            4 => IpAddr::V4(Ipv4Addr::from(self.take::<4>()?)),
+            16 => IpAddr::V6(Ipv6Addr::from(self.take::<16>()?)),
+            other => return Err(DecodeError::InvalidAddress(other)),
+        };
+        Ok(Some(VbanTarget {
+            address: SocketAddr::new(ip, self.u16()?),
+            stream_name: self.string()?,
+        }))
     }
 }
 
@@ -266,8 +303,32 @@ mod tests {
                 name: "studio-pc".into(),
                 address: "192.168.1.20:50000".into(),
             }],
+            vban: Some(quest()),
         };
         assert_eq!(decode(&fixture!("status")), Ok(Message::Status(expected)));
+    }
+
+    fn quest() -> VbanTarget {
+        VbanTarget {
+            address: "192.168.1.20:6980".parse().unwrap(),
+            stream_name: "Quest".into(),
+        }
+    }
+
+    #[test]
+    fn set_vban() {
+        assert_eq!(
+            decode(&fixture!("set-vban")),
+            Ok(Message::SetVban(Some(quest())))
+        );
+        assert_eq!(
+            decode(&fixture!("set-vban-off")),
+            Ok(Message::SetVban(None))
+        );
+        assert_eq!(
+            decode(&[b'S', b'T', VERSION, SET_VBAN, 5]),
+            Err(DecodeError::InvalidAddress(5))
+        );
     }
 
     #[test]

@@ -1,0 +1,7 @@
+# SET_VBAN: send VBAN to 192.168.1.20:6980 as "Quest"
+53 54 01 07                    # "ST", version 1, type SET_VBAN
+04                             # IPv4 address
+c0 a8 01 14                    # 192.168.1.20
+44 1b                          # port 6980
+05 00                          # stream name length 5
+51 75 65 73 74                 # "Quest"

@@ -5,40 +5,34 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val canWriteSecureSettings =
             checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
+        val agent = Agent(LoopbackServer(), PreferencesStore(this)) { headsetAddress(this) }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) { agent.run() }
+        }
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    Status(canWriteSecureSettings)
+                    val state by agent.state.collectAsStateWithLifecycle()
+                    AgentScreen(state, canWriteSecureSettings, agent::editVban)
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun Status(canWriteSecureSettings: Boolean) {
-    Column(modifier = Modifier.padding(32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Setu", style = MaterialTheme.typography.headlineMedium)
-        Text(
-            if (canWriteSecureSettings) "Set up: can turn on wireless debugging"
-            else "Not set up: run setup from a PC to grant the wireless debugging permission",
-        )
     }
 }

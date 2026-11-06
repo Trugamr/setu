@@ -41,7 +41,7 @@ tasks:
     cmd: ./gradlew assembleDebug --console=plain --quiet
 
   agent:test:
-    desc: Run the agent's JVM unit tests (protocol, receiver session, adb client, launcher)
+    desc: Run the agent's JVM unit tests (protocol, capture server, agent logic)
     dir: apps/agent
     cmd: ./gradlew testDebugUnitTest --console=plain --quiet
 
