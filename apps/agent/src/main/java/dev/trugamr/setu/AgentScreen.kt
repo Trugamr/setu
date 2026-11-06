@@ -157,7 +157,6 @@ private fun Detail(label: String, value: String) {
     }
 }
 
-private fun StreamProtocol.VbanTarget.hostAndPort() = "${address.address.hostAddress}:${address.port}"
 
 @Preview(widthDp = 720, heightDp = 1200)
 @Composable

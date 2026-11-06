@@ -141,7 +141,8 @@ the headset. VBAN has no handshake, so the headset sends to an address it is giv
 The server sends VBAN from the same capture as the Setu stream, so both can play at once. The
 agent sends its settings to the server (SET_VBAN) and corrects the server whenever its status
 differs, which covers a server that restarts. From a PC, `task agent:server -- udp --vban
-<pc-ip>` does the same.
+<pc-ip>` starts the server with a target. Until VBAN is configured in the agent, the agent takes
+over that target as its settings; once it is configured, the agent's settings win.
 
 Compared with the desktop app:
 
@@ -155,6 +156,8 @@ Compared with the desktop app:
   rate and without retries.
 - **No audience check.** The server captures for as long as VBAN is on, whether anyone listens or
   not.
+- **Any app on the headset can redirect it.** The server takes control messages from loopback,
+  which includes every app with network access, not only the agent.
 
 ## Receiver design notes
 
@@ -208,7 +211,8 @@ host[:port][/name]]`,
 ## Roadmap
 
 1. Agent: start and stop the server itself. With the browser installer, this makes VBAN work
-   with no Setu software on the PC.
+   with no Setu software on the PC. The agent then passes the server a secret that control
+   messages and local receivers must carry.
 2. Desktop app: UI and tray on top of the receiver.
 3. Installers: setup routine in the APK, then the PC installer, then the browser installer.
 4. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's

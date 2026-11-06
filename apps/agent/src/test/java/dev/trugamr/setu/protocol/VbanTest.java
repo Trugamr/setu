@@ -27,9 +27,9 @@ public class VbanTest {
         // 256 frames per packet; 16-bit stereo frames are 4 bytes, so 1024 bytes of data.
         Vban.Encoder stereo = new Vban.Encoder(FORMAT, "setu");
         assertEquals(256, stereo.maxFrames());
-        assertEquals(28 + 1024, stereo.newPacket().length);
+        assertEquals(Vban.HEADER_BYTES + 1024, stereo.newPacket().length);
         byte[] full = new byte[256 * 4];
-        assertEquals(28 + 1024, stereo.audio(stereo.newPacket(), 0, full, 0, full.length));
+        assertEquals(Vban.HEADER_BYTES + 1024, stereo.audio(stereo.newPacket(), 0, full, 0, full.length));
         assertThrows(IllegalArgumentException.class,
                 () -> stereo.audio(stereo.newPacket(), 0, new byte[257 * 4], 0, 257 * 4));
         // 8 channels: 1436 data bytes hold 89 frames.

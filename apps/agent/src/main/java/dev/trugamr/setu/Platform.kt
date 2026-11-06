@@ -8,7 +8,8 @@ import java.net.Inet4Address
 class PreferencesStore(context: Context) : SettingsStore {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
-    override fun loadVban(): VbanSettings {
+    override fun loadVban(): VbanSettings? {
+        if (!prefs.contains("vban.enabled")) return null
         val defaults = VbanSettings()
         return VbanSettings(
             enabled = prefs.getBoolean("vban.enabled", defaults.enabled),

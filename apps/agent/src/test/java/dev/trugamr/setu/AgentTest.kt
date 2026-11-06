@@ -24,7 +24,7 @@ class AgentTest {
         }
     }
 
-    private class MemoryStore(var vban: VbanSettings = VbanSettings()) : SettingsStore {
+    private class MemoryStore(var vban: VbanSettings? = null) : SettingsStore {
         override fun loadVban() = vban
 
         override fun saveVban(settings: VbanSettings) {
@@ -72,6 +72,29 @@ class AgentTest {
         agent.editVban(sendToQuest.copy(host = "192.168.1."))
         agent.refresh()
         assertEquals(quest, server.target)
+    }
+
+    @Test
+    fun takesOverTheServersTargetUntilConfigured() {
+        server.target = quest
+        val agent = agent()
+        agent.refresh()
+        assertEquals(quest, server.target)
+        assertEquals(emptyList<StreamProtocol.VbanTarget?>(), server.sets)
+        assertEquals(sendToQuest, agent.state.value.vban)
+        assertEquals(sendToQuest, store.vban)
+
+        agent.editVban(sendToQuest.copy(enabled = false))
+        agent.refresh()
+        assertNull(server.target)
+    }
+
+    @Test
+    fun unconfiguredAgentLeavesAServerWithoutVbanAlone() {
+        val agent = agent()
+        agent.refresh()
+        assertEquals(emptyList<StreamProtocol.VbanTarget?>(), server.sets)
+        assertNull(store.vban)
     }
 
     @Test

@@ -43,11 +43,11 @@ The server listens on UDP port 27184.
   HELLOs stop for 3 seconds the server stops streaming and releases the capture. A receiver the
   server cannot send to is dropped until its next HELLO. FORMAT always precedes the first AUDIO.
 - **AUDIO datagrams.** Each one carries at most 340 frames, so a datagram stays under a
-  1500-byte MTU. `sequence` counts datagrams from 0 for each capture. `framePosition` is the
-  index of the datagram's first frame since the capture began. A gap in `sequence` is a lost
+  1500-byte MTU. `sequence` counts datagrams from 0, from when the server starts streaming to the receiver.
+  `framePosition` is the index of the datagram's first frame since the capture began. A gap in `sequence` is a lost
   datagram; a jump in `framePosition` at the same time tells the receiver how much audio it lost.
 - **STATUS_REQUEST, STOP and SET_VBAN.** The server accepts these only from a loopback address,
-  which means the agent on the same headset. STATUS lists the receiver currently being streamed
+  so only from the headset itself: the agent, but also any other app with network access. STATUS lists the receiver currently being streamed
   to, or none, and the VBAN target. STOP ends the server process. SET_VBAN replaces the VBAN
   target; none turns VBAN off.
 
@@ -69,7 +69,7 @@ packets of at most 256 frames. Each packet is a 28-byte little-endian header and
 | 6 | channels − 1 |
 | 7 | sample type, `1` = 16-bit integer, with codec 0 (PCM) in the top 4 bits |
 | 8–23 | stream name, ASCII, zero-padded |
-| 24–27 | `u32` packet counter, from 0 for each capture |
+| 24–27 | `u32` packet counter, from 0 when the server starts sending to the target |
 
 A Setu receiver and a VBAN target can be served at the same time from one capture.
 

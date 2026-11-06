@@ -18,19 +18,16 @@ class LoopbackServer(
     override fun status(): StreamProtocol.Status? = try {
         open().use { socket ->
             send(socket, StreamProtocol.empty(StreamProtocol.STATUS_REQUEST))
-            val buffer = ByteArray(2048)
+            val buffer = ByteArray(MAX_DATAGRAM_BYTES)
             val packet = DatagramPacket(buffer, buffer.size)
             socket.receive(packet)
-            if (StreamProtocol.type(buffer, packet.length) == StreamProtocol.STATUS) {
-                StreamProtocol.parseStatus(buffer, packet.length)
-            } else {
-                null
-            }
+            StreamProtocol.parseStatus(buffer, packet.length)
         }
     } catch (e: IOException) {
         // A timeout, or "port unreachable": no server is running.
         null
     } catch (e: IllegalArgumentException) {
+        // Not a STATUS.
         null
     }
 
@@ -49,5 +46,10 @@ class LoopbackServer(
 
     private fun send(socket: DatagramSocket, message: ByteArray) {
         socket.send(DatagramPacket(message, message.size))
+    }
+
+    private companion object {
+        /** The largest UDP payload, so a long receiver name cannot truncate a STATUS. */
+        const val MAX_DATAGRAM_BYTES = 65_507
     }
 }

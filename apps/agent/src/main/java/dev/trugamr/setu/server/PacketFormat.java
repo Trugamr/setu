@@ -10,6 +10,9 @@ import dev.trugamr.setu.protocol.Vban;
  */
 interface PacketFormat {
 
+    /** Bytes per frame of the PCM it carries. */
+    int frameBytes();
+
     /** Frames one datagram carries at most. */
     int maxFrames();
 
@@ -17,7 +20,7 @@ interface PacketFormat {
     byte[] newPacket();
 
     /**
-     * Writes datagram {@code index} of a stream (counted from 0 for each capture) into
+     * Writes datagram {@code index} of a route (counted from 0) into
      * {@code packet}: {@code length} bytes of {@code pcm} from {@code offset}, whose first frame
      * is {@code framePosition}. Returns the datagram length.
      */
@@ -26,6 +29,11 @@ interface PacketFormat {
     static PacketFormat setu(StreamProtocol.Format format) {
         int maxFrames = StreamProtocol.maxAudioPcmBytes(format) / format.frameBytes();
         return new PacketFormat() {
+            @Override
+            public int frameBytes() {
+                return format.frameBytes();
+            }
+
             @Override
             public int maxFrames() {
                 return maxFrames;
@@ -47,6 +55,11 @@ interface PacketFormat {
     static PacketFormat vban(StreamProtocol.Format format, String streamName) {
         Vban.Encoder encoder = new Vban.Encoder(format, streamName);
         return new PacketFormat() {
+            @Override
+            public int frameBytes() {
+                return format.frameBytes();
+            }
+
             @Override
             public int maxFrames() {
                 return encoder.maxFrames();

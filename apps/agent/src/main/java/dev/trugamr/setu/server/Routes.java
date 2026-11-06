@@ -17,7 +17,8 @@ import java.util.function.LongSupplier;
  * - the VBAN target the agent set, until it is changed or cleared. VBAN has no handshake, so a
  *   failed send never drops it: nothing would bring it back.
  *
- * A route keeps its identity while it stays the same, so its datagram numbering carries on.
+ * A route keeps its identity while it stays the same, so its datagram numbering carries on;
+ * a new route numbers from 0.
  * Thread-safe: the receive loop changes the routes and the streamer reads them.
  */
 final class Routes {
@@ -32,8 +33,6 @@ final class Routes {
     private long lastHelloMs;
     private StreamProtocol.VbanTarget vbanTarget;
     private Route vban;
-    /** Whether a send to the current VBAN target failed, so the failure is logged once. */
-    private boolean vbanFailed;
     private boolean stopped;
 
     Routes(StreamProtocol.Format format, LongSupplier clockMs) {
@@ -44,8 +43,9 @@ final class Routes {
 
     synchronized void hello(InetSocketAddress from, String name) {
         if (liveReceiver() == null || !from.equals(receiver.address)) {
-            Log.info("receivers: streaming to " + name + " (" + from + ")");
-            receiver = new Route(from, setu, format.frameBytes(), name + " (" + from + ")");
+            String description = name + " (" + StreamProtocol.hostAndPort(from) + ")";
+            Log.info("receivers: streaming to " + description);
+            receiver = new Route(from, setu, description);
         }
         receiverName = name;
         lastHelloMs = clockMs.getAsLong();
@@ -61,10 +61,8 @@ final class Routes {
             return;
         }
         vban = target == null ? null
-                : new Route(target.address, PacketFormat.vban(format, target.streamName), format.frameBytes(),
-                        "VBAN " + target);
+                : new Route(target.address, PacketFormat.vban(format, target.streamName), "VBAN " + target);
         vbanTarget = target;
-        vbanFailed = false;
         Log.info(target == null ? "receivers: VBAN off" : "receivers: sending VBAN " + target);
         notifyAll();
     }
@@ -99,9 +97,9 @@ final class Routes {
         if (route == receiver) {
             Log.info("receivers: cannot reach " + route + ", dropping it until it says hello: " + e.getMessage());
             receiver = null;
-        } else if (route == vban && !vbanFailed) {
+        } else if (route == vban && !route.failed) {
             Log.info("receivers: cannot reach " + route + ", still trying: " + e.getMessage());
-            vbanFailed = true;
+            route.failed = true;
         }
     }
 
@@ -109,7 +107,7 @@ final class Routes {
         Route live = liveReceiver();
         List<StreamProtocol.Receiver> receivers = live == null
                 ? Collections.emptyList()
-                : Collections.singletonList(new StreamProtocol.Receiver(receiverName, address(live.address)));
+                : Collections.singletonList(new StreamProtocol.Receiver(receiverName, StreamProtocol.hostAndPort(live.address)));
         return new StreamProtocol.Status(format.blockFrames, receivers, vbanTarget);
     }
 
@@ -128,9 +126,5 @@ final class Routes {
             return null;
         }
         return receiver;
-    }
-
-    private static String address(InetSocketAddress a) {
-        return a.getAddress().getHostAddress() + ":" + a.getPort();
     }
 }

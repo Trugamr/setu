@@ -148,6 +148,11 @@ public final class StreamProtocol {
         return r.u64();
     }
 
+    /** {@code address} as "host:port", with the host as a numeric address. */
+    public static String hostAndPort(InetSocketAddress address) {
+        return address.getAddress().getHostAddress() + ":" + address.getPort();
+    }
+
     /** A receiver as STATUS reports it. */
     public static final class Receiver {
         public final String name;
@@ -185,6 +190,9 @@ public final class StreamProtocol {
             if (address.isUnresolved()) {
                 throw new IllegalArgumentException("unresolved VBAN address: " + address);
             }
+            if (address.getPort() == 0) {
+                throw new IllegalArgumentException("VBAN needs a port: " + address);
+            }
             this.address = address;
             this.streamName = Vban.checkStreamName(streamName);
         }
@@ -200,9 +208,13 @@ public final class StreamProtocol {
             return Objects.hash(address, streamName);
         }
 
+        public String hostAndPort() {
+            return StreamProtocol.hostAndPort(address);
+        }
+
         @Override
         public String toString() {
-            return "\"" + streamName + "\" to " + address.getAddress().getHostAddress() + ":" + address.getPort();
+            return "\"" + streamName + "\" to " + hostAndPort();
         }
     }
 

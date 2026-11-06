@@ -4,9 +4,7 @@ import dev.trugamr.setu.protocol.StreamProtocol;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.LongSupplier;
 
 /**
@@ -127,19 +125,25 @@ final class ReceiverSession {
         }
     }
 
+    /** Ends the session with {@code e}, which {@link #run} throws. */
+    private void fail(IOException e) {
+        synchronized (this) {
+            failure = e;
+        }
+        routes.stop();
+    }
+
     private void stream() {
         try {
             List<Route> targets;
             while (!(targets = routes.awaitActive()).isEmpty()) {
                 try (Capture capture = captures.open()) {
-                    // Datagrams sent to each route during this capture, which numbers the next one.
-                    Map<Route, Integer> sent = new HashMap<>();
                     while (!targets.isEmpty()) {
                         Capture.Block block = capture.read();
                         targets = routes.active();
                         for (Route route : targets) {
                             try {
-                                sent.put(route, route.send(transport, block, sent.getOrDefault(route, 0)));
+                                route.send(transport, block);
                             } catch (IOException e) {
                                 routes.unreachable(route, e);
                             }
@@ -151,10 +155,9 @@ final class ReceiverSession {
                 }
             }
         } catch (IOException e) {
-            synchronized (this) {
-                failure = e;
-            }
-            routes.stop();
+            fail(e);
+        } catch (RuntimeException e) {
+            fail(new IOException("streaming failed", e));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             routes.stop();

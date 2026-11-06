@@ -21,7 +21,8 @@ interface CaptureServer {
 
 /** Where the agent keeps its settings across launches. */
 interface SettingsStore {
-    fun loadVban(): VbanSettings
+    /** The saved VBAN settings, or null when they were never saved. */
+    fun loadVban(): VbanSettings?
 
     fun saveVban(settings: VbanSettings)
 }
@@ -43,24 +44,33 @@ data class AgentState(
 )
 
 /**
- * The agent's logic behind its screen. The agent owns the VBAN settings and keeps the server in
- * step with them: [run] reads the server's status every second and sends the settings whenever
- * the server reports something else, so a server that starts or restarts picks them up.
+ * The agent's logic behind its screen. Once VBAN is configured, the agent owns the settings and
+ * keeps the server in step with them: [run] reads the server's status every second and sends the
+ * settings whenever the server reports something else, so a server that starts or restarts picks
+ * them up. Until then, it takes over the target the server already has, e.g. one given to the
+ * server on its command line, and leaves the server alone.
  */
 class Agent(
     private val server: CaptureServer,
     private val store: SettingsStore,
     private val headsetAddress: () -> String?,
 ) {
-    private val mutableState = MutableStateFlow(AgentState(vban = store.loadVban()))
+    private val saved = store.loadVban()
+    private val mutableState = MutableStateFlow(AgentState(vban = saved ?: VbanSettings()))
     val state: StateFlow<AgentState> = mutableState.asStateFlow()
+
+    /** Whether the VBAN settings are the agent's own: edited, or taken over from the server. */
+    @Volatile
+    private var configured = saved != null
 
     /** Wakes [run] early after an edit, so a change reaches the server at once. */
     private val edited = Channel<Unit>(Channel.CONFLATED)
 
     fun editVban(settings: VbanSettings) {
-        store.saveVban(settings)
-        mutableState.update { it.copy(vban = settings) }
+        synchronized(this) {
+            configured = true
+            save(settings)
+        }
         edited.trySend(Unit)
     }
 
@@ -77,7 +87,9 @@ class Agent(
     /** One round: reads the server, brings its VBAN target in line with the settings, updates [state]. */
     fun refresh() {
         var status = server.status()
-        if (status != null) {
+        if (status != null && !configured) {
+            status.vban?.let(::takeOver)
+        } else if (status != null) {
             val wanted = when (val validated = state.value.vban.validate()) {
                 // Leave the server as it is until the settings are complete.
                 is VbanSettings.Validated.Invalid -> status.vban
@@ -92,6 +104,18 @@ class Agent(
         val serverState = if (status == null) ServerState.NotRunning else ServerState.Running(status)
         val address = headsetAddress()
         mutableState.update { it.copy(server = serverState, headsetAddress = address) }
+    }
+
+    private fun takeOver(target: StreamProtocol.VbanTarget) = synchronized(this) {
+        if (!configured) {
+            configured = true
+            save(VbanSettings.of(target))
+        }
+    }
+
+    private fun save(settings: VbanSettings) {
+        store.saveVban(settings)
+        mutableState.update { it.copy(vban = settings) }
     }
 
     private companion object {

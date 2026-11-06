@@ -1,7 +1,5 @@
 package dev.trugamr.setu.protocol;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -13,10 +11,14 @@ public final class Vban {
 
     /** The port VBAN receivers listen on by default. */
     public static final int PORT = 6980;
+    /** The stream name Setu sends under unless told otherwise. */
+    public static final String DEFAULT_STREAM_NAME = "setu";
     public static final int MAX_STREAM_NAME_LENGTH = 16;
+    public static final int HEADER_BYTES = 28;
+    /** Where the header keeps the stream name and the packet counter. */
+    public static final int STREAM_NAME_OFFSET = 8;
+    public static final int COUNTER_OFFSET = 24;
 
-    private static final int HEADER_BYTES = 28;
-    private static final int COUNTER_OFFSET = 24;
     /** The protocol's limits: frames per packet, and data bytes so a packet fits a 1500-byte MTU. */
     private static final int MAX_FRAMES = 256;
     private static final int MAX_DATA_BYTES = 1436;
@@ -33,12 +35,12 @@ public final class Vban {
     }
 
     /**
-     * Returns {@code name} if VBAN can carry it as a stream name: 1 to 16 printable ASCII
-     * characters. Throws {@link IllegalArgumentException} otherwise.
+     * Returns {@code name} if VBAN can carry it as a stream name: 1 to
+     * {@link #MAX_STREAM_NAME_LENGTH} printable ASCII characters. Throws {@link IllegalArgumentException} otherwise.
      */
     public static String checkStreamName(String name) {
         if (name.isEmpty() || name.length() > MAX_STREAM_NAME_LENGTH) {
-            throw new IllegalArgumentException("a VBAN stream name has 1 to 16 characters: \"" + name + "\"");
+            throw new IllegalArgumentException("a VBAN stream name has 1 to " + MAX_STREAM_NAME_LENGTH + " characters: \"" + name + "\"");
         }
         for (int i = 0; i < name.length(); i++) {
             char c = name.charAt(i);
@@ -72,7 +74,7 @@ public final class Vban {
             header[4] = (byte) rateIndex;
             header[6] = (byte) (format.channels - 1);
             header[7] = INT16_PCM;
-            System.arraycopy(name, 0, header, 8, name.length);
+            System.arraycopy(name, 0, header, STREAM_NAME_OFFSET, name.length);
             frameBytes = format.frameBytes();
             maxFrames = Math.min(MAX_FRAMES, MAX_DATA_BYTES / frameBytes);
         }
@@ -100,7 +102,10 @@ public final class Vban {
             }
             System.arraycopy(header, 0, packet, 0, HEADER_BYTES);
             packet[5] = (byte) (frames - 1);
-            ByteBuffer.wrap(packet, COUNTER_OFFSET, 4).order(ByteOrder.LITTLE_ENDIAN).putInt(counter);
+            packet[COUNTER_OFFSET] = (byte) counter;
+            packet[COUNTER_OFFSET + 1] = (byte) (counter >>> 8);
+            packet[COUNTER_OFFSET + 2] = (byte) (counter >>> 16);
+            packet[COUNTER_OFFSET + 3] = (byte) (counter >>> 24);
             System.arraycopy(pcm, pcmOffset, packet, HEADER_BYTES, pcmLength);
             return HEADER_BYTES + pcmLength;
         }

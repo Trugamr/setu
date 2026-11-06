@@ -23,10 +23,10 @@ class VbanSettingsTest {
 
     @Test
     fun hostsAreIpAddressesNotNames() {
-        for (host in listOf("", "192.168.1", "192.168.1.256", "studio-pc", "192.168.1.20:6980")) {
+        for (host in listOf("", "192.168.1", "studio-pc", "studio-pc:6980", "192.168.1.20:6980", "fe80::1")) {
             assertTrue(host, VbanSettings(enabled = true, host = host).validate() is Validated.Invalid)
         }
-        assertTrue(VbanSettings(enabled = true, host = "fe80::1").validate() is Validated.Send)
+        assertTrue(VbanSettings(enabled = true, host = "2001:db8::20").validate() is Validated.Send)
     }
 
     @Test

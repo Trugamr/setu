@@ -37,7 +37,6 @@ public final class Server {
 
     private static final int DEFAULT_BLOCK_FRAMES = 96;
     private static final String SOCKET_NAME = "setu";
-    static final String DEFAULT_VBAN_STREAM = "setu";
     /** Held for the life of the process so the locks are not released by the garbage collector. */
     private static final List<WifiManager.WifiLock> WIFI_LOCKS = new ArrayList<>();
 
@@ -93,7 +92,7 @@ public final class Server {
      * or {@code [fe80::1]:6980}. A host name is looked up here, once.
      */
     static StreamProtocol.VbanTarget parseVbanTarget(String spec) throws IOException {
-        String name = DEFAULT_VBAN_STREAM;
+        String name = Vban.DEFAULT_STREAM_NAME;
         int slash = spec.indexOf('/');
         if (slash >= 0) {
             name = spec.substring(slash + 1);
