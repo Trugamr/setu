@@ -1,0 +1,75 @@
+version: "3"
+
+# Runs from WSL. The agent builds with Linux tools; the desktop app builds with the Windows Rust
+# toolchain (GPUI needs MSVC and the Windows SDK), and the headset is reached through Windows
+# adb because WSL has no USB access.
+
+vars:
+  # The Windows user profile, as a Windows path and as a WSL path.
+  WIN_PROFILE:
+    sh: cd /mnt/c && /mnt/c/Windows/System32/cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r'
+  WIN_HOME:
+    sh: wslpath '{{.WIN_PROFILE}}'
+  # Windows adb.exe and cargo.exe; override with ADB=... or CARGO=... when they live elsewhere.
+  ADB: '{{.ADB | default (printf "%s/AppData/Local/Android/Sdk/platform-tools/adb.exe" .WIN_HOME)}}'
+  CARGO: '{{.CARGO | default (printf "%s/.cargo/bin/cargo.exe" .WIN_HOME)}}'
+  # Build output on the Windows side: compiling through the WSL file share is slow.
+  CARGO_TARGET_DIR: '{{.CARGO_TARGET_DIR | default (printf "%s\\.cache\\setu\\target" .WIN_PROFILE)}}'
+  AGENT_APK: apps/agent/build/outputs/apk/debug/setu-agent-debug.apk
+
+env:
+  # `proto bin` prints NDJSON in agent shells and a bare path otherwise; take the path either way.
+  JAVA_HOME:
+    sh: echo "${JAVA_HOME:-$(proto bin jdk 2>/dev/null | grep -o '/[^"]*/bin/java' | head -1 | xargs dirname | xargs dirname)}"
+  ANDROID_HOME:
+    sh: echo "${ANDROID_HOME:-$HOME/Android/Sdk}"
+  # WSL may have no IPv6 route; without this the JVM tries IPv6 first and downloads time out.
+  JAVA_TOOL_OPTIONS: -Djava.net.preferIPv4Stack=true
+
+tasks:
+  build:
+    desc: Build the agent APK and the desktop app
+    deps: [agent:build, desktop:build]
+
+  test:
+    desc: Run the agent's and the desktop app's tests
+    deps: [agent:test, desktop:test]
+
+  agent:build:
+    desc: Build the agent debug APK
+    dir: apps/agent
+    cmd: ./gradlew assembleDebug --console=plain --quiet
+
+  agent:test:
+    desc: Run the agent's JVM unit tests (protocol, receiver session, adb client, launcher)
+    dir: apps/agent
+    cmd: ./gradlew testDebugUnitTest --console=plain --quiet
+
+  agent:install:
+    desc: Install the agent on the connected headset
+    deps: [agent:build]
+    cmd: '"{{.ADB}}" install -r "$(wslpath -w {{.AGENT_APK}})"'
+
+  agent:server:
+    desc: "Run the capture server on the headset from the installed APK, e.g. task agent:server -- probe 6"
+    cmd: >-
+      "{{.ADB}}" shell 'CLASSPATH=$(pm path dev.trugamr.setu | cut -d: -f2)
+      app_process / dev.trugamr.setu.server.Server {{.CLI_ARGS}}'
+
+  desktop:build:
+    desc: Build the desktop app (Windows)
+    cmd: >-
+      cd /mnt/c && CARGO_TARGET_DIR='{{.CARGO_TARGET_DIR}}' WSLENV=CARGO_TARGET_DIR
+      "{{.CARGO}}" build --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)"
+
+  desktop:run:
+    desc: Build and run the desktop app (Windows)
+    cmd: >-
+      cd /mnt/c && CARGO_TARGET_DIR='{{.CARGO_TARGET_DIR}}' WSLENV=CARGO_TARGET_DIR
+      "{{.CARGO}}" run --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)" -- {{.CLI_ARGS}}
+
+  desktop:test:
+    desc: Run the desktop app's tests (Windows)
+    cmd: >-
+      cd /mnt/c && CARGO_TARGET_DIR='{{.CARGO_TARGET_DIR}}' WSLENV=CARGO_TARGET_DIR
+      "{{.CARGO}}" test --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)"

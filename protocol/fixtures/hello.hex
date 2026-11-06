@@ -1,0 +1,4 @@
+# HELLO from a receiver named "studio-pc"
+53 54 01 01                    # "ST", version 1, type HELLO
+09 00                          # name length 9
+73 74 75 64 69 6f 2d 70 63     # "studio-pc"

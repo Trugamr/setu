@@ -1,0 +1,2 @@
+# STATUS_REQUEST from the agent
+53 54 01 04                    # "ST", version 1, type STATUS_REQUEST

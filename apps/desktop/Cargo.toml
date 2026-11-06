@@ -1,0 +1,9 @@
+[package]
+name = "setu"
+description = "Setu desktop app: receives and plays audio streamed from the Quest agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
