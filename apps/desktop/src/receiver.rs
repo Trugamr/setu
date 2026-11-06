@@ -73,42 +73,66 @@ impl std::fmt::Display for Error {
 impl std::error::Error for Error {}
 
 pub struct Receiver {
-    shared: Arc<Shared>,
+    state: Arc<Mutex<State>>,
     // Declared before `output` so the network stops feeding first.
     _link: Link,
     output: Output,
 }
 
-struct Shared {
-    playout: Mutex<Playout>,
-    connection: Mutex<Connection>,
-}
-
 impl Receiver {
     pub fn start(config: Config) -> Result<Receiver, Error> {
-        let shared = Arc::new(Shared {
-            playout: Mutex::new(Playout::new(config.margin_ms)),
-            connection: Mutex::new(Connection::Waiting),
-        });
+        let state = Arc::new(Mutex::new(State::new(config.margin_ms)));
         let output =
-            Output::start(config.output, PlayoutRender(shared.clone())).map_err(Error::Output)?;
+            Output::start(config.output, PlayoutRender(state.clone())).map_err(Error::Output)?;
         let link = Link::start(config.headset, &config.name, {
-            let shared = shared.clone();
-            move |event| shared.on_link_event(event)
+            let state = state.clone();
+            move |event| lock(&state).on_link_event(event)
         })
         .map_err(Error::Link)?;
         Ok(Receiver {
-            shared,
+            state,
             _link: link,
             output,
         })
     }
 
     pub fn status(&self) -> Status {
-        let connection = *lock(&self.shared.connection);
-        let playout = lock(&self.shared.playout).stats();
         let output = self.output.state();
-        let latency_ms = match (connection, &output) {
+        lock(&self.state).status(output)
+    }
+}
+
+/// What the link and output threads share. One lock covers it all, so a status never mixes
+/// two moments.
+struct State {
+    playout: Playout,
+    connection: Connection,
+}
+
+impl State {
+    fn new(margin_ms: f64) -> Self {
+        State {
+            playout: Playout::new(margin_ms),
+            connection: Connection::Waiting,
+        }
+    }
+
+    fn on_link_event(&mut self, event: Event<'_>) {
+        match event {
+            Event::Format(format) => {
+                self.connection = match self.playout.set_format(format) {
+                    Ok(()) => Connection::Streaming(format),
+                    Err(_) => Connection::Unsupported(format),
+                };
+            }
+            Event::Audio(audio) => self.playout.push(audio.frame_position, audio.pcm),
+            Event::Quiet => self.connection = Connection::Waiting,
+        }
+    }
+
+    fn status(&self, output: OutputState) -> Status {
+        let playout = self.playout.stats();
+        let latency_ms = match (self.connection, &output) {
             (Connection::Streaming(format), OutputState::Playing(info)) => Some(
                 headset_capture_ms(format)
                     + (playout.buffer_min_ms + playout.buffer_max_ms) / 2.0
@@ -117,7 +141,7 @@ impl Receiver {
             _ => None,
         };
         Status {
-            connection,
+            connection: self.connection,
             output,
             playout,
             latency_ms,
@@ -125,40 +149,23 @@ impl Receiver {
     }
 }
 
-impl Shared {
-    fn on_link_event(&self, event: Event<'_>) {
-        match event {
-            Event::Format(format) => {
-                let accepted = lock(&self.playout).set_format(format).is_ok();
-                *lock(&self.connection) = if accepted {
-                    Connection::Streaming(format)
-                } else {
-                    Connection::Unsupported(format)
-                };
-            }
-            Event::Audio(audio) => lock(&self.playout).push(audio.frame_position, audio.pcm),
-            Event::Quiet => *lock(&self.connection) = Connection::Waiting,
-        }
-    }
-}
-
 /// Plays the shared playout on the output thread.
-struct PlayoutRender(Arc<Shared>);
+struct PlayoutRender(Arc<Mutex<State>>);
 
 impl Render for PlayoutRender {
     fn open(&mut self, format: OutputFormat) {
-        lock(&self.0.playout).set_output(format);
+        lock(&self.0).playout.set_output(format);
     }
 
     fn render(&mut self, out: &mut [f32]) {
-        lock(&self.0.playout).pull(out);
+        lock(&self.0).playout.pull(out);
     }
 }
 
 /// Headset delay from a sound reaching its output to the capture server reading it, fitted to
 /// `probe` on Quest 3: 6.3 ms at 96-frame blocks, 7.0 at 192, 8.0 at 384, 24 at 1920.
 fn headset_capture_ms(format: Format) -> f64 {
-    5.0 + f64::from(format.block_frames) * 1000.0 / f64::from(format.sample_rate) / 2.0
+    5.0 + format.block_ms() / 2.0
 }
 
 /// The computer's name, as the headset's status shows it.
@@ -173,4 +180,110 @@ fn default_name() -> String {
 /// worst a poisoned lock leaves behind is a glitch, which beats stopping the audio.
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::output::OutputInfo;
+    use crate::playout::PlayoutState;
+    use crate::protocol::Audio;
+
+    const FORMAT: Format = Format {
+        sample_rate: 48000,
+        channels: 2,
+        bytes_per_sample: 2,
+        block_frames: 96,
+    };
+
+    const DEVICE: OutputFormat = OutputFormat {
+        sample_rate: 48000,
+        channels: 2,
+        period_frames: 128,
+    };
+
+    fn playing() -> OutputState {
+        OutputState::Playing(OutputInfo {
+            device: "Speakers".into(),
+            exclusive: false,
+            format: DEVICE,
+            encoding: "float32".into(),
+            buffer_ms: 5.0,
+            queued_ms: 3.0,
+            engine_latency_ms: 1.0,
+        })
+    }
+
+    fn audio(frame_position: u64, pcm: &[u8]) -> Event<'_> {
+        Event::Audio(Audio {
+            sequence: 0,
+            frame_position,
+            pcm,
+        })
+    }
+
+    #[test]
+    fn waits_until_the_server_sends_its_format() {
+        let state = State::new(4.0);
+        let status = state.status(playing());
+        assert_eq!(status.connection, Connection::Waiting);
+        assert_eq!(status.latency_ms, None);
+    }
+
+    #[test]
+    fn format_starts_streaming_and_quiet_ends_it() {
+        let mut state = State::new(4.0);
+        state.on_link_event(Event::Format(FORMAT));
+        assert_eq!(
+            state.status(playing()).connection,
+            Connection::Streaming(FORMAT)
+        );
+        state.on_link_event(Event::Quiet);
+        assert_eq!(state.status(playing()).connection, Connection::Waiting);
+    }
+
+    #[test]
+    fn a_format_it_cannot_play_is_reported() {
+        let mut state = State::new(4.0);
+        let wide = Format {
+            bytes_per_sample: 3,
+            ..FORMAT
+        };
+        state.on_link_event(Event::Format(wide));
+        assert_eq!(
+            state.status(playing()).connection,
+            Connection::Unsupported(wide)
+        );
+    }
+
+    #[test]
+    fn audio_from_the_link_reaches_the_device() {
+        let state = Arc::new(Mutex::new(State::new(4.0)));
+        let mut render = PlayoutRender(state.clone());
+        render.open(DEVICE);
+        let pcm = 8192i16.to_le_bytes().repeat(2 * 1000);
+        lock(&state).on_link_event(Event::Format(FORMAT));
+        lock(&state).on_link_event(audio(0, &pcm));
+        let mut out = vec![0.0; 2 * 128];
+        render.render(&mut out);
+        assert!(out.iter().all(|&s| s == 0.25));
+        assert_eq!(
+            lock(&state).status(playing()).playout.state,
+            PlayoutState::Playing
+        );
+    }
+
+    #[test]
+    fn latency_adds_headset_capture_buffer_and_output() {
+        let mut state = State::new(4.0);
+        state.on_link_event(Event::Format(FORMAT));
+        let status = state.status(playing());
+        let buffer_ms = (status.playout.buffer_min_ms + status.playout.buffer_max_ms) / 2.0;
+        // 5 ms + half a 2 ms block on the headset, 3 + 1 ms in the output.
+        assert_eq!(status.latency_ms, Some(6.0 + buffer_ms + 4.0));
+        let lost = OutputState::Reopening {
+            error: "unplugged".into(),
+        };
+        assert_eq!(state.status(lost).latency_ms, None);
+    }
 }

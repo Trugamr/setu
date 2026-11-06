@@ -117,7 +117,7 @@ fn describe_output(state: &OutputState) -> String {
             info.format.sample_rate,
             info.format.channels,
             info.encoding,
-            f64::from(info.format.period_frames) * 1000.0 / f64::from(info.format.sample_rate),
+            info.format.period_ms(),
             info.buffer_ms,
             info.queued_ms,
             info.engine_latency_ms,
@@ -143,7 +143,7 @@ fn describe(status: &Status) -> String {
     } else {
         "silent".into()
     };
-    let block_ms = f64::from(format.block_frames) * 1000.0 / f64::from(format.sample_rate);
+    let block_ms = format.block_ms();
     let latency = status
         .latency_ms
         .map(|ms| format!("  | est. {ms:3.0} ms behind headset"))

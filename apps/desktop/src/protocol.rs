@@ -32,6 +32,11 @@ impl Format {
     pub fn frame_bytes(&self) -> usize {
         usize::from(self.channels) * usize::from(self.bytes_per_sample)
     }
+
+    /// Duration of one capture block.
+    pub fn block_ms(&self) -> f64 {
+        f64::from(self.block_frames) * 1000.0 / f64::from(self.sample_rate)
+    }
 }
 
 /// One AUDIO datagram. `pcm` borrows from the decoded buffer.
@@ -236,6 +241,7 @@ mod tests {
         };
         assert_eq!(decode(&fixture!("format")), Ok(Message::Format(expected)));
         assert_eq!(expected.frame_bytes(), 4);
+        assert_eq!(expected.block_ms(), 2.0);
     }
 
     #[test]

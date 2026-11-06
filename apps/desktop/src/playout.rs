@@ -9,7 +9,8 @@
 //!
 //! `Playout` is plain single-threaded state with no I/O. The receiver shares it between the
 //! network and device threads behind a mutex, held only to copy a datagram in or a device
-//! period out.
+//! period out. Inside, `Ring` stores and interpolates the audio and `Control` decides when
+//! and how fast to play it.
 
 use std::fmt;
 
@@ -39,29 +40,12 @@ pub struct Playout {
     margin_ms: f64,
     format: Option<Format>,
     output: Option<OutputFormat>,
-    /// Derived from the format and the output once both are known.
-    tuning: Option<Tuning>,
-
-    /// Interleaved samples of `CAPACITY_FRAMES` frames in the stream's channel layout.
-    ring: Vec<i16>,
-    /// Absolute index of the next frame to play.
-    read: u64,
-    /// Absolute index of the next frame to write.
-    write: u64,
-    /// Interpolation position between frames `read` and `read + 1`.
-    frac: f64,
+    ring: Ring,
     /// Stream position expected in the next datagram.
     next_position: Option<u64>,
-
-    playing: bool,
-    /// Target buffer minimum, in input frames.
-    margin: u64,
-    /// Level to reach before playback (re)starts.
-    prime_to: u64,
-    /// Output frames played since the last underrun or margin decay.
-    calm_frames: u64,
-    rate_adjust: f64,
-
+    /// Exists once both the format and the output are known.
+    control: Option<Control>,
+    /// Buffer level and signal peak, for [`Playout::stats`].
     window: Window,
     last_window: Window,
     totals: Totals,
@@ -116,30 +100,7 @@ impl fmt::Display for UnsupportedFormat {
 impl std::error::Error for UnsupportedFormat {}
 
 #[derive(Debug, Clone, Copy)]
-struct Tuning {
-    in_rate: f64,
-    /// Input frames per output frame at nominal rate.
-    step: f64,
-    in_channels: usize,
-    out_channels: usize,
-    block: u64,
-    /// How far the measured minimum moves with arrival phase alone: min(block, output
-    /// period). It is part of the margin and the controller's deadband.
-    quantum: u64,
-    min_margin: u64,
-    max_margin: u64,
-    backoff: u64,
-    decay_step: u64,
-    skip_threshold: u64,
-    /// In output frames.
-    window_frames: u64,
-    calm_after: u64,
-}
-
-#[derive(Debug, Clone, Copy)]
 struct Window {
-    /// Output frames pulled in this window.
-    pulled: u64,
     min_level: u64,
     max_level: u64,
     peak: u16,
@@ -148,8 +109,7 @@ struct Window {
 impl Window {
     fn new(level: u64) -> Self {
         Window {
-            pulled: 0,
-            min_level: u64::MAX,
+            min_level: level,
             max_level: level,
             peak: 0,
         }
@@ -170,17 +130,9 @@ impl Playout {
             margin_ms,
             format: None,
             output: None,
-            tuning: None,
-            ring: Vec::new(),
-            read: 0,
-            write: 0,
-            frac: 0.0,
+            ring: Ring::new(0),
             next_position: None,
-            playing: false,
-            margin: 0,
-            prime_to: 0,
-            calm_frames: 0,
-            rate_adjust: 0.0,
+            control: None,
             window: Window::new(0),
             last_window: Window::new(0),
             totals: Totals::default(),
@@ -197,10 +149,7 @@ impl Playout {
             return Ok(());
         }
         self.format = Some(format);
-        self.ring = vec![0; CAPACITY_FRAMES * usize::from(format.channels)];
-        self.read = 0;
-        self.write = 0;
-        self.frac = 0.0;
+        self.ring = Ring::new(usize::from(format.channels));
         self.next_position = None;
         self.retune();
         Ok(())
@@ -225,7 +174,7 @@ impl Playout {
         match self.next_position {
             Some(next) if frame_position > next && frame_position - next <= max_conceal => {
                 let gap = frame_position - next;
-                self.write_silence(gap);
+                self.ring.push_silence(gap);
                 self.totals.lost_frames += gap;
             }
             Some(next) if frame_position < next && next - frame_position <= max_conceal => {
@@ -238,9 +187,11 @@ impl Playout {
             // The first datagram, the next in order, or a jump too large to conceal.
             _ => {}
         }
-        let start = skip as usize * frame_bytes;
-        let end = frames as usize * frame_bytes;
-        self.write_pcm(&pcm[start..end]);
+        let peak = self
+            .ring
+            .push_pcm(&pcm[skip as usize * frame_bytes..frames as usize * frame_bytes]);
+        self.window.peak = self.window.peak.max(peak);
+        self.window.max_level = self.window.max_level.max(self.ring.level());
         self.next_position = Some(frame_position + frames);
     }
 
@@ -248,41 +199,28 @@ impl Playout {
     /// an output are both known, and while buffering.
     pub fn pull(&mut self, out: &mut [f32]) {
         out.fill(0.0);
-        let Some(t) = self.tuning else {
+        let Some(control) = &mut self.control else {
             return;
         };
-        let frames = out.len() / t.out_channels;
-        if !self.playing {
-            if self.level() < self.prime_to {
-                self.after_pull(frames as u64, &t);
-                return;
+        let channels = control.tuning.out_channels;
+        if control.should_play(self.ring.level()) {
+            let step = control.step();
+            for frame in out.chunks_exact_mut(channels) {
+                if !self.ring.play(frame, step) {
+                    control.underrun();
+                    self.totals.underruns += 1;
+                    break;
+                }
             }
-            self.playing = true;
-            self.window = Window::new(self.level());
         }
-
-        let step = t.step * (1.0 + self.rate_adjust);
-        let mask = CAPACITY_FRAMES - 1;
-        let channels = t.in_channels.min(t.out_channels);
-        for frame in out.chunks_exact_mut(t.out_channels) {
-            // Interpolation needs frames `read` and `read + 1`.
-            if self.level() < 2 {
-                self.underrun(&t);
-                break;
-            }
-            let a = (self.read as usize & mask) * t.in_channels;
-            let b = ((self.read + 1) as usize & mask) * t.in_channels;
-            let f = self.frac as f32;
-            for (c, sample) in frame[..channels].iter_mut().enumerate() {
-                let s = f32::from(self.ring[a + c]) * (1.0 - f) + f32::from(self.ring[b + c]) * f;
-                *sample = s / 32768.0;
-            }
-            self.frac += step;
-            let whole = self.frac as u64;
-            self.read += whole;
-            self.frac -= whole as f64;
+        let level = self.ring.level();
+        self.window.min_level = self.window.min_level.min(level);
+        if let Some(skip) = control.after_pull((out.len() / channels) as u64, level) {
+            self.ring.skip(skip);
+            self.totals.skipped_frames += skip;
+            self.last_window = self.window;
+            self.window = Window::new(self.ring.level());
         }
-        self.after_pull(frames as u64, &t);
     }
 
     pub fn stats(&self) -> PlayoutStats {
@@ -291,21 +229,16 @@ impl Playout {
             None => 0.0,
         };
         let window = &self.last_window;
-        let min_level = if window.min_level == u64::MAX {
-            window.max_level
-        } else {
-            window.min_level
-        };
         PlayoutStats {
-            state: match (self.tuning, self.playing) {
-                (None, _) => PlayoutState::Idle,
-                (Some(_), false) => PlayoutState::Buffering,
-                (Some(_), true) => PlayoutState::Playing,
+            state: match &self.control {
+                None => PlayoutState::Idle,
+                Some(c) if c.playing => PlayoutState::Playing,
+                Some(_) => PlayoutState::Buffering,
             },
-            buffer_min_ms: to_ms(min_level),
-            buffer_max_ms: to_ms(window.max_level.max(min_level)),
-            margin_ms: to_ms(self.margin),
-            rate_adjust: self.rate_adjust,
+            buffer_min_ms: to_ms(window.min_level),
+            buffer_max_ms: to_ms(window.max_level),
+            margin_ms: to_ms(self.control.as_ref().map_or(0, |c| c.margin)),
+            rate_adjust: self.control.as_ref().map_or(0.0, |c| c.rate_adjust),
             peak: f32::from(window.peak) / 32768.0,
             underruns: self.totals.underruns,
             lost_ms: to_ms(self.totals.lost_frames),
@@ -313,108 +246,194 @@ impl Playout {
         }
     }
 
+    /// Restarts control for the current format and output, which also restarts buffering.
+    fn retune(&mut self) {
+        self.control = match (self.format, self.output) {
+            (Some(format), Some(output)) => {
+                Some(Control::new(Tuning::new(format, output, self.margin_ms)))
+            }
+            _ => None,
+        };
+        self.window = Window::new(self.ring.level());
+    }
+}
+
+/// The buffered stream: `CAPACITY_FRAMES` frames in the stream's channel layout, with a
+/// fractional read position so playback can run slightly fast or slow.
+struct Ring {
+    samples: Vec<i16>,
+    channels: usize,
+    /// Absolute index of the next frame to play.
+    read: u64,
+    /// Absolute index of the next frame to write.
+    write: u64,
+    /// Interpolation position between frames `read` and `read + 1`.
+    frac: f64,
+}
+
+impl Ring {
+    const MASK: usize = CAPACITY_FRAMES - 1;
+
+    fn new(channels: usize) -> Self {
+        Ring {
+            samples: vec![0; CAPACITY_FRAMES * channels],
+            channels,
+            read: 0,
+            write: 0,
+            frac: 0.0,
+        }
+    }
+
     fn level(&self) -> u64 {
         self.write - self.read
     }
 
-    /// Recomputes the controller for the current format and output, and restarts buffering.
-    fn retune(&mut self) {
-        self.tuning = match (self.format, self.output) {
-            (Some(format), Some(output)) => Some(Tuning::new(format, output, self.margin_ms)),
-            _ => None,
-        };
-        if let Some(t) = self.tuning {
-            self.margin = t.min_margin;
-            self.prime_to = t.block + self.margin;
-        }
-        self.playing = false;
-        self.rate_adjust = 0.0;
-        self.calm_frames = 0;
-        self.window = Window::new(self.level());
-    }
-
-    fn write_pcm(&mut self, pcm: &[u8]) {
-        let channels = self.ring.len() / CAPACITY_FRAMES;
-        let mask = CAPACITY_FRAMES - 1;
-        let mut peak = self.window.peak;
-        for frame in pcm.chunks_exact(channels * 2) {
-            let base = (self.write as usize & mask) * channels;
-            for (c, bytes) in frame.chunks_exact(2).enumerate() {
-                let sample = i16::from_le_bytes([bytes[0], bytes[1]]);
-                self.ring[base + c] = sample;
-                peak = peak.max(sample.unsigned_abs());
+    /// Appends little-endian 16-bit frames and returns their largest absolute sample.
+    fn push_pcm(&mut self, pcm: &[u8]) -> u16 {
+        let mut peak = 0;
+        for frame in pcm.chunks_exact(self.channels * 2) {
+            let base = (self.write as usize & Self::MASK) * self.channels;
+            for (slot, bytes) in self.samples[base..].iter_mut().zip(frame.chunks_exact(2)) {
+                *slot = i16::from_le_bytes([bytes[0], bytes[1]]);
+                peak = peak.max(slot.unsigned_abs());
             }
             self.write += 1;
         }
-        self.window.peak = peak;
-        self.after_write();
+        self.drop_overflow();
+        peak
     }
 
-    fn write_silence(&mut self, frames: u64) {
-        let channels = self.ring.len() / CAPACITY_FRAMES;
-        let mask = CAPACITY_FRAMES - 1;
+    fn push_silence(&mut self, frames: u64) {
         for _ in 0..frames.min(CAPACITY_FRAMES as u64) {
-            let base = (self.write as usize & mask) * channels;
-            self.ring[base..base + channels].fill(0);
+            let base = (self.write as usize & Self::MASK) * self.channels;
+            self.samples[base..base + self.channels].fill(0);
             self.write += 1;
         }
-        self.after_write();
+        self.drop_overflow();
     }
 
-    fn after_write(&mut self) {
-        // A full ring overwrites the oldest audio.
+    /// A full ring overwrites the oldest audio.
+    fn drop_overflow(&mut self) {
         let capacity = CAPACITY_FRAMES as u64 - 1;
         if self.level() > capacity {
             self.read = self.write - capacity;
         }
-        self.window.max_level = self.window.max_level.max(self.level());
     }
 
-    fn underrun(&mut self, t: &Tuning) {
-        self.totals.underruns += 1;
+    fn skip(&mut self, frames: u64) {
+        self.read += frames.min(self.level());
+    }
+
+    /// Plays one output frame into `out`, interpolated between frames `read` and `read + 1`,
+    /// then advances by `step` input frames. Output channels beyond the stream's stay as they
+    /// are. Returns false, playing nothing, when fewer than two frames are buffered.
+    fn play(&mut self, out: &mut [f32], step: f64) -> bool {
+        if self.level() < 2 {
+            return false;
+        }
+        let a = (self.read as usize & Self::MASK) * self.channels;
+        let b = ((self.read + 1) as usize & Self::MASK) * self.channels;
+        let f = self.frac as f32;
+        let frames = self.samples[a..a + self.channels]
+            .iter()
+            .zip(&self.samples[b..b + self.channels]);
+        for (sample, (&x, &y)) in out.iter_mut().zip(frames) {
+            *sample = (f32::from(x) * (1.0 - f) + f32::from(y) * f) / 32768.0;
+        }
+        self.frac += step;
+        let whole = self.frac as u64;
+        self.read += whole;
+        self.frac -= whole as f64;
+        true
+    }
+}
+
+/// The control law: when to play, and how fast.
+struct Control {
+    tuning: Tuning,
+    playing: bool,
+    /// Target buffer minimum, in input frames.
+    margin: u64,
+    /// Output frames played since the last underrun or margin decay.
+    calm_frames: u64,
+    rate_adjust: f64,
+    /// Lowest post-pull level in the current window.
+    window_min: u64,
+    /// Output frames pulled in the current window.
+    window_pulled: u64,
+}
+
+impl Control {
+    fn new(tuning: Tuning) -> Self {
+        Control {
+            margin: tuning.min_margin,
+            tuning,
+            playing: false,
+            calm_frames: 0,
+            rate_adjust: 0.0,
+            window_min: u64::MAX,
+            window_pulled: 0,
+        }
+    }
+
+    /// Whether to play this period. Once stopped, playback restarts when `level` reaches one
+    /// block plus the margin.
+    fn should_play(&mut self, level: u64) -> bool {
+        if !self.playing && level >= self.tuning.block + self.margin {
+            self.playing = true;
+            self.window_min = u64::MAX;
+            self.window_pulled = 0;
+        }
+        self.playing
+    }
+
+    /// Input frames per output frame.
+    fn step(&self) -> f64 {
+        self.tuning.step * (1.0 + self.rate_adjust)
+    }
+
+    /// The buffer ran dry: blocks arrive later than the margin covers, so back off.
+    fn underrun(&mut self) {
+        let t = &self.tuning;
         self.playing = false;
         self.calm_frames = 0;
-        // Blocks arrive later than the margin covers: back off.
         self.margin = (self.margin + t.backoff).min(t.max_margin);
-        self.prime_to = t.block + self.margin;
     }
 
-    /// Records the post-pull level (the bottom of the sawtooth) and runs the controller once
-    /// per window.
-    fn after_pull(&mut self, frames: u64, t: &Tuning) {
-        let level = self.level();
-        self.window.min_level = self.window.min_level.min(level);
-        self.window.pulled += frames;
+    /// Records the post-pull `level` (the bottom of the sawtooth) after `frames` output
+    /// frames. At the end of each window returns the frames to skip at once, usually 0.
+    fn after_pull(&mut self, frames: u64, level: u64) -> Option<u64> {
+        let t = &self.tuning;
+        self.window_min = self.window_min.min(level);
+        self.window_pulled += frames;
         if self.playing {
             // A transient spike grows the margin on underrun; win it back once playback has
             // been clean for a while.
             self.calm_frames += frames;
             if self.calm_frames >= t.calm_after && self.margin > t.min_margin {
                 self.margin = self.margin.saturating_sub(t.decay_step).max(t.min_margin);
-                self.prime_to = t.block + self.margin;
                 self.calm_frames = 0;
             }
         }
-        if self.window.pulled < t.window_frames {
-            return;
+        if self.window_pulled < t.window_frames {
+            return None;
         }
-        if self.playing {
-            self.steer(self.window.min_level, t);
-        }
-        self.last_window = self.window;
-        self.window = Window::new(self.level());
+        let skip = if self.playing { self.steer() } else { 0 };
+        self.window_min = u64::MAX;
+        self.window_pulled = 0;
+        Some(skip)
     }
 
-    /// Sets the playback rate from the window's minimum level. Within [margin, margin +
-    /// quantum] the minimum moves with arrival phase, not with the true level, so that band is
-    /// on target.
-    fn steer(&mut self, min_level: u64, t: &Tuning) {
-        let excess = min_level as i64 - self.margin as i64;
+    /// Sets the playback rate from the window's minimum level and returns frames to skip.
+    /// Within [margin, margin + quantum] the minimum moves with arrival phase, not with the
+    /// true level, so that band is on target.
+    fn steer(&mut self) -> u64 {
+        let t = &self.tuning;
+        let excess = self.window_min as i64 - self.margin as i64;
         let quantum = t.quantum as i64;
+        let mut skip = 0;
         self.rate_adjust = if excess > t.skip_threshold as i64 + quantum {
-            let skip = (excess - quantum / 2) as u64;
-            self.read += skip;
-            self.totals.skipped_frames += skip;
+            skip = (excess - quantum / 2) as u64;
             0.0
         } else if excess > quantum {
             // Shed the excess over about two seconds.
@@ -425,7 +444,30 @@ impl Playout {
         } else {
             0.0
         };
+        skip
     }
+}
+
+/// Constants of the control law for one format and output, in input frames unless noted.
+#[derive(Debug, Clone, Copy)]
+struct Tuning {
+    in_rate: f64,
+    /// Input frames per output frame at nominal rate.
+    step: f64,
+    out_channels: usize,
+    block: u64,
+    /// How far the measured minimum moves with arrival phase alone: min(block, output
+    /// period). It is part of the margin and the controller's deadband.
+    quantum: u64,
+    min_margin: u64,
+    max_margin: u64,
+    backoff: u64,
+    decay_step: u64,
+    skip_threshold: u64,
+    /// In output frames.
+    window_frames: u64,
+    /// In output frames.
+    calm_after: u64,
 }
 
 impl Tuning {
@@ -433,13 +475,10 @@ impl Tuning {
         let in_rate = f64::from(format.sample_rate);
         let out_rate = f64::from(output.sample_rate);
         let frames = |ms: f64| (ms * in_rate / 1000.0) as u64;
-        let block_ms = f64::from(format.block_frames) * 1000.0 / in_rate;
-        let period_ms = f64::from(output.period_frames) * 1000.0 / out_rate;
-        let quantum_ms = block_ms.min(period_ms);
+        let quantum_ms = format.block_ms().min(output.period_ms());
         Tuning {
             in_rate,
             step: in_rate / out_rate,
-            in_channels: usize::from(format.channels),
             out_channels: usize::from(output.channels.max(1)),
             block: u64::from(format.block_frames),
             quantum: frames(quantum_ms),
@@ -531,7 +570,7 @@ mod tests {
         let mut p = playout(96, 96);
         p.push(0, &pcm(340, 1000));
         p.push(680, &pcm(340, 1000));
-        assert_eq!(p.level(), 1020);
+        assert_eq!(p.ring.level(), 1020);
         assert_eq!(p.stats().lost_ms, 340.0 * 1000.0 / 48000.0);
     }
 
@@ -541,9 +580,9 @@ mod tests {
         p.push(0, &pcm(96, 1000));
         p.push(96, &pcm(96, 1000));
         p.push(0, &pcm(96, 1000));
-        assert_eq!(p.level(), 192);
+        assert_eq!(p.ring.level(), 192);
         p.push(144, &pcm(96, 1000));
-        assert_eq!(p.level(), 240);
+        assert_eq!(p.ring.level(), 240);
         assert_eq!(p.stats().lost_ms, 0.0);
     }
 
@@ -552,7 +591,7 @@ mod tests {
         let mut p = playout(96, 96);
         p.push(1_000_000, &pcm(96, 1000));
         p.push(0, &pcm(96, 1000));
-        assert_eq!(p.level(), 192);
+        assert_eq!(p.ring.level(), 192);
         assert_eq!(p.stats().lost_ms, 0.0);
     }
 
@@ -561,9 +600,9 @@ mod tests {
         let mut p = playout(96, 96);
         p.push(0, &pcm(96, 1000));
         p.set_format(format(96)).unwrap();
-        assert_eq!(p.level(), 96);
+        assert_eq!(p.ring.level(), 96);
         p.set_format(format(192)).unwrap();
-        assert_eq!(p.level(), 0);
+        assert_eq!(p.ring.level(), 0);
     }
 
     #[test]

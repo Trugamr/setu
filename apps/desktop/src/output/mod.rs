@@ -32,6 +32,12 @@ pub struct OutputFormat {
     pub period_frames: u32,
 }
 
+impl OutputFormat {
+    pub fn period_ms(&self) -> f64 {
+        f64::from(self.period_frames) * 1000.0 / f64::from(self.sample_rate)
+    }
+}
+
 /// Produces the audio a device plays. Both methods run on the output's real-time thread, so
 /// they must not block for long.
 pub trait Render: Send + 'static {
@@ -139,6 +145,7 @@ impl Output {
     pub fn start(options: OutputOptions, render: impl Render) -> Result<Output, Error> {
         let stop = Arc::new(platform::Stop::new()?);
         let (opened_tx, opened_rx) = mpsc::channel();
+        // Replaced by the first open, before `start` returns.
         let state = Arc::new(Mutex::new(OutputState::Reopening {
             error: "opening".into(),
         }));
