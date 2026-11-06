@@ -311,7 +311,7 @@ mod tests {
     fn quest() -> VbanTarget {
         VbanTarget {
             address: "192.168.1.20:6980".parse().unwrap(),
-            stream_name: "Quest".into(),
+            stream_name: "setu".into(),
         }
     }
 

@@ -12,7 +12,7 @@ import org.junit.Test;
 public class StreamProtocolTest {
 
     private static final StreamProtocol.VbanTarget QUEST =
-            new StreamProtocol.VbanTarget(new InetSocketAddress("192.168.1.20", 6980), "Quest");
+            new StreamProtocol.VbanTarget(new InetSocketAddress("192.168.1.20", 6980), "setu");
 
     @Test
     public void hello() throws Exception {
@@ -65,14 +65,14 @@ public class StreamProtocolTest {
 
     @Test
     public void vbanTargetsAreIpAddresses() throws Exception {
-        StreamProtocol.VbanTarget v6 = new StreamProtocol.VbanTarget(new InetSocketAddress("fe80::1", 6980), "Quest");
+        StreamProtocol.VbanTarget v6 = new StreamProtocol.VbanTarget(new InetSocketAddress("fe80::1", 6980), "setu");
         byte[] message = StreamProtocol.setVban(v6);
         assertEquals(v6, StreamProtocol.parseSetVban(message, message.length));
 
         byte[] badLength = {'S', 'T', 1, StreamProtocol.SET_VBAN, 5, 1, 2, 3, 4, 5};
         assertThrows(IllegalArgumentException.class, () -> StreamProtocol.parseSetVban(badLength, badLength.length));
         assertThrows(IllegalArgumentException.class,
-                () -> new StreamProtocol.VbanTarget(InetSocketAddress.createUnresolved("studio-pc", 6980), "Quest"));
+                () -> new StreamProtocol.VbanTarget(InetSocketAddress.createUnresolved("studio-pc", 6980), "setu"));
     }
 
     @Test

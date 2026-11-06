@@ -15,7 +15,7 @@ class LoopbackServerTest {
     @Test
     fun asksForStatusAndSendsSettings() {
         val fake = DatagramSocket(0, InetAddress.getLoopbackAddress())
-        val quest = StreamProtocol.VbanTarget(InetSocketAddress("192.168.1.20", 6980), "Quest")
+        val quest = StreamProtocol.VbanTarget(InetSocketAddress("192.168.1.20", 6980), "setu")
         val status = StreamProtocol.Status(96, emptyList(), quest)
         val received = mutableListOf<Int>()
         val serving = thread {

@@ -16,7 +16,7 @@ public class VbanTest {
     public void audio() throws Exception {
         byte[] fixture = Fixtures.read("vban-audio");
         byte[] pcm = {0x01, 0x00, (byte) 0xff, (byte) 0xff, 0x00, 0x01, 0x00, (byte) 0xff};
-        Vban.Encoder encoder = new Vban.Encoder(FORMAT, "Quest");
+        Vban.Encoder encoder = new Vban.Encoder(FORMAT, "setu");
         byte[] packet = encoder.newPacket();
         int length = encoder.audio(packet, 7, pcm, 0, pcm.length);
         assertArrayEquals(fixture, Arrays.copyOf(packet, length));
@@ -25,7 +25,7 @@ public class VbanTest {
     @Test
     public void packetsStayWithinTheProtocolLimits() {
         // 256 frames per packet; 16-bit stereo frames are 4 bytes, so 1024 bytes of data.
-        Vban.Encoder stereo = new Vban.Encoder(FORMAT, "Quest");
+        Vban.Encoder stereo = new Vban.Encoder(FORMAT, "setu");
         assertEquals(256, stereo.maxFrames());
         assertEquals(28 + 1024, stereo.newPacket().length);
         byte[] full = new byte[256 * 4];
@@ -33,7 +33,7 @@ public class VbanTest {
         assertThrows(IllegalArgumentException.class,
                 () -> stereo.audio(stereo.newPacket(), 0, new byte[257 * 4], 0, 257 * 4));
         // 8 channels: 1436 data bytes hold 89 frames.
-        assertEquals(89, new Vban.Encoder(new StreamProtocol.Format(48000, 8, 2, 96), "Quest").maxFrames());
+        assertEquals(89, new Vban.Encoder(new StreamProtocol.Format(48000, 8, 2, 96), "setu").maxFrames());
     }
 
     @Test
@@ -47,8 +47,8 @@ public class VbanTest {
     @Test
     public void formatsVbanCannotCarryAreRejected() {
         assertThrows(IllegalArgumentException.class,
-                () -> new Vban.Encoder(new StreamProtocol.Format(47000, 2, 2, 96), "Quest"));
+                () -> new Vban.Encoder(new StreamProtocol.Format(47000, 2, 2, 96), "setu"));
         assertThrows(IllegalArgumentException.class,
-                () -> new Vban.Encoder(new StreamProtocol.Format(48000, 2, 3, 96), "Quest"));
+                () -> new Vban.Encoder(new StreamProtocol.Format(48000, 2, 3, 96), "setu"));
     }
 }

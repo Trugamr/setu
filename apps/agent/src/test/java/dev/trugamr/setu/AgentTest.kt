@@ -8,7 +8,7 @@ import org.junit.Test
 
 class AgentTest {
 
-    private val quest = StreamProtocol.VbanTarget(InetSocketAddress("192.168.1.20", 6980), "Quest")
+    private val quest = StreamProtocol.VbanTarget(InetSocketAddress("192.168.1.20", 6980), "setu")
     private val sendToQuest = VbanSettings(enabled = true, host = "192.168.1.20")
 
     private class FakeServer : CaptureServer {

@@ -23,7 +23,7 @@ import java.util.List;
  *
  *   udp [port] [blockFrames] [--vban host[:port][/name]]
  *                                   serve receivers over UDP until STOP (Wi-Fi), and send VBAN
- *                                   to host (port 6980, stream "Quest" by default)
+ *                                   to host (port 6980, stream "setu" by default)
  *   adb [blockFrames]               stream to one client over the "setu" abstract socket (adb forward)
  *   probe [clicks] [blockFrames]    measure headset-side capture latency
  *   bursts [seconds] [blockFrames]  report how capture blocks arrive
@@ -37,7 +37,7 @@ public final class Server {
 
     private static final int DEFAULT_BLOCK_FRAMES = 96;
     private static final String SOCKET_NAME = "setu";
-    static final String DEFAULT_VBAN_STREAM = "Quest";
+    static final String DEFAULT_VBAN_STREAM = "setu";
     /** Held for the life of the process so the locks are not released by the garbage collector. */
     private static final List<WifiManager.WifiLock> WIFI_LOCKS = new ArrayList<>();
 
@@ -89,7 +89,7 @@ public final class Server {
     }
 
     /**
-     * Parses {@code host[:port][/name]}, e.g. {@code 192.168.1.20}, {@code 192.168.1.20:6981/Quest}
+     * Parses {@code host[:port][/name]}, e.g. {@code 192.168.1.20}, {@code 192.168.1.20:6981/setu}
      * or {@code [fe80::1]:6980}. A host name is looked up here, once.
      */
     static StreamProtocol.VbanTarget parseVbanTarget(String spec) throws IOException {

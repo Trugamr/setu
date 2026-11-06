@@ -37,7 +37,7 @@ data class VbanSettings(
     }
 
     companion object {
-        const val DEFAULT_STREAM_NAME = "Quest"
+        const val DEFAULT_STREAM_NAME = "setu"
 
         private val IPV4 = Regex("""(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}""")
 

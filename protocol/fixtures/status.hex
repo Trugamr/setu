@@ -1,4 +1,4 @@
-# STATUS: 96-frame blocks, one receiver "studio-pc" at 192.168.1.20:50000, VBAN to 192.168.1.20:6980 as "Quest"
+# STATUS: 96-frame blocks, one receiver "studio-pc" at 192.168.1.20:50000, VBAN to 192.168.1.20:6980 as "setu"
 53 54 01 05                    # "ST", version 1, type STATUS
 60 00 00 00                    # block frames 96
 01 00                          # receiver count 1
@@ -9,5 +9,5 @@
 04                             # VBAN target: IPv4 address
 c0 a8 01 14                    # 192.168.1.20
 44 1b                          # port 6980
-05 00                          # stream name length 5
-51 75 65 73 74                 # "Quest"
+04 00                          # stream name length 4
+73 65 74 75                    # "setu"

@@ -166,7 +166,7 @@ private fun AgentScreenPreview() {
     val status = StreamProtocol.Status(
         96,
         listOf(StreamProtocol.Receiver("studio-pc", "192.168.1.20:50000")),
-        StreamProtocol.VbanTarget(InetSocketAddress("192.168.1.20", 6980), "Quest"),
+        StreamProtocol.VbanTarget(InetSocketAddress("192.168.1.20", 6980), "setu"),
     )
     MaterialTheme {
         AgentScreen(AgentState(ServerState.Running(status), vban, "192.168.1.42"), true) {}

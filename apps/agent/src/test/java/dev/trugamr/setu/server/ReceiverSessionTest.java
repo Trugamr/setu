@@ -37,7 +37,7 @@ public class ReceiverSessionTest {
     private static final InetSocketAddress OTHER_PC = new InetSocketAddress("10.0.0.3", 5000);
     private static final InetSocketAddress AGENT = new InetSocketAddress("127.0.0.1", 6000);
     private static final InetSocketAddress VBAN_PC = new InetSocketAddress("10.0.0.4", 6980);
-    private static final StreamProtocol.VbanTarget VBAN = new StreamProtocol.VbanTarget(VBAN_PC, "Quest");
+    private static final StreamProtocol.VbanTarget VBAN = new StreamProtocol.VbanTarget(VBAN_PC, "setu");
     private static final int VBAN_HEADER_BYTES = 28;
 
     private final FakeTransport transport = new FakeTransport();
@@ -225,7 +225,7 @@ public class ReceiverSessionTest {
             Datagram packet = transport.nextTo(VBAN_PC);
             assertEquals("VBAN", new String(packet.data, 0, 4, StandardCharsets.US_ASCII));
             assertEquals("frames - 1", BLOCK_FRAMES - 1, packet.data[5] & 0xff);
-            assertEquals("Quest", new String(packet.data, 8, 5, StandardCharsets.US_ASCII));
+            assertEquals("setu", new String(packet.data, 8, 4, StandardCharsets.US_ASCII));
             assertEquals(i, vbanCounter(packet));
             assertEquals(VBAN_HEADER_BYTES + BLOCK_FRAMES * FORMAT.frameBytes(), packet.data.length);
         }

@@ -133,7 +133,7 @@ it, a PC needs no Setu software: Voicemeeter, VBAN Receptor or any other VBAN re
 the headset. VBAN has no handshake, so the headset sends to an address it is given:
 
 1. In the agent, turn on "Send to a VBAN receiver" and enter the PC's IP address. The port (6980)
-   and stream name ("Quest") can stay as they are.
+   and stream name ("setu") can stay as they are.
 2. On the PC, add an incoming VBAN stream with the stream name and the "IP address from" that the
    agent shows. In Voicemeeter that is Menu → VBAN.
 3. Allow the receiver through the PC's firewall for UDP on that port.
