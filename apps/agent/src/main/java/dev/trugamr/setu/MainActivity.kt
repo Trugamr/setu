@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) { agent.run() }
         }
-        // Setup's last step: the PC opens adbd's TCP port, then starts the agent with this extra.
+        // Setup's `Server setup` starts the agent with this extra, then the PC opens adbd's TCP port.
         if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_APPROVE, false)) {
             lifecycleScope.launch { agent.approve() }
         }
@@ -45,5 +45,5 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/** Set by setup (`am start --ez dev.trugamr.setu.APPROVE true`) to have the headset approve the agent's adb key. */
+/** Set by setup (`server.Setup`) to have the headset approve the agent's adb key. */
 const val EXTRA_APPROVE = "dev.trugamr.setu.APPROVE"

@@ -1,7 +1,8 @@
 """Setu's colour tokens and the contrast each pairing must keep.
 
 The single source for the palette: generate.py writes it out for the desktop app
-(apps/desktop/src/palette.rs), the agent (Palette.kt, colors.xml) and the brand README, and
+(apps/desktop/src/palette.rs), the agent (Palette.kt, colors.xml), the browser installer
+(apps/web/src/palette.css) and the brand README, and
 refuses to write anything while a pairing below falls short of its minimum.
 """
 

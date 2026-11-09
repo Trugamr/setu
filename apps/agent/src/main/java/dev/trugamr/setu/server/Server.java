@@ -29,6 +29,7 @@ import java.util.List;
  *   bursts [seconds] [blockFrames]  report how capture blocks arrive
  *   adb-wifi-trust <bssid>          always allow wireless debugging on this network, and enable it
  *   adb-revoke-keys                 revoke every adb authorization (USB and wireless)
+ *   setup                           the one-time setup installers run after installing (see Setup)
  *
  * blockFrames sets the capture period (96 frames = 2 ms, see PlaybackCapture). The wire format
  * is in protocol/README.md.
@@ -77,6 +78,9 @@ public final class Server {
                 return;
             case "adb-revoke-keys":
                 AdbWifi.revokeKeys();
+                return;
+            case "setup":
+                Setup.run();
                 return;
             default:
                 throw new IllegalArgumentException("unknown command: " + command);

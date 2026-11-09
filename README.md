@@ -44,16 +44,19 @@ Voicemeeter. Setu means "bridge"; audio is the first thing it carries.
 </p>
 
 **Status: work in progress.** Working: the capture server, the protocol, VBAN output, the agent
-(start and stop the server, VBAN settings) and the desktop app (connect, level and delay, output
-device). Not built yet: the installers, so setup needs a development machine, and discovery, so
-the desktop app asks for the headset's address.
+(start and stop the server, VBAN settings), the desktop app (connect, level and delay, output
+device) and the browser installer. Not built yet: hosting for the installer and release builds,
+so setup still needs a development machine, the PC installer, and discovery, so the desktop app
+asks for the headset's address.
 
 ## Quick start
 
 Needs the [build tools](#build) and a headset in Developer Mode.
 
-1. **Once, over USB:** connect the headset and run `task agent:setup`. On the headset, tick
-   "Always allow from this computer" and choose Allow. Unplug the cable.
+1. **Once, over USB:** connect the headset and run `task web:dev`, then open
+   http://localhost:5173 in Chrome or Edge and choose Connect. Or run `task agent:setup`, which
+   takes the same steps with adb. On the headset, tick "Always allow from this computer" and
+   choose Allow. Unplug the cable.
 2. **On the headset:** open Setu and tap Start. The first start after each boot asks to allow
    wireless debugging on this network; choose Allow.
 3. **On the PC:** run `task desktop:run`, enter the headset's address and connect. The agent
@@ -98,7 +101,7 @@ The PC needs no adb.
 | Capture server (`apps/agent/.../server`) | Java, shipped inside the agent's APK and run with `app_process` using the APK as its classpath. Captures playback and streams it to the desktop app and to a VBAN receiver. |
 | Desktop app (`apps/desktop`) | Rust, with a [GPUI](https://www.gpui.rs) window and `setu-cli`. Receives the stream and plays it. Windows first, then Linux. |
 | Protocol (`protocol`) | The wire format, with byte fixtures that the Java and Rust sides both test against. |
-| Installers (planned) | A PC installer inside the desktop app, and a browser installer over WebUSB. Both only install the APK and run the setup routine it contains, so they cannot drift apart. |
+| Browser installer (`apps/web`) | A page that installs the agent over WebUSB and runs the setup routine inside its APK (`Server setup`), so it and `task agent:setup` cannot drift apart. A PC installer inside the desktop app is planned, the same way. |
 
 ### Starting the server
 
@@ -108,16 +111,18 @@ headset allow the agent's key once, over USB. After that the agent starts the se
 ```mermaid
 sequenceDiagram
   actor you as You
-  participant pc as PC (task agent:setup)
+  participant pc as PC (installer)
   participant agent as Agent
   participant adbd
   participant server as Capture server
 
   rect rgba(128, 128, 128, 0.12)
     note over pc, adbd: Once, over USB
-    pc ->> adbd: install the agent, grant WRITE_SECURE_SETTINGS
-    pc ->> adbd: adb_allowed_connection_time = 0, adb tcpip 5555
-    pc ->> agent: open with APPROVE
+    pc ->> adbd: install the agent
+    pc ->> adbd: shell: app_process … Server setup
+    note over adbd: grant WRITE_SECURE_SETTINGS,<br/>adb_allowed_connection_time = 0
+    adbd ->> agent: open with APPROVE
+    pc ->> adbd: adb tcpip 5555
     agent ->> adbd: connect to 127.0.0.1:5555 with the agent's key
     adbd -->> you: "Allow USB debugging?"
     you ->> adbd: Always allow
@@ -138,11 +143,14 @@ sequenceDiagram
   end
 ```
 
-Setup grants `WRITE_SECURE_SETTINGS`, so the agent can turn wireless debugging on, and sets
-`adb_allowed_connection_time` to `0`, so an allowed key never expires (the default is 7 days).
-It then opens adbd's legacy TCP port, because only that port shows the "Allow debugging?"
-prompt for an unknown key. An allowed key is accepted over USB, legacy TCP and wireless
-debugging alike.
+Setup is a routine inside the APK, `Server setup`, run as the shell user: it grants
+`WRITE_SECURE_SETTINGS`, so the agent can turn wireless debugging on, sets
+`adb_allowed_connection_time` to `0`, so an allowed key never expires (the default is 7 days),
+and opens the agent to approve its key. The agent then waits for adbd's legacy TCP port, which
+only the PC can open, because only that port shows the "Allow debugging?" prompt for an unknown
+key. An allowed key is accepted over USB, legacy TCP and wireless debugging alike. Once allowed,
+the agent returns adbd to USB, so an installer knows setup finished when
+`service.adb.tcp.port` reads 0 again.
 
 ### Streaming
 
@@ -284,6 +292,7 @@ These come from the prototype receiver; the desktop app's playout follows them.
 |---|---|
 | `apps/agent` | The agent app: `Agent` is the screen's logic, with the server and settings behind `CaptureServer` and `SettingsStore`. `.../server` is the capture server, where `ReceiverSession` sends each block to every route in `Routes` (the Setu receiver, the VBAN target) in its `PacketFormat`. `.../protocol` holds the shared protocol module and the VBAN encoder. |
 | `apps/desktop` | The desktop app, a member of the root Cargo workspace. `Receiver` wires `link` (UDP to the server), `playout` (jitter buffer) and `output` (the device, WASAPI on Windows). `Session` is the app around it: the settings, the receiver while connected, and the commands that change them. The window (`main.rs`, `ui.rs`) and `setu-cli play` host a session; `control` lets `setu-cli` drive the running one over 127.0.0.1. |
+| `apps/web` | The browser installer, TypeScript and Vite, with [Tango](https://tangoadb.dev) for adb over WebUSB. `setup.ts` is the flow, `card.ts` its wording and `webusb.ts` the adapter; the tests run the flow against a fake headset. In development, `?status=` with a status as JSON shows any state without a headset. |
 | `design/brand` | The icon, colours and the scripts that generate every icon file ([design/brand/README.md](design/brand/README.md)). |
 | `docs/screenshots` | The screenshots above: the agent's Sending preview from `task agent:screenshots`, cropped, and the desktop window while playing. |
 | `protocol` | Protocol spec ([protocol/README.md](protocol/README.md)) and byte fixtures. |
@@ -291,15 +300,17 @@ These come from the prototype receiver; the desktop app's playout follows them.
 ## Build
 
 Needs [Task](https://taskfile.dev), JDK 21, the Android SDK (`ANDROID_HOME`, default
-`~/Android/Sdk`) and Rust. The Taskfile targets WSL: the agent builds with Linux tools, while
+`~/Android/Sdk`), Rust, and Node with pnpm for the browser installer. The Taskfile targets WSL: the agent builds with Linux tools, while
 the desktop app and adb use their Windows binaries (see the variables at the top of
 `Taskfile.yml`).
 
 ```bash
 task build                    # agent APK and desktop app
-task test                     # JVM and Rust tests
+task test                     # JVM, Rust and browser installer tests
 task agent:install            # install the agent on a USB-connected headset
 task agent:setup              # install, then the one-time setup (see Quick start)
+task web:dev                  # serve the browser installer at http://localhost:5173
+task web:build                # build it, with the agent's APK, into apps/web/dist
 task agent:server -- probe 6  # run the server's latency probe from the installed APK
 task desktop:run              # open the desktop app's window
 task desktop:cli -- devices   # list output devices
@@ -320,7 +331,7 @@ task desktop:cli -- disconnect
 
 Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames] [--vban
 host[:port][/name]]`, `adb [blockFrames]`, `probe [clicks] [blockFrames]`, `bursts [seconds] [blockFrames]`,
-`adb-wifi-trust <bssid>`, `adb-revoke-keys`. The agent launches `udp` with the defaults and
+`adb-wifi-trust <bssid>`, `adb-revoke-keys`, `setup`. The agent launches `udp` with the defaults and
 logs to `/data/local/tmp/setu-server.log`.
 
 ## Roadmap
@@ -328,8 +339,8 @@ logs to `/data/local/tmp/setu-server.log`.
 1. Agent: pass the server a secret that control messages and local receivers must carry, so
    other apps on the headset cannot redirect the stream.
 2. Desktop app: a tray icon, so it can play with the window closed.
-3. Installers: setup routine in the APK, then the PC installer, then the browser installer.
-   With the browser installer, VBAN works with no Setu software on the PC.
+3. Installers: host the browser installer with a release APK, so VBAN works with no Setu
+   software on the PC, then the PC installer.
 4. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
    address from the last Setu receiver, and find VBAN receivers with VBAN's PING0 service.
 

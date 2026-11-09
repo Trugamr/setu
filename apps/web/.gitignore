@@ -1,0 +1,4 @@
+node_modules
+dist
+# Copied in from the agent's build by the web tasks.
+public/setu-agent.apk

@@ -1,0 +1,262 @@
+@import "./palette.css";
+
+/* Spacing, shapes and type from design/brand/README.md, "Shape and spacing". A browser page has
+   no rounded frame of its own, so the card sets the outermost radius: 24, less its 16 padding,
+   is the button's 8. */
+:root {
+  --margin: 16px;
+  --card-padding: 16px;
+  --tight: 4px;
+  --gap: 16px;
+  --section-gap: 24px;
+  --card-radius: 24px;
+  --group-radius: 16px;
+  --control-radius: 8px;
+  --control-height: 40px;
+  --row-height: 52px;
+  --width: 440px;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--cream);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--cream) 25%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--cream);
+  text-underline-offset: 3px;
+}
+
+code {
+  font-family: "Cascadia Mono", ui-monospace, monospace;
+  font-size: 0.92em;
+}
+
+h1,
+h2,
+h3,
+p,
+ol,
+ul {
+  margin: 0;
+}
+
+.page {
+  width: min(var(--width), 100%);
+  margin: 0 auto;
+  padding: 48px var(--margin) 40px;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+/* The mark's tile has 20 units of clear space, which would leave the grille floating off the
+   column's edge; pull it in so the dots line up with the text below. */
+.mark {
+  margin: -12px -8px -12px -12px;
+}
+
+h1 {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.label,
+.section-label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--cream-muted);
+}
+
+.section-label {
+  margin: var(--section-gap) 0 8px var(--card-padding);
+}
+
+/* The status card. Plain: Ink raised. Waiting on the headset: Cream outline. */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tight);
+  padding: var(--card-padding);
+  border-radius: var(--card-radius);
+  background: var(--ink-raised);
+  outline: 1.5px solid transparent;
+  outline-offset: -1.5px;
+}
+
+.card[data-look="waiting"] {
+  outline-color: var(--cream);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+}
+
+.title {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.sentence {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--cream-muted);
+  text-wrap: pretty;
+}
+
+.sentence[data-problem] {
+  color: var(--signal);
+}
+
+/* The grille from the icon, five dots by three, filled column by column from the bottom left. */
+.grille {
+  display: grid;
+  grid-template-rows: repeat(3, 8px);
+  grid-auto-flow: column;
+  gap: 4px;
+  flex: none;
+}
+
+.grille span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--unlit);
+}
+
+.grille span[data-lit] {
+  background: var(--cream);
+}
+
+.button {
+  align-self: flex-start;
+  height: var(--control-height);
+  margin-top: calc(var(--gap) - var(--tight));
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--control-radius);
+  background: var(--signal);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--signal-hover);
+}
+
+.button:active {
+  background: var(--signal-pressed);
+}
+
+/* After setup, starting over is not the next thing to do, so it is an outline button. */
+.button[data-quiet] {
+  background: transparent;
+  color: var(--cream);
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+
+.button[data-quiet]:hover {
+  background: var(--ink-high);
+}
+
+.button[data-quiet]:active {
+  background: var(--ink-hover);
+}
+
+.group {
+  list-style: none;
+  padding: 0;
+  border-radius: var(--group-radius);
+  background: var(--ink-raised);
+  overflow: hidden;
+}
+
+.group > li + li {
+  border-top: 1px solid var(--ink-high);
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--row-height);
+  padding: 0 var(--card-padding);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.steps li[data-state="todo"] {
+  color: var(--cream-muted);
+}
+
+/* One grille dot per step: lit once done, outlined while current, unlit to come. */
+.steps .dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--unlit);
+}
+
+.steps [data-state="done"] .dot {
+  background: var(--cream);
+}
+
+.steps [data-state="current"] .dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--cream);
+}
+
+.steps .status {
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--cream-muted);
+}
+
+.notes li {
+  padding: 14px var(--card-padding);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--cream-muted);
+  text-wrap: pretty;
+}
+
+.footer {
+  margin: 32px var(--card-padding) 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--cream-muted);
+}

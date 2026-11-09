@@ -13,6 +13,9 @@ before changing the capture path.
   change the spec, the fixtures and both sides together.
 - Desktop front ends change the app only through `Session` commands. A new action becomes a
   `Command`, so the window and `setu-cli` (through `control`) get it together.
+- Setup lives in the APK (`server/Setup.java`, run as `Server setup`); the browser installer
+  (`apps/web`) and `task agent:setup` only install, run it, then `adb tcpip 5555`. Change setup
+  there, not in an installer.
 - To see the agent's screen without a headset, `task agent:screenshots` renders its previews to
   `apps/agent/src/screenshotTestDebug/reference`. Add a `@PreviewTest` for a new state.
 - To check the running desktop app, drive it with `task desktop:cli -- status` (or `connect`,

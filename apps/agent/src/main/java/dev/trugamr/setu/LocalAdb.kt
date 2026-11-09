@@ -11,6 +11,8 @@ import io.github.muntashirakon.adb.AdbAuthenticationFailedException
 import io.github.muntashirakon.adb.AdbPairingRequiredException
 import java.io.File
 import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.util.concurrent.TimeUnit
 
 /**
@@ -22,6 +24,11 @@ class LocalAdb(private val context: Context) : HeadsetAdb {
     private val identity by lazy { AdbIdentity.loadOrCreate(File(context.noBackupFilesDir, "adb")) }
 
     override fun approve(progress: (String) -> Unit): AdbResult {
+        // Setup opens the agent before the PC opens the port, so wait for it.
+        progress("Waiting for the PC to finish setup…")
+        if (!awaitPort(LOOPBACK, LEGACY_PORT, PORT_WAIT_MS)) {
+            return AdbResult.Failed("adb isn't listening on port $LEGACY_PORT. Run setup from a PC, which opens it.")
+        }
         val adb = Connection(APPROVE_TIMEOUT_S)
         return try {
             progress("On the headset, tick “Always allow from this computer”, then choose Allow.")
@@ -30,13 +37,28 @@ class LocalAdb(private val context: Context) : HeadsetAdb {
             if (!adb.connect(LOOPBACK, LEGACY_PORT)) {
                 return AdbResult.Failed("The headset didn't allow Setu in time. Run setup again.")
             }
-            // Back to USB only, as `adb usb` does. adbd restarts, which ends this connection.
+            // Back to USB only, as `adb usb` does. adbd restarts, which ends this connection; an
+            // installer watching `service.adb.tcp.port` read 0 knows setup finished.
             runCatching { adb.openStream("usb:") }
             AdbResult.Done("This headset allows Setu. You can unplug the cable.")
         } catch (e: IOException) {
-            AdbResult.Failed("adb isn't listening on port $LEGACY_PORT. Run setup from a PC, which opens it.")
+            AdbResult.Failed("Couldn't reach adb: ${e.message}")
         } finally {
             adb.disconnectQuietly()
+        }
+    }
+
+    /** Whether something accepts connections on [host]:[port] within [timeoutMs]. */
+    private fun awaitPort(host: String, port: Int, timeoutMs: Long): Boolean {
+        val deadline = System.nanoTime() + timeoutMs * 1_000_000
+        while (true) {
+            try {
+                Socket().use { it.connect(InetSocketAddress(host, port), PORT_POLL_MS.toInt()) }
+                return true
+            } catch (e: IOException) {
+                if (System.nanoTime() >= deadline) return false
+                Thread.sleep(PORT_POLL_MS)
+            }
         }
     }
 
@@ -110,6 +132,9 @@ class LocalAdb(private val context: Context) : HeadsetAdb {
         const val LEGACY_PORT = 5555
         const val ADB_WIFI_ENABLED = "adb_wifi_enabled"
         const val APPROVE_TIMEOUT_S = 60L
+        /** How long setup's PC has to open [LEGACY_PORT] after starting the agent. */
+        const val PORT_WAIT_MS = 30_000L
+        const val PORT_POLL_MS = 250L
         const val CONNECT_TIMEOUT_S = 10L
         /** How long to look for adbd's TLS port over mDNS, including the headset's allow prompt. */
         const val DISCOVERY_TIMEOUT_MS = 30_000L

@@ -1,7 +1,8 @@
 """Generates Setu's icon files from one definition of the mark, and the palette from palette.py.
 
 Writes the dark and light SVGs in this folder, the agent's launcher icon drawables, each app's
-palette (Palette.kt, colors.xml, palette.rs), the palette sheet and the README's palette tables.
+palette (Palette.kt, colors.xml, palette.rs, palette.css), the palette sheet and the README's
+palette tables.
 It writes nothing while a pairing in palette.py falls short of its contrast minimum. PNG and ICO
 exports are rendered from the SVGs by render.py, which needs Chromium.
 
@@ -20,6 +21,7 @@ ROOT = HERE.parents[1]
 RES = ROOT / "apps/agent/src/main/res"
 AGENT_SRC = ROOT / "apps/agent/src/main/java/dev/trugamr/setu"
 DESKTOP_SRC = ROOT / "apps/desktop/src"
+WEB_SRC = ROOT / "apps/web/src"
 
 INK = palette.HEX["Ink"]
 CREAM = palette.HEX["Cream"]
@@ -192,6 +194,18 @@ def palette_kt():
     return "\n".join(lines + ["}"]) + "\n"
 
 
+def palette_css():
+    lines = [
+        "/* Setu's colour tokens. See design/brand/README.md for where each goes.",
+        f"   {GENERATED} */",
+        "",
+        ":root {",
+    ]
+    for name, hex_, use in palette.TOKENS:
+        lines += [f"  /* {use}. */", f"  --{palette.snake(name).replace('_', '-')}: {hex_};"]
+    return "\n".join(lines + ["}"]) + "\n"
+
+
 def palette_sheet():
     """Every token as a swatch with its name, hex and use, on Ink."""
     row, pad, width = 52, 24, 760
@@ -252,5 +266,6 @@ if __name__ == "__main__":
     write(RES / "values/colors.xml", COLORS)
     write(AGENT_SRC / "Palette.kt", palette_kt())
     write(DESKTOP_SRC / "palette.rs", palette_rs())
+    write(WEB_SRC / "palette.css", palette_css())
     write(HERE / "palette.svg", palette_sheet())
     write(HERE / "README.md", readme())

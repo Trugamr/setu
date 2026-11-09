@@ -33,8 +33,8 @@ const val SERVER_LOG_PATH = "/data/local/tmp/setu-server.log"
  */
 interface HeadsetAdb {
     /**
-     * Has the headset approve the agent's key: connects to adbd's TCP port, which makes the
-     * headset ask, then returns adbd to USB. Setup opens the port first (`adb tcpip 5555`).
+     * Has the headset approve the agent's key: waits for setup's PC to open adbd's TCP port
+     * (`adb tcpip 5555`), connects to it, which makes the headset ask, then returns adbd to USB.
      */
     fun approve(progress: (String) -> Unit): AdbResult
 
@@ -144,7 +144,7 @@ class Agent(
         if (settle(running = false)) null else failed("The capture server didn't stop.")
     }
 
-    /** The last step of setup, which a PC asks for once it has opened adbd's TCP port. */
+    /** The last step of setup, which `server.Setup` asks for before the PC opens adbd's TCP port. */
     suspend fun approve() = operate(Task.Approve, "Asking the headset to allow Setu…") {
         when (val approved = adb.approve { progress(it) }) {
             is AdbResult.Failed -> failed(approved.message)
