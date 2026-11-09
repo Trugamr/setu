@@ -5,7 +5,8 @@
 //! window and nudges the playback rate (±0.5 %, linearly interpolated) until that minimum
 //! settles at the margin. That keeps one block plus the margin buffered whatever the block
 //! size, and absorbs the clock drift between headset and PC. A lost datagram becomes silence
-//! of the same length, so timing survives loss.
+//! of the same length, so timing survives loss. `Jitter` measures how late each datagram
+//! arrives.
 //!
 //! `Playout` is plain single-threaded state with no I/O. The receiver shares it between the
 //! network and device threads behind a mutex, held only to copy a datagram in or a device
@@ -13,7 +14,9 @@
 //! and how fast to play it.
 
 use std::fmt;
+use std::time::Instant;
 
+use crate::jitter::Jitter;
 use crate::output::OutputFormat;
 use crate::protocol::Format;
 
@@ -45,7 +48,8 @@ pub struct Playout {
     next_position: Option<u64>,
     /// Exists once both the format and the output are known.
     control: Option<Control>,
-    /// Buffer level and signal peak, for [`Playout::stats`].
+    jitter: Jitter,
+    /// Buffer level, signal peak and lateness, for [`Playout::stats`].
     window: Window,
     last_window: Window,
     totals: Totals,
@@ -62,6 +66,11 @@ pub struct PlayoutStats {
     pub margin_ms: f64,
     /// Playback rate offset, e.g. 0.002 plays 0.2 % fast.
     pub rate_adjust: f64,
+    /// The most any datagram arrived late over the last half second, measured against the
+    /// stream's own clock.
+    pub jitter_ms: f64,
+    /// The same over the last two minutes of the stream.
+    pub jitter_peak_ms: f64,
     /// Largest sample over the last half second, 0 to 1.
     pub peak: f32,
     /// Totals since the receiver started.
@@ -104,6 +113,8 @@ struct Window {
     min_level: u64,
     max_level: u64,
     peak: u16,
+    /// The most a datagram arrived late, in seconds.
+    late_s: f64,
 }
 
 impl Window {
@@ -112,6 +123,7 @@ impl Window {
             min_level: level,
             max_level: level,
             peak: 0,
+            late_s: 0.0,
         }
     }
 }
@@ -133,6 +145,7 @@ impl Playout {
             ring: Ring::new(0),
             next_position: None,
             control: None,
+            jitter: Jitter::new(),
             window: Window::new(0),
             last_window: Window::new(0),
             totals: Totals::default(),
@@ -162,8 +175,9 @@ impl Playout {
         self.retune();
     }
 
-    /// Adds one datagram's PCM, whose first frame is `frame_position` in the stream.
-    pub fn push(&mut self, frame_position: u64, pcm: &[u8]) {
+    /// Adds one datagram's PCM, whose first frame is `frame_position` in the stream, and which
+    /// arrived at `arrived`.
+    pub fn push(&mut self, arrived: Instant, frame_position: u64, pcm: &[u8]) {
         let Some(format) = self.format else {
             return;
         };
@@ -180,12 +194,16 @@ impl Playout {
             Some(next) if frame_position < next && next - frame_position <= max_conceal => {
                 // Late or duplicate: keep only frames not yet written.
                 skip = next - frame_position;
-                if skip >= frames {
-                    return;
-                }
             }
             // The first datagram, the next in order, or a jump too large to conceal.
             _ => {}
+        }
+        // A late datagram counts even when its frames were concealed already.
+        let stream_s = frame_position as f64 / f64::from(format.sample_rate);
+        let late_s = self.jitter.arrive(arrived, stream_s);
+        self.window.late_s = self.window.late_s.max(late_s);
+        if skip > 0 && skip >= frames {
+            return;
         }
         let peak = self
             .ring
@@ -239,6 +257,8 @@ impl Playout {
             buffer_max_ms: to_ms(window.max_level),
             margin_ms: to_ms(self.control.as_ref().map_or(0, |c| c.margin)),
             rate_adjust: self.control.as_ref().map_or(0.0, |c| c.rate_adjust),
+            jitter_ms: window.late_s * 1000.0,
+            jitter_peak_ms: self.jitter.peak() * 1000.0,
             peak: f32::from(window.peak) / 32768.0,
             underruns: self.totals.underruns,
             lost_ms: to_ms(self.totals.lost_frames),
@@ -496,6 +516,7 @@ impl Tuning {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
     fn format(block_frames: u32) -> Format {
         Format {
@@ -529,7 +550,7 @@ mod tests {
     #[test]
     fn silent_until_format_and_output_are_known() {
         let mut p = Playout::new(1.5);
-        p.push(0, &pcm(960, 1000));
+        p.push(Instant::now(), 0, &pcm(960, 1000));
         let mut out = [1.0; 64];
         p.pull(&mut out);
         assert!(out.iter().all(|&s| s == 0.0));
@@ -540,13 +561,13 @@ mod tests {
     fn buffers_one_block_plus_margin_then_plays_the_stream() {
         let mut p = playout(96, 96);
         // Margin = 1.5 ms + min(block, period) = 3.5 ms = 168 frames; prime to 96 + 168.
-        p.push(0, &pcm(200, 16384));
+        p.push(Instant::now(), 0, &pcm(200, 16384));
         let mut out = vec![1.0; 2 * 32];
         p.pull(&mut out);
         assert!(out.iter().all(|&s| s == 0.0));
         assert_eq!(p.stats().state, PlayoutState::Buffering);
 
-        p.push(200, &pcm(100, 16384));
+        p.push(Instant::now(), 200, &pcm(100, 16384));
         p.pull(&mut out);
         assert!(out.iter().all(|&s| s == 0.5));
         assert_eq!(p.stats().state, PlayoutState::Playing);
@@ -557,7 +578,7 @@ mod tests {
         let mut p = Playout::new(1.5);
         p.set_format(format(96)).unwrap();
         p.set_output(output(48000, 4, 96));
-        p.push(0, &pcm(400, 16384));
+        p.push(Instant::now(), 0, &pcm(400, 16384));
         let mut out = vec![1.0; 4 * 8];
         p.pull(&mut out);
         for frame in out.chunks_exact(4) {
@@ -568,8 +589,8 @@ mod tests {
     #[test]
     fn a_lost_datagram_becomes_silence_of_its_length() {
         let mut p = playout(96, 96);
-        p.push(0, &pcm(340, 1000));
-        p.push(680, &pcm(340, 1000));
+        p.push(Instant::now(), 0, &pcm(340, 1000));
+        p.push(Instant::now(), 680, &pcm(340, 1000));
         assert_eq!(p.ring.level(), 1020);
         assert_eq!(p.stats().lost_ms, 340.0 * 1000.0 / 48000.0);
     }
@@ -577,28 +598,69 @@ mod tests {
     #[test]
     fn late_and_duplicate_datagrams_add_only_unwritten_frames() {
         let mut p = playout(96, 96);
-        p.push(0, &pcm(96, 1000));
-        p.push(96, &pcm(96, 1000));
-        p.push(0, &pcm(96, 1000));
+        p.push(Instant::now(), 0, &pcm(96, 1000));
+        p.push(Instant::now(), 96, &pcm(96, 1000));
+        p.push(Instant::now(), 0, &pcm(96, 1000));
         assert_eq!(p.ring.level(), 192);
-        p.push(144, &pcm(96, 1000));
+        p.push(Instant::now(), 144, &pcm(96, 1000));
         assert_eq!(p.ring.level(), 240);
         assert_eq!(p.stats().lost_ms, 0.0);
     }
 
     #[test]
-    fn a_restarted_capture_resynchronizes_without_silence() {
+    fn a_restarted_capture_resynchronizes_without_silence_or_jitter() {
         let mut p = playout(96, 96);
-        p.push(1_000_000, &pcm(96, 1000));
-        p.push(0, &pcm(96, 1000));
-        assert_eq!(p.ring.level(), 192);
+        let start = Instant::now();
+        let at = |ms: f64| start + Duration::from_secs_f64(ms / 1000.0);
+        p.push(at(0.0), 1_000_000, &pcm(96, 1000));
+        p.push(at(2.0), 1_000_096, &pcm(96, 1000));
+        p.push(at(4.0), 0, &pcm(96, 1000));
+        p.push(at(6.0), 96, &pcm(96, 1000));
+        assert_eq!(p.ring.level(), 384);
         assert_eq!(p.stats().lost_ms, 0.0);
+        assert!(p.stats().jitter_peak_ms < 1e-3);
+    }
+
+    #[test]
+    fn a_reordered_datagram_counts_as_late() {
+        let mut p = playout(96, 96);
+        let start = Instant::now();
+        let at = |ms: f64| start + Duration::from_secs_f64(ms / 1000.0);
+        p.push(at(0.0), 0, &pcm(96, 1000));
+        p.push(at(4.0), 192, &pcm(96, 1000));
+        // Block 1 was due at 2 ms and its frames are concealed already.
+        p.push(at(5.0), 96, &pcm(96, 1000));
+        assert_eq!(p.ring.level(), 288);
+        assert!((p.stats().jitter_peak_ms - 3.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn a_late_datagram_shows_as_jitter() {
+        let mut p = playout(96, 96);
+        let start = Instant::now();
+        let at = |ms: f64| start + Duration::from_secs_f64(ms / 1000.0);
+        for i in 0..10 {
+            p.push(at(2.0 * i as f64), i * 96, &pcm(96, 1000));
+        }
+        // Block 10 was due at 20 ms.
+        p.push(at(27.0), 960, &pcm(96, 1000));
+        assert!((p.stats().jitter_peak_ms - 7.0).abs() < 1e-6);
+        // The stats window shows it once the window closes.
+        let mut out = vec![0.0; 2 * 96];
+        for _ in 0..(48000.0 * WINDOW_S / 96.0).ceil() as usize {
+            p.pull(&mut out);
+        }
+        assert!(
+            (p.stats().jitter_ms - 7.0).abs() < 1e-6,
+            "{}",
+            p.stats().jitter_ms
+        );
     }
 
     #[test]
     fn repeated_format_keeps_the_buffer_and_a_new_one_clears_it() {
         let mut p = playout(96, 96);
-        p.push(0, &pcm(96, 1000));
+        p.push(Instant::now(), 0, &pcm(96, 1000));
         p.set_format(format(96)).unwrap();
         assert_eq!(p.ring.level(), 96);
         p.set_format(format(192)).unwrap();
@@ -666,11 +728,13 @@ mod tests {
         let mut settled_underruns = None;
         let mut next_check = 6e6;
         let mut late_windows = 0;
+        let start = Instant::now();
         let mut now = 0.0;
         while now < 60e6 {
             if next_block <= next_pull {
                 now = next_block;
-                p.push(blocks * u64::from(block), &input);
+                let at = start + Duration::from_secs_f64(now / 1e6);
+                p.push(at, blocks * u64::from(block), &input);
                 blocks += 1;
                 next_block = next_block.max(blocks as f64 * block_us + uniform() * jitter_us);
             } else {
@@ -696,5 +760,11 @@ mod tests {
             "{name}: buffer minimum stayed above {ceiling_ms:.1} ms"
         );
         assert_eq!(stats.state, PlayoutState::Playing, "{name}");
+        let jitter_ms = jitter_us / 1000.0;
+        assert!(
+            stats.jitter_peak_ms > jitter_ms * 0.8 && stats.jitter_peak_ms < jitter_ms + 0.5,
+            "{name}: jitter peak {:.2} ms for {jitter_ms} ms of jitter",
+            stats.jitter_peak_ms
+        );
     }
 }

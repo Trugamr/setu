@@ -30,7 +30,8 @@ pub enum Event<'a> {
     /// The stream's format. The server sends it in answer to every HELLO and before the first
     /// AUDIO.
     Format(Format),
-    Audio(Audio<'a>),
+    /// An AUDIO datagram and when it arrived.
+    Audio { audio: Audio<'a>, arrived: Instant },
     /// Nothing has arrived for [`QUIET_AFTER`]. Reported once per silence.
     Quiet,
 }
@@ -92,7 +93,10 @@ fn run(socket: &UdpSocket, hello: &[u8], stop: &AtomicBool, on_event: &mut dyn F
                 Ok(Message::Audio(audio)) => {
                     last_heard = Instant::now();
                     quiet = false;
-                    on_event(Event::Audio(audio));
+                    on_event(Event::Audio {
+                        audio,
+                        arrived: last_heard,
+                    });
                 }
                 // Messages meant for other parties, and datagrams that are not Setu.
                 _ => {}
@@ -161,7 +165,7 @@ mod tests {
         let link = Link::start(server.local_addr().unwrap(), "test-pc", move |event| {
             let seen = match event {
                 Event::Format(format) => Seen::Format(format),
-                Event::Audio(audio) => Seen::Audio {
+                Event::Audio { audio, .. } => Seen::Audio {
                     frame_position: audio.frame_position,
                     pcm: audio.pcm.to_vec(),
                 },

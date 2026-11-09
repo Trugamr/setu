@@ -220,10 +220,12 @@ fn describe(status: &Status) -> String {
         .map(|ms| format!("  | est. {ms:3.0} ms behind headset"))
         .unwrap_or_default();
     format!(
-        "peak {level:<9} block {block_ms:.1} ms  buffer {:5.1}..{:5.1} ms  margin {:4.1} ms  rate {:+.2}%  underruns {}  lost {:.1} ms  skipped {:.1} ms{latency}",
+        "peak {level:<9} block {block_ms:.1} ms  buffer {:5.1}..{:5.1} ms  margin {:4.1} ms  jitter {:4.1} ms (peak {:4.1})  rate {:+.2}%  underruns {}  lost {:.1} ms  skipped {:.1} ms{latency}",
         p.buffer_min_ms,
         p.buffer_max_ms,
         p.margin_ms,
+        p.jitter_ms,
+        p.jitter_peak_ms,
         p.rate_adjust * 100.0,
         p.underruns,
         p.lost_ms,

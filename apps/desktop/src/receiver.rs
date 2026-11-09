@@ -125,7 +125,9 @@ impl State {
                     Err(_) => Connection::Unsupported(format),
                 };
             }
-            Event::Audio(audio) => self.playout.push(audio.frame_position, audio.pcm),
+            Event::Audio { audio, arrived } => {
+                self.playout.push(arrived, audio.frame_position, audio.pcm)
+            }
             Event::Quiet => self.connection = Connection::Waiting,
         }
     }
@@ -233,11 +235,14 @@ mod tests {
     }
 
     fn audio(frame_position: u64, pcm: &[u8]) -> Event<'_> {
-        Event::Audio(Audio {
-            sequence: 0,
-            frame_position,
-            pcm,
-        })
+        Event::Audio {
+            audio: Audio {
+                sequence: 0,
+                frame_position,
+                pcm,
+            },
+            arrived: std::time::Instant::now(),
+        }
     }
 
     #[test]

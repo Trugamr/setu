@@ -208,6 +208,8 @@ mod tests {
                     buffer_max_ms: 0.0,
                     margin_ms: 0.0,
                     rate_adjust: 0.0,
+                    jitter_ms: 0.0,
+                    jitter_peak_ms: 0.0,
                     peak: 0.0,
                     underruns: 0,
                     lost_ms: 0.0,

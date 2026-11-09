@@ -4,7 +4,8 @@
 //!
 //! - [`protocol`]: the wire format shared with the headset (`protocol/README.md`).
 //! - [`link`]: the UDP conversation with the headset's capture server.
-//! - [`playout`]: the jitter buffer and rate controller between network and device.
+//! - [`playout`]: the jitter buffer and rate controller between network and device, which
+//!   measures how late datagrams arrive with `jitter`.
 //! - [`output`]: the audio device, behind a platform adapter.
 //!
 //! [`Session`] is the app around a receiver, which the front ends (the window in `main.rs` and
@@ -16,6 +17,7 @@
 //! - [`settings`]: what the app remembers between runs.
 
 pub mod control;
+mod jitter;
 pub mod link;
 pub mod output;
 pub mod playout;
