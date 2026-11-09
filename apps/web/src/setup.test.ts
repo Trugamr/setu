@@ -5,6 +5,8 @@ import {
   SETUP_COMMAND,
   SETUP_DONE,
   TCP_PORT_PROP,
+  installFailure,
+  isApk,
   runSetup,
   type Apk,
   type Headset,
@@ -26,6 +28,14 @@ class FakeDevice {
   polls = 0;
   connections = 0;
   current?: FakeHeadset;
+  /** What `pm install` printed when it refused the APK, or nothing when it took it. */
+  installRefused?: string;
+  /** Whether a read on an ended connection never answers, instead of failing. */
+  hangsWhenGone = false;
+  /** Whether adbd restarts while the setup routine runs, its answer never arriving. */
+  dropsDuringSetup = false;
+  /** Whether the headset asks to allow the browser again after adbd restarts. */
+  asksOnReconnect = false;
 
   constructor(
     readonly allowAfter: number | null = 2,
@@ -44,6 +54,7 @@ class FakeDevice {
 }
 
 class FakeHeadset implements Headset {
+  readonly serial = "2G97C5ZH2T013J";
   readonly model = "Quest 3";
   readonly disconnected: Promise<void>;
   private end!: () => void;
@@ -64,6 +75,7 @@ class FakeHeadset implements Headset {
 
   async install(_apk: Apk, progress: (sent: number) => void) {
     this.check();
+    if (this.device.installRefused) throw new Error(this.device.installRefused);
     this.device.log.push("install");
     progress(1);
   }
@@ -71,10 +83,15 @@ class FakeHeadset implements Headset {
   async shell(command: string) {
     this.check();
     this.device.log.push(command);
+    if (command === SETUP_COMMAND && this.device.dropsDuringSetup) {
+      this.device.restart();
+      return new Promise<string>(() => {});
+    }
     return command === SETUP_COMMAND ? this.device.setupOutput : "";
   }
 
   async getProp(key: string) {
+    if (this.gone && this.device.hangsWhenGone) return new Promise<string>(() => {});
     this.check();
     expect(key).toBe(TCP_PORT_PROP);
     const { device } = this;
@@ -100,6 +117,7 @@ class FakeHeadset implements Headset {
     this.check();
     this.device.log.push("usb");
     this.device.port = "0";
+    queueMicrotask(() => this.device.restart());
   }
 
   async close() {}
@@ -113,7 +131,8 @@ function usb(device: FakeDevice, choose: "pick" | "cancel" | "busy" = "pick"): U
       authorizing();
       return device.connect();
     },
-    async reconnect() {
+    async reconnect(_previous, _timeoutMs, authorizing) {
+      if (device.asksOnReconnect) authorizing();
       return device.connect();
     },
   };
@@ -135,6 +154,49 @@ describe("runSetup", () => {
     expect(statuses).toContainEqual({ kind: "asking", step: "allow" });
     // Once after tcpip restarted adbd, once after the agent's usb did.
     expect(device.connections).toBe(3);
+  });
+
+  it("reconnects when a read on the ended connection never answers", async () => {
+    const device = new FakeDevice();
+    device.hangsWhenGone = true;
+    const statuses = await run(device);
+    expect(statuses.at(-1)).toEqual({ kind: "done", model: "Quest 3" });
+  });
+
+  it("closes a port an earlier setup left open before running setup", async () => {
+    const device = new FakeDevice();
+    device.port = String(LEGACY_PORT);
+    const statuses = await run(device);
+    expect(device.log).toEqual(["install", "usb", SETUP_COMMAND, "tcpip 5555", "agent: usb"]);
+    expect(statuses.at(-1)).toEqual({ kind: "done", model: "Quest 3" });
+  });
+
+  it("says the headset asks again when closing that port forgets this browser", async () => {
+    const device = new FakeDevice();
+    device.port = String(LEGACY_PORT);
+    device.asksOnReconnect = true;
+    const statuses = await run(device);
+    expect(statuses).toContainEqual({ kind: "asking", step: "setup" });
+    expect(statuses.at(-1)).toEqual({ kind: "done", model: "Quest 3" });
+  });
+
+  it("stops instead of waiting when the connection ends during a command", async () => {
+    const device = new FakeDevice();
+    device.dropsDuringSetup = true;
+    const statuses = await run(device);
+    expect(statuses.at(-1)).toMatchObject({ kind: "failed", step: "setup", reason: { kind: "error" } });
+  });
+
+  it("stops at install with why the headset refused it", async () => {
+    const device = new FakeDevice();
+    device.installRefused = "Failure [INSTALL_FAILED_INSUFFICIENT_STORAGE]";
+    const statuses = await run(device);
+    expect(device.log).toEqual([]);
+    expect(statuses.at(-1)).toEqual({
+      kind: "failed",
+      step: "install",
+      reason: { kind: "error", message: "the headset is out of storage. Free some space, then try again" },
+    });
   });
 
   it("finishes when the agent was faster than the reconnect", async () => {
@@ -169,5 +231,31 @@ describe("runSetup", () => {
   it("goes back to the start when no headset is picked", async () => {
     const statuses = await run(new FakeDevice(), "cancel");
     expect(statuses.at(-1)).toEqual({ kind: "idle" });
+  });
+});
+
+describe("installFailure", () => {
+  it("tells the user to uninstall a Setu signed by another build", () => {
+    const output =
+      "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package dev.trugamr.setu signatures do not match newer version; ignoring!]";
+    expect(installFailure(output)).toContain("Uninstall Setu");
+  });
+
+  it("names a refusal it has no words for", () => {
+    expect(installFailure("Failure [INSTALL_FAILED_TEST_ONLY: installPackageLI]")).toBe(
+      "the headset refused Setu (INSTALL_FAILED_TEST_ONLY)",
+    );
+  });
+
+  it("passes on output that isn't pm's", () => {
+    expect(installFailure("device offline")).toBe("device offline");
+  });
+});
+
+describe("isApk", () => {
+  it("knows an APK by its zip header, and a page served in its place by its lack of one", () => {
+    expect(isApk(new Uint8Array([0x50, 0x4b, 0x03, 0x04]))).toBe(true);
+    expect(isApk(new TextEncoder().encode("<!doctype html>"))).toBe(false);
+    expect(isApk(new Uint8Array())).toBe(false);
   });
 });

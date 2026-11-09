@@ -14,6 +14,8 @@ export const TCP_PORT_PROP = "service.adb.tcp.port";
 
 /** One headset, connected and authorised over USB. */
 export interface Headset {
+  /** The USB serial number, which finds the headset again after adbd restarts. */
+  readonly serial: string;
   /** The model, such as "Quest 3". */
   readonly model: string;
   /** Resolves when the connection ends, such as when adbd restarts. */
@@ -36,8 +38,12 @@ export interface Usb {
    * asking to allow this browser. Resolves undefined when the user picks nothing.
    */
   choose(authorizing: () => void): Promise<Headset | undefined>;
-  /** Connects again to the headset [previous] was, once it is back on USB after adbd restarted. */
-  reconnect(previous: Headset, timeoutMs: number): Promise<Headset>;
+  /**
+   * Connects again to the headset [previous] was, once it is back on USB after adbd restarted.
+   * [authorizing] runs when the headset may be asking to allow this browser again, as it does
+   * after a restart when it was allowed only once.
+   */
+  reconnect(previous: Headset, timeoutMs: number, authorizing: () => void): Promise<Headset>;
 }
 
 export interface Apk {
@@ -55,7 +61,7 @@ export type Status =
   | { kind: "idle" }
   | { kind: "working"; step: Step; progress?: number }
   /** Waiting for the user to choose Allow on the headset. */
-  | { kind: "asking"; step: "connect" | "allow" }
+  | { kind: "asking"; step: "connect" | "setup" | "allow" }
   | { kind: "done"; model: string }
   | { kind: "failed"; step: Step; reason: Failure };
 
@@ -71,7 +77,12 @@ export interface Timing {
   pollMs: number;
 }
 
-export const DEFAULT_TIMING: Timing = { allowMs: 90_000, pollMs: 1000 };
+/**
+ * Outlasts the agent's approval (LocalAdb.kt): up to MAX_ASKS (3) prompts of APPROVE_TIMEOUT_S
+ * (60 s) each, plus REMEMBER_WAIT_MS (2 s) for the key to be saved, inside APPROVE_WINDOW_MS
+ * (180 s). Change them together.
+ */
+export const DEFAULT_TIMING: Timing = { allowMs: 200_000, pollMs: 1000 };
 
 /** Runs setup from the start, reporting each change. Call it straight from a click: it picks the device first. */
 export async function runSetup(
@@ -94,11 +105,24 @@ export async function runSetup(
     step = "install";
     report({ kind: "working", step, progress: 0 });
     const apk = await loadApk();
-    await headset.install(apk, (progress) => report({ kind: "working", step: "install", progress }));
+    const installing = headset;
+    await whileConnected(
+      installing,
+      installing.install(apk, (progress) => report({ kind: "working", step: "install", progress })).catch((e) => {
+        throw new Error(installFailure(e instanceof Error ? e.message : String(e)));
+      }),
+    );
 
     step = "setup";
     report({ kind: "working", step });
-    const output = (await headset.shell(SETUP_COMMAND)).trim();
+    // A port an earlier setup left open lets the agent approve and restart adbd before this one
+    // opens it, ending the connection mid-command. Close it first, so the steps run in order.
+    if (isOpen(await whileConnected(headset, headset.getProp(TCP_PORT_PROP)))) {
+      await headset.closeTcpPort();
+      headset = await reconnect(usb, headset, timing.allowMs, () => report({ kind: "asking", step: "setup" }));
+      report({ kind: "working", step });
+    }
+    const output = (await whileConnected(headset, headset.shell(SETUP_COMMAND))).trim();
     if (!output.endsWith(SETUP_DONE)) {
       const last = output.split("\n").pop()?.replace(/^setup: /, "") || "the setup routine printed nothing";
       throw new Error(last);
@@ -131,10 +155,11 @@ async function awaitAllowed(usb: Usb, headset: Headset, timing: Timing): Promise
     }
     let port: string;
     try {
-      port = (await headset.getProp(TCP_PORT_PROP)).trim();
+      // A read on a connection that adbd's restart ended may never answer.
+      port = (await whileConnected(headset, headset.getProp(TCP_PORT_PROP))).trim();
     } catch {
-      await headset.close().catch(() => {});
-      headset = await usb.reconnect(headset, left);
+      // The page already asks the user to allow on the headset.
+      headset = await reconnect(usb, headset, left, () => {});
       continue;
     }
     if (port !== String(LEGACY_PORT)) return headset;
@@ -144,12 +169,64 @@ async function awaitAllowed(usb: Usb, headset: Headset, timing: Timing): Promise
 
 class NotAllowed extends Error {}
 
+function isOpen(port: string): boolean {
+  const value = port.trim();
+  return value !== "" && value !== "0";
+}
+
+/** Closes [headset] and connects again once adbd, restarting, is back on USB. */
+async function reconnect(usb: Usb, headset: Headset, timeoutMs: number, authorizing: () => void): Promise<Headset> {
+  await headset.close().catch(() => {});
+  return usb.reconnect(headset, timeoutMs, authorizing);
+}
+
+/** [work], failing instead of waiting forever when the connection ends first. */
+function whileConnected<T>(headset: Headset, work: Promise<T>): Promise<T> {
+  return Promise.race([
+    work,
+    headset.disconnected.then(() => {
+      throw new Error("the headset disconnected. Check the cable, then try again");
+    }),
+  ]);
+}
+
+/**
+ * Says why `pm install` refused the APK, from what it printed, such as
+ * "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package … signatures do not match …]".
+ */
+export function installFailure(output: string): string {
+  const code = /\[?(INSTALL_[A-Z_]+)/.exec(output)?.[1];
+  switch (code) {
+    case undefined:
+      return output.trim() || "the headset refused Setu";
+    case "INSTALL_FAILED_UPDATE_INCOMPATIBLE":
+      return (
+        "Setu on the headset was installed from another build, so it can't be updated. " +
+        "Uninstall Setu from the headset's Library, under Unknown sources, then try again"
+      );
+    case "INSTALL_FAILED_VERSION_DOWNGRADE":
+      return "the headset has a newer Setu than this page. Uninstall it from the headset, then try again";
+    case "INSTALL_FAILED_INSUFFICIENT_STORAGE":
+      return "the headset is out of storage. Free some space, then try again";
+    default:
+      return `the headset refused Setu (${code})`;
+  }
+}
+
 function failure(e: unknown): Failure {
   if (e instanceof HeadsetBusy) return { kind: "busy" };
   if (e instanceof NotAllowed) return { kind: "notAllowed" };
   return { kind: "error", message: e instanceof Error ? e.message : String(e) };
 }
 
-function sleep(ms: number): Promise<void> {
+/**
+ * Whether a file starts as an APK does, with a zip's local header. A server without the APK may
+ * answer its URL with a page instead, as Vite's does.
+ */
+export function isApk(start: Uint8Array): boolean {
+  return start[0] === 0x50 && start[1] === 0x4b && start[2] === 0x03 && start[3] === 0x04;
+}
+
+export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

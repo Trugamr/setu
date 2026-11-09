@@ -55,8 +55,8 @@ Needs the [build tools](#build) and a headset in Developer Mode.
 
 1. **Once, over USB:** connect the headset and run `task web:dev`, then open
    http://localhost:5173 in Chrome or Edge and choose Connect. Or run `task agent:setup`, which
-   takes the same steps with adb. On the headset, tick "Always allow from this computer" and
-   choose Allow. Unplug the cable.
+   takes the same steps with adb. On the headset, choose "Always allow from this computer" each
+   time it asks. Unplug the cable.
 2. **On the headset:** open Setu and tap Start. The first start after each boot asks to allow
    wireless debugging on this network; choose Allow.
 3. **On the PC:** run `task desktop:run`, enter the headset's address and connect. The agent
@@ -148,9 +148,9 @@ Setup is a routine inside the APK, `Server setup`, run as the shell user: it gra
 `adb_allowed_connection_time` to `0`, so an allowed key never expires (the default is 7 days),
 and opens the agent to approve its key. The agent then waits for adbd's legacy TCP port, which
 only the PC can open, because only that port shows the "Allow debugging?" prompt for an unknown
-key. An allowed key is accepted over USB, legacy TCP and wireless debugging alike. Once allowed,
-the agent returns adbd to USB, so an installer knows setup finished when
-`service.adb.tcp.port` reads 0 again.
+key. An allowed key is accepted over USB, legacy TCP and wireless debugging alike. The agent
+asks again until `dumpsys adb` shows the key remembered, then returns adbd to USB, so an
+installer knows setup finished when `service.adb.tcp.port` reads 0 again.
 
 ### Streaming
 
@@ -175,6 +175,8 @@ measured jitter allows (see [Receiver design notes](#receiver-design-notes)). Th
   the "Allow debugging?" prompt, which is why setup uses it once.
 - The adb shell holds `MANAGE_DEBUGGING`, so it can trust a network with no dialog
   (`IAdbManager.allowWirelessDebugging`, the server's `adb-wifi-trust` command).
+- "Allow USB debugging?" has an "Always allow from this computer" button where Android has a
+  checkbox. Allow admits the key only until adbd restarts, so setup needs that button.
 - The Quest Link PC service can stop the "Allow USB debugging?" prompt from appearing; stop it
   while setting up. Toggling Developer Mode in the phone app clears USB authorizations.
 
@@ -299,7 +301,7 @@ These come from the prototype receiver; the desktop app's playout follows them.
 |---|---|
 | `apps/agent` | The agent app: `Agent` is the screen's logic, with the server and settings behind `CaptureServer` and `SettingsStore`. `.../server` is the capture server, where `ReceiverSession` sends each block to every route in `Routes` (the Setu receiver, the VBAN target) in its `PacketFormat`. `.../protocol` holds the shared protocol module and the VBAN encoder. |
 | `apps/desktop` | The desktop app, a member of the root Cargo workspace. `Receiver` wires `link` (UDP to the server), `playout` (jitter buffer) and `output` (the device, WASAPI on Windows). `Session` is the app around it: the settings, the receiver while connected, and the commands that change them. The window (`main.rs`, `ui.rs`) and `setu-cli play` host a session; `control` lets `setu-cli` drive the running one over 127.0.0.1. |
-| `apps/web` | The browser installer, TypeScript and Vite, with [Tango](https://tangoadb.dev) for adb over WebUSB. `setup.ts` is the flow, `card.ts` its wording and `webusb.ts` the adapter; the tests run the flow against a fake headset. In development, `?status=` with a status as JSON shows any state without a headset. |
+| `apps/web` | The browser installer: React, Tailwind and Motion on Vite, with [Tango](https://tangoadb.dev) for adb over WebUSB. `setup.ts` is the flow, `card.ts` what each state shows, `webusb.ts` the adapter and `components/` the page, styled only with the brand's tokens in `style.css`. The tests run the flow against a fake headset. In development the page serves the agent's latest build, and `?status=` with a status as JSON shows any state without a headset. |
 | `design/brand` | The icon, colours and the scripts that generate every icon file ([design/brand/README.md](design/brand/README.md)). |
 | `docs/screenshots` | The screenshots above: the agent's Sending preview from `task agent:screenshots`, cropped, and the desktop window while playing. |
 | `protocol` | Protocol spec ([protocol/README.md](protocol/README.md)) and byte fixtures. |
@@ -339,7 +341,7 @@ task desktop:cli -- disconnect
 Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames] [--vban
 host[:port][/name]]`, `adb [blockFrames]`, `probe [clicks] [blockFrames]`, `bursts [seconds] [blockFrames]`,
 `adb-wifi-trust <bssid>`, `adb-revoke-keys`, `setup`. The agent launches `udp` with the defaults and
-logs to `/data/local/tmp/setu-server.log`.
+logs to `/data/local/tmp/setu-server.log`. A new server ends any Setu server holding its port.
 
 ## Roadmap
 

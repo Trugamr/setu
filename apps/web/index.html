@@ -8,45 +8,9 @@
     <title>Set up Setu</title>
     <meta name="description" content="Install Setu on your Meta Quest and set it up from the browser, over USB." />
     <link rel="icon" href="../../design/brand/setu-icon-16-dark.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./src/style.css" />
-    <script type="module" src="./src/main.ts"></script>
+    <script type="module" src="./src/main.tsx"></script>
   </head>
   <body>
-    <main class="page">
-      <header class="masthead">
-        <img class="mark" id="mark" width="64" height="64" alt="" />
-        <div>
-          <h1>Setu</h1>
-          <p class="label">Headset setup</p>
-        </div>
-      </header>
-
-      <section class="card" id="card" aria-live="polite">
-        <div class="card-head">
-          <h2 class="title" id="card-title"></h2>
-          <div class="grille" id="grille" aria-hidden="true"></div>
-        </div>
-        <p class="sentence" id="card-sentence"></p>
-        <button class="button" id="card-action" type="button" hidden></button>
-      </section>
-
-      <h3 class="section-label">Steps</h3>
-      <ol class="group steps" id="steps"></ol>
-
-      <h3 class="section-label">Before you start</h3>
-      <ul class="group notes">
-        <li>Turn on Developer Mode for the headset, in the Meta Horizon app on your phone.</li>
-        <li>Use a USB-C cable that carries data, not only charge.</li>
-        <li>
-          Close SideQuest and Meta Quest Link, and run <code>adb kill-server</code> if you use adb:
-          only one program can use the headset's USB connection.
-        </li>
-      </ul>
-
-      <footer class="footer">
-        Setu sends your Quest's audio to your PC.
-        <a href="https://github.com/Trugamr/setu">Source and docs on GitHub</a>.
-      </footer>
-    </main>
+    <div id="root"></div>
   </body>
 </html>

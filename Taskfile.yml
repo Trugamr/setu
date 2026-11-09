@@ -58,13 +58,19 @@ tasks:
   agent:setup:
     desc: "One-time setup over USB: install the agent, grant it wireless debugging, have the headset allow its adb key"
     deps: [agent:install]
-    # The same steps as the browser installer (apps/web): run the APK's setup routine, then open
-    # adbd's TCP port, which the agent waits for so the headset asks to allow its key.
+    # The same steps as the browser installer (apps/web): close a port an earlier setup left open,
+    # run the APK's setup routine, then open adbd's TCP port, which the agent waits for so the
+    # headset asks to allow its key.
     cmds:
+      - |
+        port=$("{{.ADB}}" shell getprop service.adb.tcp.port | tr -d '\r')
+        if [ -n "$port" ] && [ "$port" != "0" ]; then
+          "{{.ADB}}" usb && sleep 2 && "{{.ADB}}" wait-for-usb-device
+        fi
       - task: agent:server
         vars: { CLI_ARGS: setup }
       - '"{{.ADB}}" tcpip 5555'
-      - 'echo "On the headset, tick \"Always allow from this computer\", then choose Allow."'
+      - 'echo "On the headset, choose \"Always allow from this computer\"."'
 
   agent:server:
     desc: "Run the capture server on the headset from the installed APK, e.g. task agent:server -- probe 6"
@@ -102,20 +108,15 @@ tasks:
     sources: [package.json, pnpm-lock.yaml]
     internal: true
 
-  web:apk:
-    desc: Copy the agent's APK next to the browser installer's page
-    deps: [agent:build]
-    cmd: mkdir -p apps/web/public && cp {{.AGENT_APK}} apps/web/public/setu-agent.apk
-
   web:dev:
     desc: Serve the browser installer at http://localhost:5173 (open it in Chrome or Edge on Windows)
-    deps: [web:deps, web:apk]
+    deps: [web:deps, agent:build]
     dir: apps/web
     cmd: pnpm exec vite
 
   web:build:
     desc: Build the browser installer, with the agent's APK, into apps/web/dist
-    deps: [web:deps, web:apk]
+    deps: [web:deps, agent:build]
     dir: apps/web
     cmd: pnpm run build
 
