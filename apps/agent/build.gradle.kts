@@ -48,6 +48,10 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    // The agent's adb client, for launching the capture server through this headset's adbd.
+    implementation(libs.libadb)
+    // Makes the self-signed certificate that wireless debugging's TLS presents for the adb key.
+    implementation(libs.bouncycastle.pkix)
 
     testImplementation(libs.junit)
 }

@@ -50,6 +50,20 @@ tasks:
     deps: [agent:build]
     cmd: '"{{.ADB}}" install -r "$(wslpath -w {{.AGENT_APK}})"'
 
+  agent:setup:
+    desc: "One-time setup over USB: install the agent, grant it wireless debugging, have the headset allow its adb key"
+    deps: [agent:install]
+    cmds:
+      - '"{{.ADB}}" shell pm grant dev.trugamr.setu android.permission.WRITE_SECURE_SETTINGS'
+      # An allowed key never expires (the default is 7 days).
+      - '"{{.ADB}}" shell settings put global adb_allowed_connection_time 0'
+      # The agent connects to this port so the headset asks to allow its key, then returns adbd to USB.
+      - '"{{.ADB}}" tcpip 5555'
+      - sleep 3
+      - '"{{.ADB}}" wait-for-usb-device'
+      - '"{{.ADB}}" shell am start -S -n dev.trugamr.setu/.MainActivity --ez dev.trugamr.setu.APPROVE true'
+      - 'echo "On the headset, tick \"Always allow from this computer\", then choose Allow."'
+
   agent:server:
     desc: "Run the capture server on the headset from the installed APK, e.g. task agent:server -- probe 6"
     cmd: >-

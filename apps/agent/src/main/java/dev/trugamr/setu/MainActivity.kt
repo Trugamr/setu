@@ -20,17 +20,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val canWriteSecureSettings =
             checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
-        val agent = Agent(LoopbackServer(), PreferencesStore(this)) { headsetAddress(this) }
+        val agent = Agent(LoopbackServer(), LocalAdb(this), PreferencesStore(this), { headsetAddress(this) })
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) { agent.run() }
+        }
+        // Setup's last step: the PC opens adbd's TCP port, then starts the agent with this extra.
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_APPROVE, false)) {
+            lifecycleScope.launch { agent.approve() }
         }
         setContent {
             SetuTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val state by agent.state.collectAsStateWithLifecycle()
-                    AgentScreen(state, canWriteSecureSettings, agent::editVban)
+                    AgentScreen(
+                        state = state,
+                        canWriteSecureSettings = canWriteSecureSettings,
+                        onStart = { lifecycleScope.launch { agent.startServer() } },
+                        onStop = { lifecycleScope.launch { agent.stopServer() } },
+                        onVbanChange = agent::editVban,
+                    )
                 }
             }
         }
     }
 }
+
+/** Set by setup (`am start --ez dev.trugamr.setu.APPROVE true`) to have the headset approve the agent's adb key. */
+const val EXTRA_APPROVE = "dev.trugamr.setu.APPROVE"

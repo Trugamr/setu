@@ -39,6 +39,14 @@ class LoopbackServer(
         }
     }
 
+    override fun stop() {
+        try {
+            open().use { send(it, StreamProtocol.empty(StreamProtocol.STOP)) }
+        } catch (e: IOException) {
+            // No server, which is what STOP asks for.
+        }
+    }
+
     private fun open() = DatagramSocket().apply {
         soTimeout = timeoutMs
         connect(InetAddress.getLoopbackAddress(), serverPort)

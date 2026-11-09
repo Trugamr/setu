@@ -6,6 +6,8 @@ activity-compose = "1.13.0"
 core-ktx = "1.19.1"
 lifecycle = "2.11.0"
 junit = "4.13.2"
+libadb = "3.1.1"
+bouncycastle = "1.81"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
@@ -16,6 +18,8 @@ androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 junit = { module = "junit:junit", version.ref = "junit" }
+libadb = { module = "com.github.MuntashirAkon:libadb-android", version.ref = "libadb" }
+bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk15to18", version.ref = "bouncycastle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

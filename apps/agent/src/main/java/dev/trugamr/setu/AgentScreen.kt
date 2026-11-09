@@ -4,12 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -26,6 +30,8 @@ import java.net.InetSocketAddress
 fun AgentScreen(
     state: AgentState,
     canWriteSecureSettings: Boolean,
+    onStart: () -> Unit,
+    onStop: () -> Unit,
     onVbanChange: (VbanSettings) -> Unit,
 ) {
     Column(
@@ -37,13 +43,14 @@ fun AgentScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Setu", style = MaterialTheme.typography.headlineMedium)
-            Text(
-                if (canWriteSecureSettings) "Set up: can turn on wireless debugging"
-                else "Not set up: run setup from a PC to grant the wireless debugging permission",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (!canWriteSecureSettings) {
+                Text(
+                    "Not set up. Connect the headset to a PC and run Setu's setup once.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
-        ServerSection(state.server)
+        ServerSection(state.server, state.operation, canStart = canWriteSecureSettings, onStart, onStop)
         VbanSection(state.vban, onVbanChange)
         ReceiverSetupSection(state.vban, state.headsetAddress)
     }
@@ -58,13 +65,21 @@ private fun Section(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun ServerSection(server: ServerState) {
+private fun ServerSection(
+    server: ServerState,
+    operation: Operation?,
+    canStart: Boolean,
+    onStart: () -> Unit,
+    onStop: () -> Unit,
+) {
+    val idle = operation !is Operation.Working
     Section("Capture server") {
         when (server) {
             ServerState.Checking -> Text("Checking…")
-            ServerState.NotRunning -> Text(
-                "Not running. Start it from a PC for now: task agent:server -- udp",
-            )
+            ServerState.NotRunning -> {
+                Text("Not running")
+                Button(onClick = onStart, enabled = idle && canStart) { Text("Start") }
+            }
             is ServerState.Running -> {
                 val status = server.status
                 Text("Running, capturing in ${status.blockFrames}-frame blocks")
@@ -76,8 +91,26 @@ private fun ServerSection(server: ServerState) {
                     status.vban?.let { "VBAN: sending “${it.streamName}” to ${it.hostAndPort()}" }
                         ?: "VBAN: off",
                 )
+                OutlinedButton(onClick = onStop, enabled = idle) { Text("Stop") }
             }
         }
+        OperationStatus(operation)
+    }
+}
+
+@Composable
+private fun OperationStatus(operation: Operation?) {
+    when (operation) {
+        null -> {}
+        is Operation.Working -> Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            Text(operation.message)
+        }
+        is Operation.Done -> Text(operation.message, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        is Operation.Failed -> Text(operation.message, color = MaterialTheme.colorScheme.error)
     }
 }
 
@@ -168,6 +201,12 @@ private fun AgentScreenPreview() {
         StreamProtocol.VbanTarget(InetSocketAddress("192.168.1.20", 6980), "setu"),
     )
     MaterialTheme {
-        AgentScreen(AgentState(ServerState.Running(status), vban, "192.168.1.42"), true) {}
+        AgentScreen(
+            state = AgentState(ServerState.Running(status), vban, "192.168.1.42"),
+            canWriteSecureSettings = true,
+            onStart = {},
+            onStop = {},
+            onVbanChange = {},
+        )
     }
 }
