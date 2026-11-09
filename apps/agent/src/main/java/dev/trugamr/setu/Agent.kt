@@ -64,13 +64,19 @@ sealed interface ServerState {
     data class Running(val status: StreamProtocol.Status) : ServerState
 }
 
-/** Something the user asked the agent to do: starting or stopping the server, or approving its key. */
+/** What the user asked the agent to do. */
+enum class Task { Start, Stop, Approve }
+
+/** A [Task] in progress, or how it ended: [message] says what it waits for, or what happened. */
 sealed interface Operation {
-    data class Working(val message: String) : Operation
+    val task: Task
+    val message: String
 
-    data class Done(val message: String) : Operation
+    data class Working(override val task: Task, override val message: String) : Operation
 
-    data class Failed(val message: String) : Operation
+    data class Done(override val task: Task, override val message: String) : Operation
+
+    data class Failed(override val task: Task, override val message: String) : Operation
 }
 
 /** Everything the agent's screen shows. */
@@ -122,43 +128,50 @@ class Agent(
         edited.trySend(Unit)
     }
 
-    suspend fun startServer() = operate("Starting the capture server…") { progress ->
-        when (val launched = adb.launchServer(progress)) {
-            is AdbResult.Failed -> Operation.Failed(launched.message)
+    suspend fun startServer() = operate(Task.Start, "Starting the capture server…") {
+        when (val launched = adb.launchServer { progress(it) }) {
+            is AdbResult.Failed -> failed(launched.message)
             is AdbResult.Done -> {
                 progress("Waiting for the capture server…")
                 if (settle(running = true)) null
-                else Operation.Failed("The capture server didn't start. Its log is $SERVER_LOG_PATH on the headset.")
+                else failed("The capture server didn't start. Its log is $SERVER_LOG_PATH on the headset.")
             }
         }
     }
 
-    suspend fun stopServer() = operate("Stopping the capture server…") {
+    suspend fun stopServer() = operate(Task.Stop, "Stopping the capture server…") {
         server.stop()
-        if (settle(running = false)) null else Operation.Failed("The capture server didn't stop.")
+        if (settle(running = false)) null else failed("The capture server didn't stop.")
     }
 
     /** The last step of setup, which a PC asks for once it has opened adbd's TCP port. */
-    suspend fun approve() = operate("Asking the headset to allow Setu…") { progress ->
-        when (val approved = adb.approve(progress)) {
-            is AdbResult.Failed -> Operation.Failed(approved.message)
-            is AdbResult.Done -> approved.message?.let(Operation::Done)
+    suspend fun approve() = operate(Task.Approve, "Asking the headset to allow Setu…") {
+        when (val approved = adb.approve { progress(it) }) {
+            is AdbResult.Failed -> failed(approved.message)
+            is AdbResult.Done -> approved.message?.let { done(it) }
         }
+    }
+
+    /** What an operation's block reports through: its progress, and the outcomes it can end with. */
+    private inner class OperationScope(val task: Task) {
+        fun progress(message: String) = mutableState.update { it.copy(operation = Operation.Working(task, message)) }
+
+        fun failed(message: String) = Operation.Failed(task, message)
+
+        fun done(message: String) = Operation.Done(task, message)
     }
 
     /**
      * Runs [block] unless another operation is running, showing its progress, then its outcome:
      * the operation it returns, or nothing.
      */
-    private suspend fun operate(start: String, block: suspend (progress: (String) -> Unit) -> Operation?) {
+    private suspend fun operate(task: Task, start: String, block: suspend OperationScope.() -> Operation?) {
         if (!operating.tryLock()) return
         try {
             withContext(Dispatchers.IO) {
-                val progress = { message: String ->
-                    mutableState.update { it.copy(operation = Operation.Working(message)) }
-                }
-                progress(start)
-                val outcome = block(progress)
+                val running = OperationScope(task)
+                running.progress(start)
+                val outcome = running.block()
                 mutableState.update { it.copy(operation = outcome) }
             }
         } finally {

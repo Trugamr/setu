@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                     val state by agent.state.collectAsStateWithLifecycle()
                     AgentScreen(
                         state = state,
-                        canWriteSecureSettings = canWriteSecureSettings,
+                        canSetUp = canWriteSecureSettings,
                         onStart = { lifecycleScope.launch { agent.startServer() } },
                         onStop = { lifecycleScope.launch { agent.stopServer() } },
                         onVbanChange = agent::editVban,

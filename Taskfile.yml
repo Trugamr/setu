@@ -40,6 +40,11 @@ tasks:
     dir: apps/agent
     cmd: ./gradlew assembleDebug --console=plain --quiet
 
+  agent:screenshots:
+    desc: Render the agent screen's previews to PNGs, no headset needed (apps/agent/src/screenshotTestDebug/reference)
+    dir: apps/agent
+    cmd: ./gradlew updateDebugScreenshotTest --console=plain --quiet
+
   agent:test:
     desc: Run the agent's JVM unit tests (protocol, capture server, agent logic)
     dir: apps/agent

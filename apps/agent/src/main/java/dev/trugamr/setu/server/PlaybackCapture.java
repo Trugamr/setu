@@ -26,9 +26,9 @@ import java.lang.reflect.Method;
  * sets the capture period directly (96 frames = 2 ms; AudioPolicy.createAudioRecordSink() asks
  * for 1920 frames, 40 ms).
  */
-final class PlaybackCapture implements Capture {
+public final class PlaybackCapture implements Capture {
 
-    static final int SAMPLE_RATE = 48000;
+    public static final int SAMPLE_RATE = 48000;
     private static final int CHANNELS = 2;
     private static final int BYTES_PER_SAMPLE = 2;
     static final int FRAME_BYTES = CHANNELS * BYTES_PER_SAMPLE;

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.android.compose.screenshot") version "0.0.1-alpha16"
 }
 
 android {
@@ -32,6 +33,9 @@ android {
         compose = true
     }
 
+    // Renders @PreviewTest previews to PNGs on the JVM: ./gradlew updateDebugScreenshotTest.
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
+
     testOptions {
         unitTests.all {
             // Byte fixtures shared with the desktop app's protocol tests.
@@ -54,4 +58,6 @@ dependencies {
     implementation(libs.bouncycastle.pkix)
 
     testImplementation(libs.junit)
+    screenshotTestImplementation("com.android.tools.screenshot:screenshot-validation-api:0.0.1-alpha16")
+    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
 }

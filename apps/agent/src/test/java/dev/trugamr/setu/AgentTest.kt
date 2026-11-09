@@ -158,7 +158,7 @@ class AgentTest {
         adb.failure = "not set up"
         val agent = agent()
         agent.startServer()
-        assertEquals(Operation.Failed("not set up"), agent.state.value.operation)
+        assertEquals(Operation.Failed(Task.Start, "not set up"), agent.state.value.operation)
     }
 
     @Test
@@ -184,6 +184,6 @@ class AgentTest {
         val agent = agent()
         agent.approve()
         assertEquals(listOf("tick Always allow"), adb.progress)
-        assertEquals(Operation.Done("allowed"), agent.state.value.operation)
+        assertEquals(Operation.Done(Task.Approve, "allowed"), agent.state.value.operation)
     }
 }

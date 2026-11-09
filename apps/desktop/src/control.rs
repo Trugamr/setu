@@ -249,6 +249,7 @@ fn reply_text(result: Result<(), String>, snapshot: &Snapshot) -> String {
 fn phase_name(phase: Phase) -> &'static str {
     match phase {
         Phase::Stopped => "stopped",
+        Phase::Failed => "failed",
         Phase::Waiting => "waiting",
         Phase::Buffering => "buffering",
         Phase::Playing => "playing",

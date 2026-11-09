@@ -4,54 +4,58 @@
 
 use std::time::Duration;
 
-use gpui_kit::component::button::{Button, ButtonVariants};
+use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants};
 use gpui_kit::component::input::{Input, InputEvent, InputState};
 use gpui_kit::component::select::{Select, SelectEvent, SelectState};
-use gpui_kit::component::switch::Switch;
-use gpui_kit::component::{IndexPath, h_flex, v_flex};
+use gpui_kit::component::{IndexPath, Sizable, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use setu::control;
 use setu::output;
 use setu::settings::Store;
-use setu::view::{Phase, Summary};
+use setu::view::{Look, Summary};
 use setu::{Command, Session, Snapshot};
 
-use crate::brand;
+use crate::brand::{self, hsla};
+use crate::dimens::{self, Type};
+use crate::palette::*;
 
 /// The device list's first entry, which follows the system's default output.
 const SYSTEM_DEFAULT: &str = "System default";
 const POLL: Duration = Duration::from_millis(100);
 
 pub fn run() {
-    gpui_kit::application().run(|cx| {
-        gpui_kit::init(cx);
-        brand::apply(cx);
-        let options = WindowOptions {
-            window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
-                None,
-                size(px(440.), px(640.)),
-                cx,
-            ))),
-            window_min_size: Some(size(px(380.), px(580.))),
-            titlebar: Some(TitlebarOptions {
-                title: Some("Setu".into()),
+    // The component icons, such as the select's chevron.
+    gpui_kit::application()
+        .with_assets(gpui_kit::assets::Assets)
+        .run(|cx| {
+            gpui_kit::init(cx);
+            brand::apply(cx);
+            let options = WindowOptions {
+                window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
+                    None,
+                    size(px(440.), px(540.)),
+                    cx,
+                ))),
+                window_min_size: Some(size(px(380.), px(500.))),
+                titlebar: Some(TitlebarOptions {
+                    title: Some("Setu".into()),
+                    ..Default::default()
+                }),
+                app_id: Some("dev.trugamr.setu".into()),
                 ..Default::default()
-            }),
-            app_id: Some("dev.trugamr.setu".into()),
-            ..Default::default()
-        };
-        gpui_kit::open_window(options, cx, |window, cx| cx.new(|cx| Setu::new(window, cx)))
-            .expect("could not open the window");
-        // Closing the window quits; the receiver stops when it drops.
-        cx.on_window_closed(|cx, _| {
-            if cx.windows().is_empty() {
-                cx.quit();
-            }
-        })
-        .detach();
-        cx.activate(true);
-    });
+            };
+            gpui_kit::open_window(options, cx, |window, cx| cx.new(|cx| Setu::new(window, cx)))
+                .expect("could not open the window");
+            // Closing the window quits; the receiver stops when it drops.
+            cx.on_window_closed(|cx, _| {
+                if cx.windows().is_empty() {
+                    cx.quit();
+                }
+            })
+            .detach();
+            cx.activate(true);
+        });
 }
 
 struct Setu {
@@ -186,6 +190,116 @@ impl Setu {
         self.snapshot = snapshot;
         cx.notify();
     }
+
+    /// The status card: what is happening, and the one action for it. Not connected, it holds
+    /// the address field and Connect; connected, Disconnect.
+    fn status_card(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
+        let snapshot = &self.snapshot;
+        let summary = &snapshot.summary;
+        let look = summary.phase.look();
+        let flowing = look == Look::Flowing;
+        let secondary = hsla(if flowing { LINE } else { CREAM_MUTED });
+        let sentence = match look {
+            _ if summary.phase.is_problem() => hsla(SIGNAL),
+            Look::Waiting => hsla(CREAM),
+            _ => secondary,
+        };
+        let headset = snapshot.settings.headset.clone();
+
+        let toggle = cx.listener(|this, _: &ClickEvent, window, cx| this.toggle(window, cx));
+        let action = if !snapshot.connected {
+            h_flex()
+                .mt(px(dimens::GAP))
+                .gap(px(8.))
+                .child(div().flex_1().child(Input::new(&self.headset).large()))
+                .child(
+                    Button::new("connect")
+                        .label("Connect")
+                        .primary()
+                        .large()
+                        .px(px(20.))
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .on_click(toggle),
+                )
+                .into_any_element()
+        } else {
+            let button = Button::new("disconnect")
+                .large()
+                .w_full()
+                .font_weight(FontWeight::SEMIBOLD)
+                .on_click(toggle);
+            let button = match look {
+                // Ink on the Cream card.
+                Look::Flowing => button.label("Disconnect").custom(
+                    ButtonCustomVariant::new(cx)
+                        .color(hsla(INK))
+                        .foreground(hsla(CREAM))
+                        .hover(hsla(INK_RAISED))
+                        .active(hsla(INK_HIGH)),
+                ),
+                // Outlined in Edge with no fill: the kit's outline style fills with Edge too.
+                _ => button
+                    .label(if headset.is_empty() {
+                        "Disconnect".to_string()
+                    } else {
+                        format!("Disconnect from {headset}")
+                    })
+                    .h(px(38.))
+                    .custom(
+                        ButtonCustomVariant::new(cx)
+                            .color(hsla(INK_RAISED))
+                            .foreground(hsla(CREAM))
+                            .hover(hsla(INK_HIGH))
+                            .active(hsla(INK_HOVER)),
+                    ),
+            };
+            let button = if look == Look::Flowing {
+                div().child(button)
+            } else {
+                div()
+                    .rounded(px(dimens::CONTROL_RADIUS))
+                    .border_1()
+                    .border_color(hsla(EDGE))
+                    .child(button)
+            };
+            div().mt(px(dimens::GAP)).child(button).into_any_element()
+        };
+
+        v_flex()
+            .p(px(dimens::CARD_PADDING))
+            .rounded(px(dimens::CARD_RADIUS))
+            .bg(hsla(if flowing { CREAM } else { INK_RAISED }))
+            .text_color(hsla(if flowing { INK } else { CREAM }))
+            .when(look == Look::Waiting, |card| {
+                card.border_2().border_color(hsla(CREAM))
+            })
+            .child(
+                h_flex()
+                    .items_start()
+                    .gap(px(dimens::GAP))
+                    .child(
+                        v_flex()
+                            .flex_1()
+                            .min_w_0()
+                            .gap(px(dimens::TIGHT))
+                            .child(
+                                text(&dimens::TITLE)
+                                    .font_weight(FontWeight::BOLD)
+                                    .child(summary.title.clone()),
+                            )
+                            .child(
+                                text(&dimens::SENTENCE)
+                                    .text_color(sentence)
+                                    .child(summary.detail.clone()),
+                            ),
+                    )
+                    .child(brand::grille(look, summary.level)),
+            )
+            .when(flowing, |card| {
+                card.child(facts(summary, &headset, secondary))
+            })
+            .child(action)
+    }
 }
 
 /// The list entry for a device setting: the exact name, else the first name containing it
@@ -210,149 +324,122 @@ fn device_index(names: &[SharedString], device: Option<&str>) -> usize {
 
 impl Render for Setu {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let snapshot = &self.snapshot;
-        let connected = snapshot.connected;
-        let summary = &snapshot.summary;
-
-        let connect = Button::new("connect")
-            .label(if connected { "Disconnect" } else { "Connect" })
-            .map(|button| {
-                if connected {
-                    button.outline()
-                } else {
-                    button.primary()
-                }
-            })
-            .on_click(cx.listener(|this, _: &ClickEvent, window, cx| this.toggle(window, cx)));
-
-        let exclusive = Switch::new("exclusive")
-            .checked(snapshot.settings.exclusive)
-            .on_click(cx.listener(|this, checked: &bool, window, cx| {
-                this.apply(Command::Exclusive(*checked), window, cx);
-            }));
+        let exclusive = self.snapshot.settings.exclusive;
+        let footer = self.snapshot.summary.footer.clone();
 
         v_flex()
             .size_full()
-            .bg(brand::ink())
-            .text_color(brand::cream())
-            .px(px(28.))
-            .py(px(24.))
-            .gap(px(22.))
-            .child(header(summary.phase))
-            .child(status_card(summary))
-            .child(field(
-                "Headset",
-                h_flex()
-                    .gap(px(8.))
-                    .child(div().flex_1().child(Input::new(&self.headset)))
-                    .child(connect),
-            ))
-            .child(field(
-                "Output",
-                v_flex()
-                    .gap(px(14.))
-                    .child(Select::new(&self.device))
-                    .child(
-                        h_flex()
-                            .justify_between()
-                            .items_center()
-                            .gap(px(16.))
-                            .child(v_flex().flex_1().min_w_0().child("Exclusive mode").child(
-                                muted(
-                                    "Lowest latency. Other apps cannot use the device meanwhile.",
-                                ),
-                            ))
-                            .child(div().flex_none().child(exclusive)),
-                    ),
-            ))
-            .when_some(snapshot.error.clone(), |el, error| {
-                el.child(div().text_sm().text_color(brand::signal()).child(error))
-            })
-            .child(div().flex_1())
+            .bg(hsla(INK))
+            .text_color(hsla(CREAM))
+            .p(px(dimens::MARGIN))
+            .child(self.status_card(cx))
+            .child(section_label("Output"))
             .child(
-                div().text_xs().text_color(brand::cream_muted()).child(
-                    summary
-                        .stats
-                        .clone()
-                        .unwrap_or_else(|| "Not streaming".into()),
-                ),
+                v_flex()
+                    .rounded(px(dimens::CARD_RADIUS))
+                    .bg(hsla(INK_RAISED))
+                    .child(
+                        row()
+                            .child(text(&dimens::ROW).flex_1().child("Device"))
+                            .child(
+                                div().w(px(220.)).child(
+                                    Select::new(&self.device).menu_width(px(280.)),
+                                ),
+                            ),
+                    )
+                    .child(div().h(px(1.)).bg(hsla(INK_HIGH)))
+                    .child(
+                        row()
+                            .child(
+                                v_flex()
+                                    .flex_1()
+                                    .min_w_0()
+                                    .child(text(&dimens::ROW).child("Exclusive mode"))
+                                    .child(text(&dimens::LABEL).text_color(hsla(CREAM_MUTED)).child(
+                                        "Lowest latency. Other apps can't use the device meanwhile.",
+                                    )),
+                            )
+                            .child(switch("exclusive", exclusive).on_click(cx.listener(
+                                move |this, _: &ClickEvent, window, cx| {
+                                    this.apply(Command::Exclusive(!exclusive), window, cx);
+                                },
+                            ))),
+                    ),
             )
+            .child(div().flex_1())
+            .when_some(footer, |page, footer| {
+                page.child(
+                    text(&dimens::FACT_LABEL)
+                        .px(px(dimens::CARD_PADDING))
+                        .text_color(hsla(CREAM_MUTED))
+                        .child(footer),
+                )
+            })
     }
 }
 
-fn header(phase: Phase) -> impl IntoElement {
-    let (label, live) = match phase {
-        Phase::Stopped => ("Off", false),
-        Phase::Waiting | Phase::Buffering => ("Waiting", false),
-        Phase::Playing => ("Live", true),
-        Phase::Unsupported | Phase::OutputLost => ("Problem", false),
+/// While playing: where from, the buffer and the underruns.
+fn facts(summary: &Summary, headset: &str, secondary: Hsla) -> impl IntoElement {
+    let fact = |value: String, label: &'static str| {
+        v_flex()
+            .child(
+                text(&dimens::FACT)
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .child(value),
+            )
+            .child(text(&dimens::FACT_LABEL).text_color(secondary).child(label))
     };
     h_flex()
-        .justify_between()
+        .mt(px(dimens::GAP))
+        .gap(px(24.))
+        .when(!headset.is_empty(), |row| {
+            row.child(fact(headset.to_string(), "headset"))
+        })
+        .children(summary.facts.iter().map(|f| fact(f.value.clone(), f.label)))
+}
+
+fn section_label(label: &'static str) -> impl IntoElement {
+    text(&dimens::LABEL)
+        .text_color(hsla(CREAM_MUTED))
+        .pt(px(dimens::SECTION_GAP))
+        .pb(px(8.))
+        .px(px(dimens::CARD_PADDING))
+        .child(label)
+}
+
+fn row() -> Div {
+    h_flex()
         .items_center()
-        .child(
-            h_flex()
-                .gap(px(12.))
-                .items_center()
-                .child(brand::mark(36.))
-                .child(
-                    div()
-                        .text_xl()
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .child("Setu"),
-                ),
-        )
-        .child(
-            h_flex()
-                .gap(px(6.))
-                .items_center()
-                .px(px(10.))
-                .py(px(4.))
-                .rounded_full()
-                .border_1()
-                .border_color(if live { brand::signal() } else { brand::line() })
-                .child(div().size(px(7.)).rounded_full().bg(if live {
-                    brand::signal()
-                } else {
-                    brand::cream_muted()
-                }))
-                .child(div().text_xs().child(label)),
-        )
+        .gap(px(12.))
+        .min_h(px(dimens::ROW_HEIGHT))
+        .px(px(dimens::CARD_PADDING))
+        .py(px(10.))
 }
 
-fn status_card(summary: &Summary) -> impl IntoElement {
-    v_flex()
-        .gap(px(8.))
-        .p(px(20.))
-        .rounded(px(16.))
-        .bg(brand::ink_raised())
-        .border_1()
-        .border_color(brand::ink_high())
-        .child(
-            div()
-                .text_2xl()
-                .font_weight(FontWeight::SEMIBOLD)
-                .child(summary.title.clone()),
-        )
-        .child(muted(summary.detail.clone()))
-        .child(div().pt(px(8.)).child(brand::meter(summary.level, 16)))
-}
-
-fn field(label: &'static str, control: impl IntoElement) -> impl IntoElement {
-    v_flex()
-        .gap(px(8.))
-        .child(
-            div()
-                .text_sm()
-                .text_color(brand::cream_muted())
-                .child(label),
-        )
-        .child(control)
-}
-
-fn muted(text: impl Into<SharedString>) -> Div {
+/// A switch in the brand's colours, which the component theme can't give: on, a Cream track
+/// with an Ink thumb; off, an Edge outline and thumb.
+fn switch(id: &'static str, on: bool) -> Stateful<Div> {
     div()
-        .text_sm()
-        .text_color(brand::cream_muted())
-        .child(text.into())
+        .id(id)
+        .flex_none()
+        .w(px(40.))
+        .h(px(20.))
+        .rounded_full()
+        .p(px(4.))
+        .flex()
+        .cursor_pointer()
+        .when(on, |track| track.bg(hsla(CREAM)).justify_end())
+        .when(!on, |track| {
+            track.border_1().border_color(hsla(EDGE)).p(px(3.))
+        })
+        .child(
+            div()
+                .size(px(12.))
+                .rounded_full()
+                .bg(hsla(if on { INK } else { EDGE })),
+        )
+}
+
+fn text(style: &Type) -> Div {
+    div().text_size(px(style.0)).line_height(px(style.1))
 }

@@ -24,22 +24,34 @@ data class VbanSettings(
 
     fun validate(): Validated {
         if (!enabled) return Validated.Off
-        val address = parseIpLiteral(host.trim())
-            ?: return Validated.Invalid("Enter the PC's IP address, like 192.168.1.20.")
-        if (address is Inet6Address && address.isLinkLocalAddress) {
-            return Validated.Invalid("Use the PC's IPv4 address. A link-local IPv6 address (fe80::) does not work here.")
-        }
-        val port = port.trim().toIntOrNull()?.takeIf { it in 1..65535 }
-            ?: return Validated.Invalid("The port is a number from 1 to 65535.")
-        val name = streamName.trim()
-        return try {
-            Validated.Send(StreamProtocol.VbanTarget(InetSocketAddress(address, port), name))
-        } catch (e: IllegalArgumentException) {
-            Validated.Invalid("The stream name is 1 to ${Vban.MAX_STREAM_NAME_LENGTH} plain letters, digits or symbols.")
-        }
+        val problem = hostProblem(host) ?: portProblem(port) ?: streamNameProblem(streamName)
+        if (problem != null) return Validated.Invalid(problem)
+        val address = InetSocketAddress(parseIpLiteral(host.trim()), port.trim().toInt())
+        return Validated.Send(StreamProtocol.VbanTarget(address, streamName.trim()))
     }
 
     companion object {
+        /** Why [host] can't be the PC's address, or null when it can. */
+        fun hostProblem(host: String): String? {
+            val address = parseIpLiteral(host.trim()) ?: return "Enter the PC's IP address, like 192.168.1.20."
+            if (address is Inet6Address && address.isLinkLocalAddress) {
+                return "Use the PC's IPv4 address. A link-local IPv6 address (fe80::) does not work here."
+            }
+            return null
+        }
+
+        /** Why [port] can't be the receiver's port, or null when it can. */
+        fun portProblem(port: String): String? =
+            if (port.trim().toIntOrNull() in 1..65535) null else "The port is a number from 1 to 65535."
+
+        /** Why VBAN can't carry [name] as a stream name, or null when it can. */
+        fun streamNameProblem(name: String): String? = try {
+            Vban.checkStreamName(name.trim())
+            null
+        } catch (e: IllegalArgumentException) {
+            "The stream name is 1 to ${Vban.MAX_STREAM_NAME_LENGTH} plain letters, digits or symbols."
+        }
+
         /** Settings that send to [target]. */
         fun of(target: StreamProtocol.VbanTarget) = VbanSettings(
             enabled = true,

@@ -118,7 +118,7 @@ impl<R: Running> Session<R> {
             settings: self.settings.clone(),
             connected: self.receiver.is_some(),
             error: self.error.clone(),
-            summary: view::summarize(self.status().as_ref()),
+            summary: view::summarize(self.status().as_ref(), self.error.as_deref()),
         }
     }
 
@@ -289,6 +289,7 @@ mod tests {
             snapshot.error.as_deref(),
             Some("enter the headset's address")
         );
+        assert_eq!(snapshot.summary.phase, Phase::Failed);
         assert!(started.borrow().is_empty());
     }
 
