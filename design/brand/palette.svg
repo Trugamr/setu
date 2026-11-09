@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="672" viewBox="0 0 760 672" role="img" aria-label="Setu colour tokens">
+<rect width="760" height="672" rx="16" fill="#15141A"/>
+<g font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<rect x="24" y="30" width="40" height="40" rx="10" fill="#15141A" stroke="#4A4851"/>
+<text x="80" y="48" font-size="15" font-weight="600" fill="#F5ECDC">Ink<tspan fill="#A9A398" font-weight="400" dx="10">#15141A</tspan></text>
+<text x="80" y="66" font-size="12.5" fill="#A9A398">Page background, the icon tile, text on Signal and on Cream</text>
+<rect x="24" y="82" width="40" height="40" rx="10" fill="#F5ECDC" stroke="#4A4851"/>
+<text x="80" y="100" font-size="15" font-weight="600" fill="#F5ECDC">Cream<tspan fill="#A9A398" font-weight="400" dx="10">#F5ECDC</tspan></text>
+<text x="80" y="118" font-size="12.5" fill="#A9A398">Text, the grille, the status card while sound flows, and on switches</text>
+<rect x="24" y="134" width="40" height="40" rx="10" fill="#FF3B2F" stroke="#4A4851"/>
+<text x="80" y="152" font-size="15" font-weight="600" fill="#F5ECDC">Signal<tspan fill="#A9A398" font-weight="400" dx="10">#FF3B2F</tspan></text>
+<text x="80" y="170" font-size="12.5" fill="#A9A398">The one accent: the power light, the action that starts things, focus, errors</text>
+<rect x="24" y="186" width="40" height="40" rx="10" fill="#1F1E25" stroke="#4A4851"/>
+<text x="80" y="204" font-size="15" font-weight="600" fill="#F5ECDC">InkRaised<tspan fill="#A9A398" font-weight="400" dx="10">#1F1E25</tspan></text>
+<text x="80" y="222" font-size="12.5" fill="#A9A398">Cards, groups, dialogs, popovers and menus</text>
+<rect x="24" y="238" width="40" height="40" rx="10" fill="#2A2930" stroke="#4A4851"/>
+<text x="80" y="256" font-size="15" font-weight="600" fill="#F5ECDC">InkHigh<tspan fill="#A9A398" font-weight="400" dx="10">#2A2930</tspan></text>
+<text x="80" y="274" font-size="12.5" fill="#A9A398">Dividers inside groups, disabled buttons, off switch tracks</text>
+<rect x="24" y="290" width="40" height="40" rx="10" fill="#36353D" stroke="#4A4851"/>
+<text x="80" y="308" font-size="15" font-weight="600" fill="#F5ECDC">InkHover<tspan fill="#A9A398" font-weight="400" dx="10">#36353D</tspan></text>
+<text x="80" y="326" font-size="12.5" fill="#A9A398">Hover and pressed on raised surfaces, the selected menu item</text>
+<rect x="24" y="342" width="40" height="40" rx="10" fill="#403F47" stroke="#4A4851"/>
+<text x="80" y="360" font-size="15" font-weight="600" fill="#F5ECDC">Unlit<tspan fill="#A9A398" font-weight="400" dx="10">#403F47</tspan></text>
+<text x="80" y="378" font-size="12.5" fill="#A9A398">Grille dots that are off</text>
+<rect x="24" y="394" width="40" height="40" rx="10" fill="#4A4851" stroke="#4A4851"/>
+<text x="80" y="412" font-size="15" font-weight="600" fill="#F5ECDC">Line<tspan fill="#A9A398" font-weight="400" dx="10">#4A4851</tspan></text>
+<text x="80" y="430" font-size="12.5" fill="#A9A398">Popover outlines, and secondary text on Cream. Never a control's outline</text>
+<rect x="24" y="446" width="40" height="40" rx="10" fill="#75727D" stroke="#4A4851"/>
+<text x="80" y="464" font-size="15" font-weight="600" fill="#F5ECDC">Edge<tspan fill="#A9A398" font-weight="400" dx="10">#75727D</tspan></text>
+<text x="80" y="482" font-size="12.5" fill="#A9A398">Outlines of controls: inputs, selects, outline buttons, off switches and their thumbs</text>
+<rect x="24" y="498" width="40" height="40" rx="10" fill="#A9A398" stroke="#4A4851"/>
+<text x="80" y="516" font-size="15" font-weight="600" fill="#F5ECDC">CreamMuted<tspan fill="#A9A398" font-weight="400" dx="10">#A9A398</tspan></text>
+<text x="80" y="534" font-size="12.5" fill="#A9A398">Secondary text and placeholders</text>
+<rect x="24" y="550" width="40" height="40" rx="10" fill="#FF5A4F" stroke="#4A4851"/>
+<text x="80" y="568" font-size="15" font-weight="600" fill="#F5ECDC">SignalHover<tspan fill="#A9A398" font-weight="400" dx="10">#FF5A4F</tspan></text>
+<text x="80" y="586" font-size="12.5" fill="#A9A398">Signal under the pointer</text>
+<rect x="24" y="602" width="40" height="40" rx="10" fill="#F0382C" stroke="#4A4851"/>
+<text x="80" y="620" font-size="15" font-weight="600" fill="#F5ECDC">SignalPressed<tspan fill="#A9A398" font-weight="400" dx="10">#F0382C</tspan></text>
+<text x="80" y="638" font-size="12.5" fill="#A9A398">Signal while pressed</text>
+</g>
+</svg>
