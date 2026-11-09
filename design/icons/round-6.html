@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setu icon studies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C0C0F;
+  --card: #131317;
+  --line: #25252C;
+  --text: #EDECE8;
+  --muted: #A09EA8;
+  --chip: #1C1C22;
+  --stage: radial-gradient(120% 90% at 50% 0%, #22222A 0%, #141418 70%);
+  --stage-ink: #A09EA8;
+}
+body[data-stage="paper"] { --stage: radial-gradient(120% 90% at 50% 0%, #F7F3EC 0%, #E7E0D3 80%); --stage-ink: #5C574E; }
+body[data-stage="wall"] { --stage: linear-gradient(135deg, #2B2160 0%, #8A3F86 45%, #E2775E 80%, #F4B26A 100%); --stage-ink: #F6E9F0; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 40px; } }
+
+header.top { padding: 72px 0 40px; display: grid; gap: 24px; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.eyebrow a { color: var(--muted); }
+h1 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: clamp(48px, 8vw, 104px); line-height: .92; letter-spacing: -.02em; }
+h1 em { color: #FFB4A8; }
+.lede { margin: 0; max-width: 640px; color: var(--muted); font-size: 17px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: rgba(12,12,15,.86); backdrop-filter: blur(14px); z-index: 5; }
+.seg { display: inline-flex; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+.seg button { font: 500 13px Inter, sans-serif; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDECE8; color: #0C0C0F; }
+.bar nav { display: flex; gap: 18px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+
+section { padding: 56px 0 24px; }
+section > h2 { margin: 0 0 6px; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 44px; line-height: 1; }
+section > p.sub { margin: 0 0 28px; color: var(--muted); max-width: 640px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
+.stage { background: var(--stage); aspect-ratio: 1 / .82; display: grid; place-items: center; border: 0; padding: 0; width: 100%; cursor: zoom-in; }
+.stage .hero { width: 60%; aspect-ratio: 1; filter: drop-shadow(0 16px 26px rgba(0,0,0,.3)) drop-shadow(0 3px 6px rgba(0,0,0,.18)); transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.card:hover .stage .hero { transform: translateY(-4px) scale(1.02); }
+.stage .hero svg, .mini svg, .tile svg, .tb svg, .tray svg { width: 100%; height: 100%; display: block; }
+.ladder { background: var(--stage); display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.06); }
+.ladder div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ladder span { font: 500 10px 'JetBrains Mono', monospace; color: var(--stage-ink); }
+.meta { padding: 18px 20px 20px; display: grid; gap: 6px; }
+.meta .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.num { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); }
+.tag { font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .04em; color: #FFC9BF; background: rgba(255,140,120,.1); border: 1px solid rgba(255,140,120,.25); padding: 3px 9px; border-radius: 999px; }
+.meta h3 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 30px; line-height: 1.05; }
+.meta p { margin: 0; color: var(--muted); font-size: 14px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.actions button:hover { border-color: #3A3A44; background: #222229; }
+
+.ctx { display: grid; gap: 20px; }
+.ctx-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; }
+.env { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); padding: clamp(20px, 5vw, 56px); background:
+  radial-gradient(60% 80% at 15% 20%, #3C5A7A 0%, transparent 60%),
+  radial-gradient(50% 70% at 85% 30%, #6B4A7E 0%, transparent 60%),
+  radial-gradient(70% 60% at 50% 110%, #C98A5C 0%, transparent 60%), #1B1D28; }
+.panel { max-width: 940px; margin: 0 auto; border-radius: 28px; padding: 24px; background: rgba(20,22,32,.62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(24px); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-weight: 600; font-size: 18px; }
+.panel .ph span { font: 400 13px Inter, sans-serif; color: rgba(255,255,255,.6); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 20px 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12.5px; color: rgba(255,255,255,.85); text-align: center; }
+.tile .ic { width: 80px; height: 80px; }
+.tile.ph-tile .ic { border-radius: 20px; background: rgba(255,255,255,.07); }
+.desk { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--stage); min-height: 160px; display: flex; flex-direction: column; justify-content: flex-end; }
+.taskbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 14px; background: rgba(24,24,30,.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+.tb-apps { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; }
+.tb:hover { background: rgba(255,255,255,.08); }
+.tb .i24 { width: 24px; height: 24px; }
+.tray { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.75); font: 500 12px Inter, sans-serif; }
+.tray .i16 { width: 16px; height: 16px; }
+.tray .clock { margin-left: 8px; text-align: right; line-height: 1.25; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(6,6,9,.82); backdrop-filter: blur(10px); }
+.focus { width: min(92vw, 720px); border-radius: 28px; overflow: hidden; background: var(--stage); border: 1px solid var(--line); }
+.focus .big { width: min(72vw, 540px); aspect-ratio: 1; margin: 48px auto 20px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.35)); }
+.focus .big svg { width: 100%; height: 100%; display: block; }
+.focus .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; background: var(--card); color: var(--text); }
+.focus .cap strong { font: 400 26px 'Instrument Serif', serif; }
+.focus .cap button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+
+footer { padding: 48px 0 80px; color: var(--muted); font-size: 13px; }
+footer a { color: var(--muted); }
+</style>
+<style>
+.pal { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pal-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-right: 4px; }
+.pal button { width: 36px; height: 36px; border-radius: 999px; border: 2px solid transparent; padding: 3px; background: transparent; cursor: pointer; }
+.pal button[aria-pressed="true"] { border-color: var(--text); }
+.pal button span { display: block; width: 100%; height: 100%; border-radius: 999px; }
+.grid.sm { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
+.grid.sm .meta h3 { font-size: 26px; }
+.sw { display: flex; gap: 6px; margin-top: 2px; }
+.sw i { width: 18px; height: 18px; border-radius: 6px; border: 1px solid rgba(255,255,255,.12); }
+.sw code { font: 500 11px 'JetBrains Mono', monospace; color: var(--muted); align-self: center; margin-left: 4px; }
+</style>
+</head>
+<body data-stage="graphite">
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Setu · app icon studies · round 6 · <a href="round-7.html">round 7</a> · <a href="round-5.html">round 5</a> · <a href="round-4.html">round 4</a> · <a href="round-3.html">round 3</a> · <a href="round-2.html">round 2</a></span>
+    <h1>Grille <em>at night.</em></h1>
+    <p class="lede">The Night grille, cream dots on near-black, pushed further. First the one accent dot: where it sits and how it behaves. Then the dot layouts, then the shade of the night itself. Red is the default; switch the accent in the bar to compare.</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Backdrop">
+      <button type="button" data-stage="graphite" aria-pressed="true">Graphite</button>
+      <button type="button" data-stage="paper" aria-pressed="false">Paper</button>
+      <button type="button" data-stage="wall" aria-pressed="false">Wallpaper</button>
+    </div>
+    <div class="pal" role="group" aria-label="Accent colour"><span class="pal-label">Accent</span><span id="acc"></span></div>
+    <nav><a href="#dot">The dot</a><a href="#shapes">Shapes</a><a href="#shades">Shades</a><a href="#context">In context</a></nav>
+  </div>
+
+  <section id="dot">
+    <h2>The dot</h2>
+    <p class="sub">The classic Night grille with the accent placed and treated eight ways. Click any icon to enlarge it.</p>
+    <div class="grid" id="g-dot"></div>
+  </section>
+
+  <section id="shapes">
+    <h2>Shapes</h2>
+    <p class="sub">Every dot layout from round 5, in Night with the accent.</p>
+    <div class="grid sm" id="g-shapes"></div>
+  </section>
+
+  <section id="shades">
+    <h2>Shades</h2>
+    <p class="sub">How dark, how warm, and how flat. The same grille on different blacks, dot tones and finishes.</p>
+    <div class="grid sm" id="g-shades"></div>
+  </section>
+
+  <section id="context">
+    <h2>In context</h2>
+    <p class="sub">The accent studies and shades in a generic headset library panel, and a desktop taskbar at 24 px with a 16 px tray.</p>
+    <div class="ctx">
+      <div>
+        <p class="ctx-label">Headset library</p>
+        <div class="env"><div class="panel"><div class="ph">Library<span>Sorted by recent</span></div><div class="tiles" id="tiles"></div></div></div>
+      </div>
+      <div>
+        <p class="ctx-label">Desktop taskbar &amp; tray</p>
+        <div class="desk"><div class="taskbar"><div class="tb-apps" id="tb"></div><div class="tray" id="tray"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="focus"><div class="focus"><div class="big" id="focus-big"></div><div class="cap"><strong id="focus-name"></strong><button type="button" id="focus-close">Close</button></div></div></dialog>
+
+  <footer>Each icon is a 100×100 SVG. Use the buttons under each one to download the vector or a 1024 px PNG, in the accent selected at the time. Other rounds: <a href="round-7.html">round 7</a> · <a href="round-5.html">round 5</a> · <a href="round-4.html">round 4</a> · <a href="round-3.html">round 3</a> · <a href="round-2.html">round 2</a>.</footer>
+</div>
+
+<script>
+// Superellipse (n = 5) tile outline, close to a continuous-corner app icon.
+const SQ = (() => {
+  const n = 5, pts = [];
+  for (let i = 0; i < 240; i++) {
+    const t = i / 240 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+    pts.push([50 + 50 * Math.sign(c) * Math.abs(c) ** (2 / n), 50 + 50 * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return 'M' + pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+})();
+
+let N = 0;
+const uid = () => 'i' + (++N) + '_';
+const f = n => +n.toFixed(2);
+
+function tile(u, fill, inner, defs = '') {
+  return `<defs><clipPath id="${u}c"><path d="${SQ}"/></clipPath>${defs}</defs>
+  <g clip-path="url(#${u}c)"><rect width="100" height="100" fill="${fill}"/>${inner}<path d="${SQ}" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".9"/></g>`;
+}
+
+/* ---------- Geometry ---------- */
+
+// Dot centres on a grid, minus an arch of radius ar centred at (ax, ay).
+function grid({ x0 = 14, x1 = 86, y0 = 26, y1 = 74, dx = 6, dy = 6, stagger = 0, ax = 50, ay = 76, ar = 25 } = {}) {
+  const pts = [];
+  let row = 0;
+  for (let y = y0; y <= y1 + 1e-6; y += dy, row++) {
+    for (let x = x0 + (row % 2 ? stagger : 0); x <= x1 + 1e-6; x += dx) {
+      if (Math.hypot(x - ax, y - ay) < ar) continue;
+      pts.push([f(x), f(y)]);
+    }
+  }
+  return pts;
+}
+
+// The top-right dot, which carries the power light.
+function hotIndex(pts) {
+  const top = Math.min(...pts.map(p => p[1]));
+  let best = -1;
+  pts.forEach((p, i) => { if (Math.abs(p[1] - top) < .01 && (best < 0 || p[0] > pts[best][0])) best = i; });
+  return best;
+}
+
+const CLASSIC = grid();
+const CLASSIC_HOT = hotIndex(CLASSIC);
+const ALL = grid({ ar: 0 });
+const at = (pts, x, y) => pts.findIndex(p => p[0] === x && p[1] === y);
+
+const dotsSvg = (pts, r, p, hot = hotIndex(pts)) =>
+  pts.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${typeof r === 'function' ? f(r(x, y)) : r}" fill="${i === hot ? p.hot : p.dot}"/>`).join('');
+
+/* ---------- Accent ---------- */
+
+const ACCENTS = [
+  { key: 'red', name: 'Red', c: '#FF3B2F' },
+  { key: 'yellow', name: 'Yellow', c: '#FFC21A' },
+  { key: 'orange', name: 'Orange', c: '#FF7A1A' },
+  { key: 'pink', name: 'Pink', c: '#FF4F9A' },
+  { key: 'green', name: 'Green', c: '#3DDC84' },
+  { key: 'cyan', name: 'Cyan', c: '#3FD0FF' },
+];
+let acc = ACCENTS[0];
+
+const INK = '#15141A';
+const CREAM = '#F5ECDC';
+const night = () => ({ bg: INK, dot: CREAM, hot: acc.c });
+
+/* ---------- The dot: placement and treatment ---------- */
+
+const DOT = [
+  { key: 'classic', name: 'Classic', tag: 'top right',
+    blurb: 'The Night grille as it stands, with the accent as a power light in the top-right corner.',
+    fn: u => tile(u, INK, dotsSvg(CLASSIC, 2.15, night())) },
+
+  { key: 'button', name: 'Button', tag: 'bigger dot',
+    blurb: 'The accent grows into a power button, a step larger than the dots around it.',
+    fn: u => {
+      const [hx, hy] = CLASSIC[CLASSIC_HOT];
+      return tile(u, INK, dotsSvg(CLASSIC, 2.15, { dot: CREAM }, -1).replace(`<circle cx="${hx}" cy="${hy}" r="2.15" fill="${CREAM}"/>`, '') +
+        `<circle cx="${hx - 1}" cy="${hy + 1}" r="3.6" fill="${acc.c}"/>`);
+    } },
+
+  { key: 'glow', name: 'Glow', tag: 'bloom',
+    blurb: 'The accent dot is lit and bleeds a soft halo onto the dark panel. Everything else stays flat.',
+    fn: u => {
+      const [hx, hy] = CLASSIC[CLASSIC_HOT];
+      return tile(u, INK, `<circle cx="${hx}" cy="${hy}" r="9" fill="url(#${u}halo)"/>` + dotsSvg(CLASSIC, 2.15, night()) +
+        `<circle cx="${hx}" cy="${hy}" r=".9" fill="#fff" opacity=".7"/>`,
+        `<radialGradient id="${u}halo"><stop offset="0" stop-color="${acc.c}" stop-opacity=".55"/><stop offset="1" stop-color="${acc.c}" stop-opacity="0"/></radialGradient>`);
+    } },
+
+  { key: 'live', name: 'On Air', tag: 'ring',
+    blurb: 'A thin ring around the accent, like a recording light. Reads as "live", which is what a stream is.',
+    fn: u => {
+      const [hx, hy] = CLASSIC[CLASSIC_HOT];
+      return tile(u, INK, dotsSvg(CLASSIC, 2.15, night()) +
+        `<circle cx="${hx}" cy="${hy}" r="4.3" fill="none" stroke="${acc.c}" stroke-width=".8" opacity=".75"/>`);
+    } },
+
+  { key: 'keystone', name: 'Keystone', tag: 'top centre',
+    blurb: 'The accent moves to the top of the arch, where the keystone of a stone bridge would sit.',
+    fn: u => tile(u, INK, dotsSvg(CLASSIC, 2.15, night(), at(CLASSIC, 50, 50))) },
+
+  { key: 'sun', name: 'Red Sun', tag: 'in the arch',
+    blurb: 'No accent in the grille at all. A big sun sits low inside the arch instead, setting under the bridge.',
+    fn: u => tile(u, INK, dotsSvg(CLASSIC, 2.15, night(), -1) + `<circle cx="50" cy="72" r="10" fill="${acc.c}"/>`) },
+
+  { key: 'edge', name: 'Lit Arch', tag: 'arch edge',
+    blurb: 'Only the dots that line the arch take the accent, so the bridge is drawn in light.',
+    fn: u => tile(u, INK, CLASSIC.map(([x, y]) => {
+      const edge = [[6, 0], [-6, 0], [0, 6]].some(([dx, dy]) => y + dy <= 74 && Math.hypot(x + dx - 50, y + dy - 76) < 25);
+      return `<circle cx="${x}" cy="${y}" r="2.15" fill="${edge ? acc.c : CREAM}"/>`;
+    }).join('')) },
+
+  { key: 'meter', name: 'Meter', tag: 'level',
+    blurb: 'The right-hand column lights up from the bottom like a level meter, so the grille shows sound playing.',
+    fn: u => tile(u, INK, CLASSIC.map(([x, y]) => {
+      const lit = x === 86 && y >= 50;
+      return `<circle cx="${x}" cy="${y}" r="2.15" fill="${lit ? acc.c : CREAM}"/>`;
+    }).join('')) },
+];
+
+/* ---------- Shapes ---------- */
+
+const SHAPES = [
+  { key: 'classic', name: 'Classic', tag: 'square grid',
+    fn: (u, p) => tile(u, p.bg, dotsSvg(CLASSIC, 2.15, p)) },
+
+  { key: 'honeycomb', name: 'Honeycomb', tag: 'staggered grid',
+    fn: (u, p) => tile(u, p.bg, dotsSvg(grid({ dy: 5.2, y0: 26, y1: 74, stagger: 3, x1: 86 }), 2.15, p)) },
+
+  { key: 'halftone', name: 'Halftone', tag: 'dot size',
+    fn: (u, p) => {
+      const ar = 30, pts = grid({ x0: 8, x1: 92, y0: 8, y1: 92, ay: 96, ar: 0 });
+      const r = (x, y) => Math.max(0, Math.min(2.6, (Math.hypot(x - 50, y - 96) - ar) * .14));
+      return tile(u, p.bg, dotsSvg(pts.filter(([x, y]) => r(x, y) > .25), r, p));
+    } },
+
+  { key: 'keystone-arches', name: 'Keystone', tag: 'concentric arches',
+    fn: (u, p) => {
+      let out = '';
+      [27, 33, 39, 45].forEach((r, ring) => {
+        // An even count, so each ring has a dot at its crown.
+        const n = 2 * Math.round(Math.PI * r / 12.4);
+        for (let i = 0; i <= n; i++) {
+          const a = Math.PI * i / n, x = 50 - r * Math.cos(a), y = 80 - r * Math.sin(a);
+          out += `<circle cx="${f(x)}" cy="${f(y)}" r="2.15" fill="${ring === 3 && i === n / 2 ? p.hot : p.dot}"/>`;
+        }
+      });
+      return tile(u, p.bg, out);
+    } },
+
+  { key: 'slots', name: 'Slots', tag: 'vent lines',
+    fn: (u, p) => {
+      let d = '';
+      for (let y = 28; y <= 74; y += 6.5) {
+        const dy = y - 76, w = 28 ** 2 - dy * dy > 0 ? Math.sqrt(28 ** 2 - dy * dy) : 0;
+        const right = y === 28 ? 77 : 86;
+        d += w ? `M14 ${y}H${f(50 - w)}M${f(50 + w)} ${y}H${right}` : `M14 ${y}H${right}`;
+      }
+      return tile(u, p.bg, `<path d="${d}" stroke="${p.dot}" stroke-width="3.4" stroke-linecap="round"/><circle cx="86" cy="28" r="2.4" fill="${p.hot}"/>`);
+    } },
+
+  { key: 'bold', name: 'Bold', tag: 'coarse grid',
+    fn: (u, p) => tile(u, p.bg, dotsSvg(grid({ x0: 20, x1: 80, y0: 24, y1: 76, dx: 12, dy: 13, ay: 80, ar: 22 }), 4.3, p)) },
+
+  { key: 'pixel', name: 'Pixel', tag: 'square dots',
+    fn: (u, p) => tile(u, p.bg, CLASSIC.map(([x, y], i) => `<rect x="${f(x - 2.3)}" y="${f(y - 2.3)}" width="4.6" height="4.6" rx="1" fill="${i === CLASSIC_HOT ? p.hot : p.dot}"/>`).join('')) },
+
+  { key: 'full-bleed', name: 'Full Bleed', tag: 'edge to edge',
+    fn: (u, p) => { const pts = grid({ x0: 5, x1: 95, y0: 5, y1: 95, ay: 100, ar: 31 }); return tile(u, p.bg, dotsSvg(pts, 2.15, p, at(pts, 83, 17))); } },
+];
+
+/* ---------- Shades ---------- */
+
+const flat = (bg, dot) => u => tile(u, bg, dotsSvg(CLASSIC, 2.15, { bg, dot, hot: acc.c }));
+
+const SHADES = [
+  { key: 'ink', name: 'Ink', tag: 'round 5', note: `${INK} · ${CREAM}`, fn: flat(INK, CREAM) },
+  { key: 'black', name: 'True Black', tag: 'oled', note: '#000000 · #FFFFFF', fn: flat('#000000', '#FFFFFF') },
+  { key: 'blue-black', name: 'Blue Hour', tag: 'cool', note: '#0E1322 · #E6EBF5', fn: flat('#0E1322', '#E6EBF5') },
+  { key: 'warm', name: 'Espresso', tag: 'warm', note: '#1C1714 · #F2E1C6', fn: flat('#1C1714', '#F2E1C6') },
+  { key: 'graphite', name: 'Graphite', tag: 'lighter', note: '#2B2A30 · #ECE9E3', fn: flat('#2B2A30', '#ECE9E3') },
+  { key: 'muted', name: 'Muted', tag: 'grey dots', note: `${INK} · #77737F`, fn: flat(INK, '#77737F') },
+
+  { key: 'dusk', name: 'Dusk', tag: 'fade',
+    note: 'dots fade toward the bottom',
+    fn: u => tile(u, `url(#${u}bg)`, CLASSIC.map(([x, y], i) =>
+      `<circle cx="${x}" cy="${y}" r="2.15" fill="${i === CLASSIC_HOT ? acc.c : CREAM}" opacity="${i === CLASSIC_HOT ? 1 : f(1 - (y - 26) / 48 * .6)}"/>`).join(''),
+      `<radialGradient id="${u}bg" cx=".5" cy=".2" r=".95"><stop offset="0" stop-color="#2A2733"/><stop offset="1" stop-color="#0D0C11"/></radialGradient>`) },
+
+  { key: 'anodised', name: 'Anodised', tag: 'black metal',
+    note: 'brushed black aluminium, raised dots',
+    fn: u => {
+      const dots = CLASSIC.map(([x, y], i) => i === CLASSIC_HOT ? '' :
+        `<circle cx="${x}" cy="${f(y + .45)}" r="2.15" fill="#000" opacity=".6"/><circle cx="${x}" cy="${y}" r="2.15" fill="url(#${u}d)"/>`).join('');
+      const [hx, hy] = CLASSIC[CLASSIC_HOT];
+      return tile(u, `url(#${u}al)`, `
+        <rect width="100" height="100" filter="url(#${u}br)"/>
+        <rect width="100" height="100" fill="url(#${u}sheen)"/>
+        ${dots}
+        <circle cx="${hx}" cy="${hy}" r="7" fill="url(#${u}halo)"/>
+        <circle cx="${hx}" cy="${hy}" r="2.3" fill="${acc.c}"/>
+        <circle cx="${hx - .6}" cy="${hy - .7}" r=".7" fill="#fff" opacity=".6"/>`,
+        `<linearGradient id="${u}al" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34333A"/><stop offset=".55" stop-color="#1D1C22"/><stop offset="1" stop-color="#121116"/></linearGradient>
+         <linearGradient id="${u}sheen" x1="0" y1="0" x2="1" y2="1"><stop offset=".25" stop-color="#fff" stop-opacity="0"/><stop offset=".42" stop-color="#fff" stop-opacity=".08"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
+         <radialGradient id="${u}d" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#FFFBF2"/><stop offset=".7" stop-color="${CREAM}"/><stop offset="1" stop-color="#BFB29C"/></radialGradient>
+         <radialGradient id="${u}halo"><stop offset="0" stop-color="${acc.c}" stop-opacity=".5"/><stop offset="1" stop-color="${acc.c}" stop-opacity="0"/></radialGradient>
+         <filter id="${u}br" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+           <feTurbulence type="fractalNoise" baseFrequency=".035 2.4" numOctaves="2" seed="4"/>
+           <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  .2 0 0 0 -.07"/>
+         </filter>`);
+    } },
+
+  { key: 'led', name: 'LED', tag: 'glow',
+    note: 'cream pixels lit behind dark glass',
+    fn: u => {
+      const off = ALL.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.9" fill="#24222A"/>`).join('');
+      const lit = CLASSIC.map(([x, y], i) => i === CLASSIC_HOT
+        ? `<circle cx="${x}" cy="${y}" r="1.9" fill="${acc.c}"/><circle cx="${x}" cy="${y}" r=".8" fill="#fff" opacity=".75"/>`
+        : `<circle cx="${x}" cy="${y}" r="1.9" fill="${CREAM}"/>`).join('');
+      return tile(u, '#0C0B0F', `${off}<g filter="url(#${u}glow)">${lit}</g><path d="M0 0H62L28 100H0Z" fill="url(#${u}glass)"/>`,
+        `<linearGradient id="${u}glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+         <filter id="${u}glow" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+           <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b2"/>
+           <feGaussianBlur in="SourceGraphic" stdDeviation="1.1" result="b1"/>
+           <feComponentTransfer in="b2" result="b2d"><feFuncA type="linear" slope=".6"/></feComponentTransfer>
+           <feMerge><feMergeNode in="b2d"/><feMergeNode in="b1"/><feMergeNode in="SourceGraphic"/></feMerge>
+         </filter>`);
+    } },
+];
+
+/* ---------- Rendering ---------- */
+
+const svg = (fn, label, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" ${extra} role="img" aria-label="${label}">${fn(uid())}</svg>`;
+
+// Every rendered icon, by id, so the click handler can find it.
+let REG = [];
+const register = (name, key, fn) => REG.push({ name, key, fn }) - 1;
+
+function card(item, i, { ladder = [64, 48, 32, 24, 16], extra = '' } = {}) {
+  const id = register(item.name, `${item.key}-${acc.key}`, item.fn);
+  return `
+  <article class="card">
+    <button type="button" class="stage" data-focus="${id}" aria-label="Enlarge ${item.name}"><div class="hero">${svg(item.fn, item.name + ' icon')}</div></button>
+    <div class="ladder">${ladder.map(s => `<div><div class="mini" style="width:${s}px;height:${s}px">${svg(item.fn, item.name + ' at ' + s + ' px')}</div><span>${s}</span></div>`).join('')}</div>
+    <div class="meta">
+      <div class="row"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="tag">${item.tag}</span></div>
+      <h3>${item.name}</h3>
+      ${item.blurb ? `<p>${item.blurb}</p>` : ''}${extra}
+      <div class="actions"><button type="button" data-id="${id}" data-kind="svg">Download SVG</button><button type="button" data-id="${id}" data-kind="png">PNG 1024</button></div>
+    </div>
+  </article>`;
+}
+
+const shapeItems = () => SHAPES.map(s => ({ ...s, fn: u => s.fn(u, night()) }));
+
+function render() {
+  REG = [];
+  document.getElementById('g-dot').innerHTML = DOT.map((d, i) => card(d, i)).join('');
+  document.getElementById('g-shapes').innerHTML = shapeItems().map((s, i) => card(s, i, { ladder: [48, 32, 24, 16] })).join('');
+  document.getElementById('g-shades').innerHTML = SHADES.map((s, i) => card(s, i, { ladder: [48, 32, 24, 16], extra: `<p><code class="num">${s.note}</code></p>` })).join('');
+
+  const items = [...DOT, ...SHADES];
+  document.getElementById('tiles').innerHTML = items.map(ic => `<div class="tile"><div class="ic">${svg(ic.fn, ic.name)}</div>${ic.name}</div>`).join('');
+  document.getElementById('tb').innerHTML = DOT.map(ic => `<div class="tb" title="${ic.name}"><div class="i24">${svg(ic.fn, ic.name + ' at 24 px')}</div></div>`).join('');
+  document.getElementById('tray').innerHTML = DOT.map(ic => `<div class="i16" title="${ic.name}">${svg(ic.fn, ic.name + ' at 16 px')}</div>`).join('') + '<div class="clock">21:40<br>09/11/2026</div>';
+}
+
+document.getElementById('acc').innerHTML = ACCENTS.map((a, i) =>
+  `<button type="button" data-acc="${i}" aria-pressed="${i === 0}" aria-label="${a.name}" title="${a.name}"><span style="background:radial-gradient(circle, ${a.c} 0 42%, ${INK} 44%)"></span></button>`).join('');
+document.getElementById('acc').addEventListener('click', e => {
+  const b = e.target.closest('[data-acc]'); if (!b) return;
+  acc = ACCENTS[+b.dataset.acc];
+  document.querySelectorAll('#acc button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  render();
+});
+render();
+
+function save(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const dlg = document.getElementById('focus');
+document.addEventListener('click', e => {
+  const fb = e.target.closest('[data-focus]');
+  if (fb) {
+    const ic = REG[+fb.dataset.focus];
+    document.getElementById('focus-big').innerHTML = svg(ic.fn, ic.name + ' icon, enlarged');
+    document.getElementById('focus-name').textContent = ic.name;
+    dlg.showModal();
+    return;
+  }
+  const b = e.target.closest('button[data-kind]'); if (!b) return;
+  const ic = REG[+b.dataset.id];
+  if (b.dataset.kind === 'svg') {
+    save(URL.createObjectURL(new Blob([svg(ic.fn, ic.name)], { type: 'image/svg+xml' })), `setu-${ic.key}.svg`);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = c.height = 1024;
+    c.getContext('2d').drawImage(img, 0, 0, 1024, 1024);
+    c.toBlob(blob => save(URL.createObjectURL(blob), `setu-${ic.key}-1024.png`));
+  };
+  img.src = URL.createObjectURL(new Blob([svg(ic.fn, ic.name, 'width="1024" height="1024"')], { type: 'image/svg+xml' }));
+});
+document.getElementById('focus-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.body.dataset.stage = b.dataset.stage;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>

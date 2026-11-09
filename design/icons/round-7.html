@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setu icon studies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C0C0F;
+  --card: #131317;
+  --line: #25252C;
+  --text: #EDECE8;
+  --muted: #A09EA8;
+  --chip: #1C1C22;
+  --stage: radial-gradient(120% 90% at 50% 0%, #22222A 0%, #141418 70%);
+  --stage-ink: #A09EA8;
+}
+body[data-stage="paper"] { --stage: radial-gradient(120% 90% at 50% 0%, #F7F3EC 0%, #E7E0D3 80%); --stage-ink: #5C574E; }
+body[data-stage="wall"] { --stage: linear-gradient(135deg, #2B2160 0%, #8A3F86 45%, #E2775E 80%, #F4B26A 100%); --stage-ink: #F6E9F0; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 40px; } }
+
+header.top { padding: 72px 0 40px; display: grid; gap: 24px; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.eyebrow a { color: var(--muted); }
+h1 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: clamp(48px, 8vw, 104px); line-height: .92; letter-spacing: -.02em; }
+h1 em { color: #FFB4A8; }
+.lede { margin: 0; max-width: 640px; color: var(--muted); font-size: 17px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: rgba(12,12,15,.86); backdrop-filter: blur(14px); z-index: 5; }
+.seg { display: inline-flex; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+.seg button { font: 500 13px Inter, sans-serif; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDECE8; color: #0C0C0F; }
+.bar nav { display: flex; gap: 18px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+
+section { padding: 56px 0 24px; }
+section > h2 { margin: 0 0 6px; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 44px; line-height: 1; }
+section > p.sub { margin: 0 0 28px; color: var(--muted); max-width: 640px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
+.stage { background: var(--stage); aspect-ratio: 1 / .82; display: grid; place-items: center; border: 0; padding: 0; width: 100%; cursor: zoom-in; }
+.stage .hero { width: 60%; aspect-ratio: 1; filter: drop-shadow(0 16px 26px rgba(0,0,0,.3)) drop-shadow(0 3px 6px rgba(0,0,0,.18)); transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.card:hover .stage .hero { transform: translateY(-4px) scale(1.02); }
+.stage .hero svg, .mini svg, .tile svg, .tb svg, .tray svg { width: 100%; height: 100%; display: block; }
+.ladder { background: var(--stage); display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.06); }
+.ladder div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ladder span { font: 500 10px 'JetBrains Mono', monospace; color: var(--stage-ink); }
+.meta { padding: 18px 20px 20px; display: grid; gap: 6px; }
+.meta .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.num { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); }
+.tag { font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .04em; color: #FFC9BF; background: rgba(255,140,120,.1); border: 1px solid rgba(255,140,120,.25); padding: 3px 9px; border-radius: 999px; }
+.meta h3 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 30px; line-height: 1.05; }
+.meta p { margin: 0; color: var(--muted); font-size: 14px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.actions button:hover { border-color: #3A3A44; background: #222229; }
+
+.ctx { display: grid; gap: 20px; }
+.ctx-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; }
+.env { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); padding: clamp(20px, 5vw, 56px); background:
+  radial-gradient(60% 80% at 15% 20%, #3C5A7A 0%, transparent 60%),
+  radial-gradient(50% 70% at 85% 30%, #6B4A7E 0%, transparent 60%),
+  radial-gradient(70% 60% at 50% 110%, #C98A5C 0%, transparent 60%), #1B1D28; }
+.panel { max-width: 940px; margin: 0 auto; border-radius: 28px; padding: 24px; background: rgba(20,22,32,.62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(24px); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-weight: 600; font-size: 18px; }
+.panel .ph span { font: 400 13px Inter, sans-serif; color: rgba(255,255,255,.6); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 20px 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12.5px; color: rgba(255,255,255,.85); text-align: center; }
+.tile .ic { width: 80px; height: 80px; }
+.tile.ph-tile .ic { border-radius: 20px; background: rgba(255,255,255,.07); }
+.desk { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--stage); min-height: 160px; display: flex; flex-direction: column; justify-content: flex-end; }
+.taskbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 14px; background: rgba(24,24,30,.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+.tb-apps { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; }
+.tb:hover { background: rgba(255,255,255,.08); }
+.tb .i24 { width: 24px; height: 24px; }
+.tray { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.75); font: 500 12px Inter, sans-serif; }
+.tray .i16 { width: 16px; height: 16px; }
+.tray .clock { margin-left: 8px; text-align: right; line-height: 1.25; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(6,6,9,.82); backdrop-filter: blur(10px); }
+.focus { width: min(92vw, 720px); border-radius: 28px; overflow: hidden; background: var(--stage); border: 1px solid var(--line); }
+.focus .big { width: min(72vw, 540px); aspect-ratio: 1; margin: 48px auto 20px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.35)); }
+.focus .big svg { width: 100%; height: 100%; display: block; }
+.focus .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; background: var(--card); color: var(--text); }
+.focus .cap strong { font: 400 26px 'Instrument Serif', serif; }
+.focus .cap button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+
+footer { padding: 48px 0 80px; color: var(--muted); font-size: 13px; }
+footer a { color: var(--muted); }
+</style>
+<style>
+.pal { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pal-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-right: 4px; }
+.pal button { width: 36px; height: 36px; border-radius: 999px; border: 2px solid transparent; padding: 3px; background: transparent; cursor: pointer; }
+.pal button[aria-pressed="true"] { border-color: var(--text); }
+.pal button span { display: block; width: 100%; height: 100%; border-radius: 999px; }
+.grid.sm { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
+.grid.sm .meta h3 { font-size: 26px; }
+.sw { display: flex; gap: 6px; margin-top: 2px; }
+.sw i { width: 18px; height: 18px; border-radius: 6px; border: 1px solid rgba(255,255,255,.12); }
+.sw code { font: 500 11px 'JetBrains Mono', monospace; color: var(--muted); align-self: center; margin-left: 4px; }
+</style>
+<style>
+.px { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); }
+.px-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
+.px-row { background: var(--stage); display: flex; flex-wrap: wrap; gap: 28px; padding: 24px 20px; align-items: flex-end; }
+.px-col { display: grid; gap: 10px; justify-items: center; }
+.px-col canvas { width: 128px; height: 128px; image-rendering: pixelated; border-radius: 6px; }
+.px-col .real { display: flex; gap: 10px; align-items: flex-end; }
+#g-red { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.px-col span { font: 500 11px 'JetBrains Mono', monospace; color: var(--stage-ink); }
+</style>
+</head>
+<body data-stage="graphite">
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Setu · app icon studies · round 7 · <a href="index.html">round 8</a> · <a href="round-6.html">round 6</a> · <a href="round-5.html">round 5</a> · <a href="round-4.html">round 4</a> · <a href="round-3.html">round 3</a> · <a href="round-2.html">round 2</a></span>
+    <h1>Classic &amp; <em>Slots.</em></h1>
+    <p class="lede">Two marks, refined. Flat cream on near-black with one red light. Each section starts from the round 6 version and changes one thing at a time: proportion, density, the arch, the red.</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Backdrop">
+      <button type="button" data-stage="graphite" aria-pressed="true">Graphite</button>
+      <button type="button" data-stage="paper" aria-pressed="false">Paper</button>
+      <button type="button" data-stage="wall" aria-pressed="false">Wallpaper</button>
+    </div>
+    <nav><a href="#classic">Classic</a><a href="#slots">Slots</a><a href="#small">16 px</a><a href="#red">Red</a><a href="#context">In context</a></nav>
+  </div>
+
+  <section id="classic">
+    <h2>Classic</h2>
+    <p class="sub">The dot grille. Click any icon to enlarge it.</p>
+    <div class="grid" id="g-classic"></div>
+  </section>
+
+  <section id="slots">
+    <h2>Slots</h2>
+    <p class="sub">The vent grille.</p>
+    <div class="grid" id="g-slots"></div>
+  </section>
+
+  <section id="small">
+    <h2>16 px cuts</h2>
+    <p class="sub">At tray size a 100-unit drawing turns to mush. These are separate small versions drawn on a 16 × 16 pixel grid, next to the full mark scaled down. Each is shown at real size and blown up so you can see the pixels.</p>
+    <div class="px" id="g-small"></div>
+  </section>
+
+  <section id="red">
+    <h2>Which red</h2>
+    <p class="sub">The round 6 versions of both marks in three reds.</p>
+    <div class="grid sm" id="g-red"></div>
+  </section>
+
+  <section id="context">
+    <h2>In context</h2>
+    <p class="sub">Every refinement in a generic headset library panel, and a desktop taskbar at 24 px with a 16 px tray. The tray uses the 16 px cuts.</p>
+    <div class="ctx">
+      <div>
+        <p class="ctx-label">Headset library</p>
+        <div class="env"><div class="panel"><div class="ph">Library<span>Sorted by recent</span></div><div class="tiles" id="tiles"></div></div></div>
+      </div>
+      <div>
+        <p class="ctx-label">Desktop taskbar &amp; tray</p>
+        <div class="desk"><div class="taskbar"><div class="tb-apps" id="tb"></div><div class="tray" id="tray"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="focus"><div class="focus"><div class="big" id="focus-big"></div><div class="cap"><strong id="focus-name"></strong><button type="button" id="focus-close">Close</button></div></div></dialog>
+
+  <footer>Each icon is a 100×100 SVG. Use the buttons under each one to download the vector or a 1024 px PNG. Other rounds: <a href="index.html">round 8</a> · <a href="round-6.html">round 6</a> · <a href="round-5.html">round 5</a> · <a href="round-4.html">round 4</a> · <a href="round-3.html">round 3</a> · <a href="round-2.html">round 2</a>.</footer>
+</div>
+
+<script>
+// Superellipse (n = 5) tile outline, close to a continuous-corner app icon.
+const SQ = (() => {
+  const n = 5, pts = [];
+  for (let i = 0; i < 240; i++) {
+    const t = i / 240 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+    pts.push([50 + 50 * Math.sign(c) * Math.abs(c) ** (2 / n), 50 + 50 * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return 'M' + pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+})();
+
+let N = 0;
+const uid = () => 'i' + (++N) + '_';
+const f = n => +n.toFixed(2);
+
+const INK = '#15141A';
+const CREAM = '#F5ECDC';
+const REDS = [
+  { key: 'signal', name: 'Signal', c: '#FF3B2F' },
+  { key: 'vermilion', name: 'Vermilion', c: '#F25530' },
+  { key: 'crimson', name: 'Crimson', c: '#E5263F' },
+];
+const RED = REDS[0].c;
+
+function tile(u, inner, defs = '', bg = INK) {
+  return `<defs><clipPath id="${u}c"><path d="${SQ}"/></clipPath>${defs}</defs>
+  <g clip-path="url(#${u}c)"><rect width="100" height="100" fill="${bg}"/>${inner}<path d="${SQ}" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".9"/></g>`;
+}
+
+/* ---------- Classic ---------- */
+
+// Dot centres on a grid, skipping any point inside the void test.
+function grid({ x0 = 14, x1 = 86, y0 = 26, y1 = 74, dx = 6, dy = 6, void: inVoid = (x, y) => Math.hypot(x - 50, y - 76) < 25 } = {}) {
+  const pts = [];
+  for (let y = y0; y <= y1 + 1e-6; y += dy) for (let x = x0; x <= x1 + 1e-6; x += dx) if (!inVoid(x, y)) pts.push([f(x), f(y)]);
+  return pts;
+}
+
+// The top-right dot, which carries the red light.
+function topRight(pts) {
+  const top = Math.min(...pts.map(p => p[1]));
+  let best = -1;
+  pts.forEach((p, i) => { if (Math.abs(p[1] - top) < .01 && (best < 0 || p[0] > pts[best][0])) best = i; });
+  return best;
+}
+
+const dots = (pts, r, red, hot = topRight(pts)) =>
+  pts.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${i === hot ? red : CREAM}"/>`).join('');
+
+const CLASSIC = [
+  { key: 'classic-r6', name: 'Round 6', tag: 'baseline',
+    blurb: 'Where we left off: thirteen by nine, 2.15 dots on a 6 grid, and a shallow arch cut from the bottom.',
+    fn: (u, red = RED) => tile(u, dots(grid(), 2.15, red)) },
+
+  { key: 'classic-roomy', name: 'Roomy', tag: 'fewer, larger dots',
+    blurb: 'Nine by seven with bigger dots and more air between them. Calmer up close, and the dots survive further down the ladder.',
+    fn: (u, red = RED) => tile(u, dots(grid({ x0: 18, x1: 82, y0: 26, y1: 74, dx: 8, dy: 8, void: (x, y) => Math.hypot(x - 50, y - 78) < 23 }), 2.8, red)) },
+
+  { key: 'classic-large', name: 'Large', tag: 'bigger mark',
+    blurb: 'The grille grows to fill more of the tile, so it holds its own next to busier icons in a library.',
+    fn: (u, red = RED) => tile(u, dots(grid({ x0: 11, x1: 89, y0: 24, y1: 76, dx: 6.5, dy: 6.5, void: (x, y) => Math.hypot(x - 50, y - 79) < 27 }), 2.35, red)) },
+
+  { key: 'classic-roman', name: 'Roman', tag: 'round arch',
+    blurb: 'A semicircle on straight legs, like a stone bridge, in place of the shallow curve. The opening reads as an arch, not a dent.',
+    fn: (u, red = RED) => tile(u, dots(grid({ void: (x, y) => (y >= 58 && Math.abs(x - 50) < 15) || Math.hypot(x - 50, y - 58) < 15 }), 2.15, red)) },
+
+  { key: 'classic-led', name: 'Status Light', tag: 'red below',
+    blurb: 'The red leaves the grille and sits below it, like the status light under a real speaker.',
+    fn: (u, red = RED) => tile(u, dots(grid({ y0: 22, y1: 70, void: (x, y) => Math.hypot(x - 50, y - 72) < 25 }), 2.15, red, -1) +
+      `<circle cx="50" cy="81" r="2.15" fill="${red}"/>`) },
+
+  { key: 'classic-under', name: 'Underpass', tag: 'red in the arch',
+    blurb: 'One red dot travels under the bridge, on the same grid as the rest. The stream, passing through.',
+    fn: (u, red = RED) => tile(u, dots(grid(), 2.15, red, -1) + `<circle cx="50" cy="74" r="2.15" fill="${red}"/>`) },
+];
+
+/* ---------- Slots ---------- */
+
+// Horizontal slots from x0 to x1, with an arch of radius ar at (50, ay) cut out of them.
+function slots({ ys, w, ar, ay = 76, x0 = 14, x1 = 86, topEnd = x1 }) {
+  let d = '';
+  ys.forEach((y, i) => {
+    const end = i === 0 ? topEnd : x1;
+    const dy = y - ay, half = ar * ar - dy * dy > 0 ? Math.sqrt(ar * ar - dy * dy) : 0;
+    d += half ? `M${x0} ${f(y)}H${f(50 - half)}M${f(50 + half)} ${f(y)}H${end}` : `M${x0} ${f(y)}H${end}`;
+  });
+  return `<path d="${d}" stroke="${CREAM}" stroke-width="${w}" stroke-linecap="round"/>`;
+}
+
+const range = (a, b, n) => Array.from({ length: n }, (_, i) => a + (b - a) * i / (n - 1));
+
+const SLOTS = [
+  { key: 'slots-r6', name: 'Round 6', tag: 'baseline',
+    blurb: 'Where we left off: eight slots with rounded ends, stopped short by the arch, and a red light at the end of the top slot.',
+    fn: (u, red = RED) => tile(u, slots({ ys: range(28, 73.5, 8), w: 3.4, ar: 28, topEnd: 77 }) + `<circle cx="86" cy="28" r="2.4" fill="${red}"/>`) },
+
+  { key: 'slots-cut', name: 'Clean Cut', tag: 'arch-cut ends',
+    blurb: 'Full slots sliced by one true circle, so the inner ends follow the arch exactly instead of each ending in its own round cap.',
+    fn: (u, red = RED) => tile(u, `<g mask="url(#${u}m)">${slots({ ys: range(28, 73.5, 8), w: 3.4, ar: 0, topEnd: 77 })}</g><circle cx="86" cy="28" r="2.4" fill="${red}"/>`,
+      `<mask id="${u}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#fff"/><circle cx="50" cy="78" r="25" fill="#000"/></mask>`) },
+
+  { key: 'slots-bold', name: 'Bold', tag: 'six slots',
+    blurb: 'Six thicker slots. Loses some finesse at 1024 px but stays a grille all the way down to the taskbar.',
+    fn: (u, red = RED) => tile(u, slots({ ys: range(29, 73, 6), w: 4.8, ar: 27, topEnd: 75 }) + `<circle cx="86" cy="29" r="3" fill="${red}"/>`) },
+
+  { key: 'slots-fine', name: 'Fine', tag: 'eleven slots',
+    blurb: 'Eleven thin slots, like the grille on a good hi-fi. The most refined up close, the first to blur when small.',
+    fn: (u, red = RED) => tile(u, slots({ ys: range(27, 74, 11), w: 2.2, ar: 28, topEnd: 79 }) + `<circle cx="86" cy="27" r="1.9" fill="${red}"/>`) },
+
+  { key: 'slots-pill', name: 'Red Slot', tag: 'red as a slot',
+    blurb: 'The red light becomes a short slot itself, so every element in the mark speaks the same language.',
+    fn: (u, red = RED) => tile(u, slots({ ys: range(28, 73.5, 8), w: 3.4, ar: 28, topEnd: 68 }) + `<path d="M76 28H86" stroke="${red}" stroke-width="3.4" stroke-linecap="round"/>`) },
+
+  { key: 'slots-bleed', name: 'Bleed', tag: 'edge to edge',
+    blurb: 'Slots run off both sides of the tile and the arch grows, so the whole icon is the speaker panel.',
+    fn: (u, red = RED) => tile(u, slots({ ys: range(16, 88, 10), w: 3.4, ar: 33, ay: 96, x0: -4, x1: 104, topEnd: 77 }) + `<circle cx="86" cy="16" r="2.4" fill="${red}"/>`) },
+];
+
+/* ---------- 16 px cuts, drawn on a 16-pixel grid (1 px = 6.25 units) ---------- */
+
+const P = 6.25;
+const px = (x, y, w, h, fill) => `<rect x="${x * P}" y="${y * P}" width="${w * P}" height="${h * P}" fill="${fill}"/>`;
+
+const SMALL = [
+  { key: 'classic-16', name: 'Classic', full: CLASSIC[0],
+    fn: u => {
+      // Two-pixel dots centred on pixel corners, three pixels apart; the arch is the missing dots at the bottom centre.
+      const voids = { 9: [8], 12: [5, 8, 11] };
+      let out = '';
+      for (const y of [3, 6, 9, 12]) for (const x of [2, 5, 8, 11, 14]) {
+        if ((voids[y] || []).includes(x)) continue;
+        out += `<circle cx="${x * P}" cy="${y * P}" r="${P}" fill="${x === 14 && y === 3 ? RED : CREAM}"/>`;
+      }
+      return tile(u, out);
+    } },
+  { key: 'slots-16', name: 'Slots', full: SLOTS[0],
+    fn: u => {
+      // One-pixel slots with one-pixel gaps; the arch steps in by a pixel per row.
+      const C = CREAM;
+      return tile(u,
+        px(3, 4, 8, 1, C) + px(12, 4, 1, 1, RED) +
+        px(3, 6, 10, 1, C) +
+        px(3, 8, 3, 1, C) + px(10, 8, 3, 1, C) +
+        px(3, 10, 2, 1, C) + px(11, 10, 2, 1, C) +
+        px(3, 12, 2, 1, C) + px(11, 12, 2, 1, C));
+    } },
+];
+
+/* ---------- Rendering ---------- */
+
+const svg = (fn, label, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" ${extra} role="img" aria-label="${label}">${fn(uid())}</svg>`;
+
+// Every rendered icon, by id, so the click handler can find it.
+const REG = [];
+const register = (name, key, fn) => REG.push({ name, key, fn }) - 1;
+
+function card(item, i, { ladder = [64, 48, 32, 24, 16], extra = '' } = {}) {
+  const id = register(item.name, item.key, item.fn);
+  return `
+  <article class="card">
+    <button type="button" class="stage" data-focus="${id}" aria-label="Enlarge ${item.name}"><div class="hero">${svg(item.fn, item.name + ' icon')}</div></button>
+    <div class="ladder">${ladder.map(s => `<div><div class="mini" style="width:${s}px;height:${s}px">${svg(item.fn, item.name + ' at ' + s + ' px')}</div><span>${s}</span></div>`).join('')}</div>
+    <div class="meta">
+      <div class="row"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="tag">${item.tag}</span></div>
+      <h3>${item.name}</h3>
+      ${item.blurb ? `<p>${item.blurb}</p>` : ''}${extra}
+      <div class="actions"><button type="button" data-id="${id}" data-kind="svg">Download SVG</button><button type="button" data-id="${id}" data-kind="png">PNG 1024</button></div>
+    </div>
+  </article>`;
+}
+
+document.getElementById('g-classic').innerHTML = CLASSIC.map((c, i) => card(c, i)).join('');
+document.getElementById('g-slots').innerHTML = SLOTS.map((c, i) => card(c, i)).join('');
+document.getElementById('g-red').innerHTML = [CLASSIC[0], SLOTS[0]].flatMap(m => REDS.map(r => ({
+  key: `${m.key}-${r.key}`, name: r.name, tag: m === CLASSIC[0] ? 'classic' : 'slots', fn: u => m.fn(u, r.c),
+}))).map((c, i) => card(c, i, { ladder: [48, 32, 24, 16], extra: `<p><code class="num">${REDS[i % 3].c}</code></p>` })).join('');
+
+// Rasterise an icon at its real pixel size, so the blown-up view shows the actual pixels.
+function raster(canvas, fn, size) {
+  const img = new Image();
+  img.onload = () => { canvas.width = canvas.height = size; canvas.getContext('2d').drawImage(img, 0, 0, size, size); };
+  img.src = URL.createObjectURL(new Blob([svg(fn, '', `width="${size}" height="${size}"`)], { type: 'image/svg+xml' }));
+}
+document.getElementById('g-small').innerHTML = SMALL.map((s, i) => `
+  <article class="px-card">
+    <div class="px-row">
+      ${[['full', s.full.fn, 'Full mark, scaled'], ['cut', s.fn, '16 px cut']].map(([k, , label]) => `
+      <div class="px-col">
+        <canvas data-s="${i}" data-k="${k}" aria-label="${s.name} ${label}, enlarged pixels"></canvas>
+        <div class="real">${[16, 24].map(z => `<div style="width:${z}px;height:${z}px">${svg(k === 'full' ? s.full.fn : s.fn, s.name + ' ' + label + ' at ' + z + ' px')}</div>`).join('')}</div>
+        <span>${label}</span>
+      </div>`).join('')}
+    </div>
+    <div class="meta"><h3>${s.name}</h3><div class="actions"><button type="button" data-id="${register(s.name + ' 16 px', s.key, s.fn)}" data-kind="svg">Download 16 px SVG</button></div></div>
+  </article>`).join('');
+document.querySelectorAll('#g-small canvas').forEach(c => {
+  const s = SMALL[+c.dataset.s];
+  raster(c, c.dataset.k === 'full' ? s.full.fn : s.fn, 16);
+});
+
+const all = [...CLASSIC, ...SLOTS];
+document.getElementById('tiles').innerHTML = all.map(ic => `<div class="tile"><div class="ic">${svg(ic.fn, ic.name)}</div>${ic.tag === 'baseline' ? (CLASSIC.includes(ic) ? 'Classic' : 'Slots') : ic.name}</div>`).join('');
+document.getElementById('tb').innerHTML = all.map(ic => `<div class="tb" title="${ic.name}"><div class="i24">${svg(ic.fn, ic.name + ' at 24 px')}</div></div>`).join('');
+document.getElementById('tray').innerHTML = SMALL.map(ic => `<div class="i16" title="${ic.name} 16 px cut">${svg(ic.fn, ic.name + ' at 16 px')}</div>`).join('') + '<div class="clock">21:40<br>09/11/2026</div>';
+
+function save(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const dlg = document.getElementById('focus');
+document.addEventListener('click', e => {
+  const fb = e.target.closest('[data-focus]');
+  if (fb) {
+    const ic = REG[+fb.dataset.focus];
+    document.getElementById('focus-big').innerHTML = svg(ic.fn, ic.name + ' icon, enlarged');
+    document.getElementById('focus-name').textContent = ic.name;
+    dlg.showModal();
+    return;
+  }
+  const b = e.target.closest('button[data-kind]'); if (!b) return;
+  const ic = REG[+b.dataset.id];
+  if (b.dataset.kind === 'svg') {
+    save(URL.createObjectURL(new Blob([svg(ic.fn, ic.name)], { type: 'image/svg+xml' })), `setu-${ic.key}.svg`);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = c.height = 1024;
+    c.getContext('2d').drawImage(img, 0, 0, 1024, 1024);
+    c.toBlob(blob => save(URL.createObjectURL(blob), `setu-${ic.key}-1024.png`));
+  };
+  img.src = URL.createObjectURL(new Blob([svg(ic.fn, ic.name, 'width="1024" height="1024"')], { type: 'image/svg+xml' }));
+});
+document.getElementById('focus-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.body.dataset.stage = b.dataset.stage;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>

@@ -6,9 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
@@ -27,7 +25,7 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) { agent.run() }
         }
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) {
+            SetuTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val state by agent.state.collectAsStateWithLifecycle()
                     AgentScreen(state, canWriteSecureSettings, agent::editVban)

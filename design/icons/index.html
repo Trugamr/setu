@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setu icon studies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C0C0F;
+  --card: #131317;
+  --line: #25252C;
+  --text: #EDECE8;
+  --muted: #A09EA8;
+  --chip: #1C1C22;
+  --stage: radial-gradient(120% 90% at 50% 0%, #22222A 0%, #141418 70%);
+  --stage-ink: #A09EA8;
+}
+body[data-stage="paper"] { --stage: radial-gradient(120% 90% at 50% 0%, #F7F3EC 0%, #E7E0D3 80%); --stage-ink: #5C574E; }
+body[data-stage="wall"] { --stage: linear-gradient(135deg, #2B2160 0%, #8A3F86 45%, #E2775E 80%, #F4B26A 100%); --stage-ink: #F6E9F0; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 40px; } }
+
+header.top { padding: 72px 0 40px; display: grid; gap: 24px; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.eyebrow a { color: var(--muted); }
+h1 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: clamp(48px, 8vw, 104px); line-height: .92; letter-spacing: -.02em; }
+h1 em { color: #FFB4A8; }
+.lede { margin: 0; max-width: 640px; color: var(--muted); font-size: 17px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: rgba(12,12,15,.86); backdrop-filter: blur(14px); z-index: 5; }
+.seg { display: inline-flex; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+.seg button { font: 500 13px Inter, sans-serif; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDECE8; color: #0C0C0F; }
+.bar nav { display: flex; gap: 18px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+
+section { padding: 56px 0 24px; }
+section > h2 { margin: 0 0 6px; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 44px; line-height: 1; }
+section > p.sub { margin: 0 0 28px; color: var(--muted); max-width: 640px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
+.stage { background: var(--stage); aspect-ratio: 1 / .82; display: grid; place-items: center; border: 0; padding: 0; width: 100%; cursor: zoom-in; }
+.stage .hero { width: 60%; aspect-ratio: 1; filter: drop-shadow(0 16px 26px rgba(0,0,0,.3)) drop-shadow(0 3px 6px rgba(0,0,0,.18)); transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.card:hover .stage .hero { transform: translateY(-4px) scale(1.02); }
+.stage .hero svg, .mini svg, .tile svg, .tb svg, .tray svg { width: 100%; height: 100%; display: block; }
+.ladder { background: var(--stage); display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.06); }
+.ladder div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ladder span { font: 500 10px 'JetBrains Mono', monospace; color: var(--stage-ink); }
+.meta { padding: 18px 20px 20px; display: grid; gap: 6px; }
+.meta .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.num { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); }
+.tag { font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .04em; color: #FFC9BF; background: rgba(255,140,120,.1); border: 1px solid rgba(255,140,120,.25); padding: 3px 9px; border-radius: 999px; }
+.meta h3 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 30px; line-height: 1.05; }
+.meta p { margin: 0; color: var(--muted); font-size: 14px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.actions button:hover { border-color: #3A3A44; background: #222229; }
+
+.ctx { display: grid; gap: 20px; }
+.ctx-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; }
+.env { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); padding: clamp(20px, 5vw, 56px); background:
+  radial-gradient(60% 80% at 15% 20%, #3C5A7A 0%, transparent 60%),
+  radial-gradient(50% 70% at 85% 30%, #6B4A7E 0%, transparent 60%),
+  radial-gradient(70% 60% at 50% 110%, #C98A5C 0%, transparent 60%), #1B1D28; }
+.panel { max-width: 940px; margin: 0 auto; border-radius: 28px; padding: 24px; background: rgba(20,22,32,.62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(24px); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-weight: 600; font-size: 18px; }
+.panel .ph span { font: 400 13px Inter, sans-serif; color: rgba(255,255,255,.6); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 20px 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12.5px; color: rgba(255,255,255,.85); text-align: center; }
+.tile .ic { width: 80px; height: 80px; }
+.tile.ph-tile .ic { border-radius: 20px; background: rgba(255,255,255,.07); }
+.desk { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--stage); min-height: 160px; display: flex; flex-direction: column; justify-content: flex-end; }
+.taskbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 14px; background: rgba(24,24,30,.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+.tb-apps { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; }
+.tb:hover { background: rgba(255,255,255,.08); }
+.tb .i24 { width: 24px; height: 24px; }
+.tray { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.75); font: 500 12px Inter, sans-serif; }
+.tray .i16 { width: 16px; height: 16px; }
+.tray .clock { margin-left: 8px; text-align: right; line-height: 1.25; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(6,6,9,.82); backdrop-filter: blur(10px); }
+.focus { width: min(92vw, 720px); border-radius: 28px; overflow: hidden; background: var(--stage); border: 1px solid var(--line); }
+.focus .big { width: min(72vw, 540px); aspect-ratio: 1; margin: 48px auto 20px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.35)); }
+.focus .big svg { width: 100%; height: 100%; display: block; }
+.focus .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; background: var(--card); color: var(--text); }
+.focus .cap strong { font: 400 26px 'Instrument Serif', serif; }
+.focus .cap button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+
+footer { padding: 48px 0 80px; color: var(--muted); font-size: 13px; }
+footer a { color: var(--muted); }
+</style>
+<style>
+.pal { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pal-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-right: 4px; }
+.pal button { width: 36px; height: 36px; border-radius: 999px; border: 2px solid transparent; padding: 3px; background: transparent; cursor: pointer; }
+.pal button[aria-pressed="true"] { border-color: var(--text); }
+.pal button span { display: block; width: 100%; height: 100%; border-radius: 999px; }
+.grid.sm { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
+.grid.sm .meta h3 { font-size: 26px; }
+.sw { display: flex; gap: 6px; margin-top: 2px; }
+.sw i { width: 18px; height: 18px; border-radius: 6px; border: 1px solid rgba(255,255,255,.12); }
+.sw code { font: 500 11px 'JetBrains Mono', monospace; color: var(--muted); align-self: center; margin-left: 4px; }
+</style>
+<style>
+.px { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); }
+.px-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
+.px-row { background: var(--stage); display: flex; flex-wrap: wrap; gap: 28px; padding: 24px 20px; align-items: flex-end; }
+.px-col { display: grid; gap: 10px; justify-items: center; }
+.px-col canvas { width: 128px; height: 128px; image-rendering: pixelated; border-radius: 6px; }
+.px-col .real { display: flex; gap: 10px; align-items: flex-end; }
+#g-red { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.px-col span { font: 500 11px 'JetBrains Mono', monospace; color: var(--stage-ink); }
+</style>
+</head>
+<body data-stage="graphite">
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Setu · app icon studies · round 8 · <a href="round-7.html">round 7</a> · <a href="round-6.html">round 6</a> · <a href="round-5.html">round 5</a> · <a href="round-4.html">round 4</a></span>
+    <h1>Roomy, <em>curved.</em></h1>
+    <p class="lede">The Roomy grille, curved from the top so the whole silhouette reads as a headset seen from the front: a rounded visor, with the arch as the nose gap. Flat cream on near-black, one red light.</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Backdrop">
+      <button type="button" data-stage="graphite" aria-pressed="true">Graphite</button>
+      <button type="button" data-stage="paper" aria-pressed="false">Paper</button>
+      <button type="button" data-stage="wall" aria-pressed="false">Wallpaper</button>
+    </div>
+    <nav><a href="#curves">Curves</a><a href="#context">In context</a></nav>
+  </div>
+
+  <section id="curves">
+    <h2>Curves</h2>
+    <p class="sub">From the round 7 Roomy, curving a little more each step. Click any icon to enlarge it.</p>
+    <div class="grid" id="g-curves"></div>
+  </section>
+
+  <section id="context">
+    <h2>In context</h2>
+    <p class="sub">A generic headset library panel, and a desktop taskbar at 24 px with a 16 px tray.</p>
+    <div class="ctx">
+      <div>
+        <p class="ctx-label">Headset library</p>
+        <div class="env"><div class="panel"><div class="ph">Library<span>Sorted by recent</span></div><div class="tiles" id="tiles"></div></div></div>
+      </div>
+      <div>
+        <p class="ctx-label">Desktop taskbar &amp; tray</p>
+        <div class="desk"><div class="taskbar"><div class="tb-apps" id="tb"></div><div class="tray" id="tray"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="focus"><div class="focus"><div class="big" id="focus-big"></div><div class="cap"><strong id="focus-name"></strong><button type="button" id="focus-close">Close</button></div></div></dialog>
+
+  <footer>Each icon is a 100×100 SVG. Use the buttons under each one to download the vector or a 1024 px PNG. Other rounds: <a href="round-7.html">round 7</a> · <a href="round-6.html">round 6</a> · <a href="round-5.html">round 5</a> · <a href="round-4.html">round 4</a>.</footer>
+</div>
+
+<script>
+// Superellipse (n = 5) tile outline, close to a continuous-corner app icon.
+const SQ = (() => {
+  const n = 5, pts = [];
+  for (let i = 0; i < 240; i++) {
+    const t = i / 240 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+    pts.push([50 + 50 * Math.sign(c) * Math.abs(c) ** (2 / n), 50 + 50 * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return 'M' + pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+})();
+
+let N = 0;
+const uid = () => 'i' + (++N) + '_';
+const f = n => +n.toFixed(2);
+
+const INK = '#15141A';
+const CREAM = '#F5ECDC';
+const RED = '#FF3B2F';
+
+function tile(u, inner) {
+  return `<defs><clipPath id="${u}c"><path d="${SQ}"/></clipPath></defs>
+  <g clip-path="url(#${u}c)"><rect width="100" height="100" fill="${INK}"/>${inner}<path d="${SQ}" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".9"/></g>`;
+}
+
+/*
+ * The Roomy grille: nine by seven on an 8-unit grid, with the arch cut from the bottom.
+ *   keep(x, y): which grid points stay (the silhouette)
+ *   warp(x, y): where a kept point is drawn, as { x, y, rx, ry }
+ *   extra:      points added outside the grid, drawn where given
+ * The red light is the rightmost dot of the top row.
+ */
+const R = 2.8;
+const arch = (x, y) => Math.hypot(x - 50, y - 78) < 23;
+function roomy({ keep = () => true, warp = (x, y) => ({ x, y, rx: R, ry: R }), extra = [] } = {}) {
+  const dot = (x, y, fill) => { const w = warp(x, y); return `<ellipse cx="${f(w.x)}" cy="${f(w.y)}" rx="${f(w.rx)}" ry="${f(w.ry)}" fill="${fill}"/>`; };
+  const pts = [];
+  for (let y = 26; y <= 74; y += 8) for (let x = 18; x <= 82; x += 8) if (!arch(x, y) && keep(x, y)) pts.push([x, y]);
+  const top = Math.min(...pts.map(p => p[1]));
+  const hot = Math.max(...pts.filter(p => p[1] === top).map(p => p[0]));
+  return pts.map(([x, y]) => dot(x, y, y === top && x === hot ? RED : CREAM)).join('') + extra.map(([x, y]) => `<circle cx="${f(x)}" cy="${f(y)}" r="${R}" fill="${CREAM}"/>`).join('');
+}
+
+// Silhouettes round the top only; the bottom row stays square so the legs stand flat.
+const softTop = (x, y) => !(y === 26 && Math.abs(x - 50) === 32);
+const dome = (x, y) => y >= 50 || (Math.abs(x - 50) / 37) ** 2.2 + ((50 - y) / 26) ** 2.2 <= 1;
+
+// How far a point sits above the bottom row, 1 at the top row and 0 at the bottom.
+const lift = y => (74 - y) / 48;
+
+// Rows droop toward the sides, most at the top and not at all at the bottom, so the top edge arcs.
+const arcTop = (x, y) => ({ x, y: y + .0062 * (x - 50) ** 2 * lift(y), rx: R, ry: R });
+
+// A curved visor seen head-on: columns crowd and narrow toward the sides, and the top arcs.
+function visor(x, y) {
+  const t = (x - 50) / 40;
+  return { x: 50 + 1.1 * 40 * Math.sin(t), y: y + 14 * (1 - Math.cos(t)) * lift(y), rx: R * Math.cos(t) ** .8, ry: R };
+}
+
+const CURVES = [
+  { key: 'roomy', name: 'Roomy', tag: 'round 7',
+    blurb: 'The starting point: a square-shouldered block, nine by seven.',
+    fn: u => tile(u, roomy()) },
+
+  { key: 'soft-top', name: 'Soft Top', tag: 'trimmed corners',
+    blurb: 'One dot off each top corner. The shoulders round off and nothing else changes.',
+    fn: u => tile(u, roomy({ keep: softTop })) },
+
+  { key: 'dome', name: 'Dome', tag: 'stepped curve',
+    blurb: 'The top rows shorten into a curve while the bottom stays square, like the crown of a headset.',
+    fn: u => tile(u, roomy({ keep: dome })) },
+
+  { key: 'arc-top', name: 'Arc Top', tag: 'bent rows',
+    blurb: 'No dots removed. The rows bend instead: most at the top, flat at the bottom, so the top edge is one smooth arc.',
+    fn: u => tile(u, roomy({ warp: arcTop })) },
+
+  { key: 'visor', name: 'Visor', tag: 'wrapped',
+    blurb: 'The arc top, plus dots that crowd and narrow toward the sides, like a grille on a curved visor seen head-on.',
+    fn: u => tile(u, roomy({ warp: visor })) },
+
+  { key: 'dome-arc', name: 'Dome Arc', tag: 'trimmed + bent',
+    blurb: 'Top corners trimmed and the rows bent: the roundest crown, closest to a headset outline.',
+    fn: u => tile(u, roomy({ keep: softTop, warp: arcTop })) },
+
+  { key: 'strapped', name: 'Strapped', tag: 'with straps',
+    blurb: 'The arc top with a row running out each side as a strap, so it reads as something you wear.',
+    fn: u => {
+      // The straps run level from where the outer columns' 42 row lands after bending.
+      const y = arcTop(18, 42).y;
+      return tile(u, roomy({ warp: arcTop, extra: [[10, y], [2, y], [90, y], [98, y]] }));
+    } },
+];
+
+/* ---------- Rendering ---------- */
+
+const svg = (fn, label, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" ${extra} role="img" aria-label="${label}">${fn(uid())}</svg>`;
+
+document.getElementById('g-curves').innerHTML = CURVES.map((ic, i) => `
+  <article class="card">
+    <button type="button" class="stage" data-focus="${i}" aria-label="Enlarge ${ic.name}"><div class="hero">${svg(ic.fn, ic.name + ' icon')}</div></button>
+    <div class="ladder">${[64, 48, 32, 24, 16].map(s => `<div><div class="mini" style="width:${s}px;height:${s}px">${svg(ic.fn, ic.name + ' at ' + s + ' px')}</div><span>${s}</span></div>`).join('')}</div>
+    <div class="meta">
+      <div class="row"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="tag">${ic.tag}</span></div>
+      <h3>${ic.name}</h3>
+      <p>${ic.blurb}</p>
+      <div class="actions"><button type="button" data-i="${i}" data-kind="svg">Download SVG</button><button type="button" data-i="${i}" data-kind="png">PNG 1024</button></div>
+    </div>
+  </article>`).join('');
+
+document.getElementById('tiles').innerHTML = CURVES.map(ic => `<div class="tile"><div class="ic">${svg(ic.fn, ic.name)}</div>${ic.name}</div>`).join('');
+document.getElementById('tb').innerHTML = CURVES.map(ic => `<div class="tb" title="${ic.name}"><div class="i24">${svg(ic.fn, ic.name + ' at 24 px')}</div></div>`).join('');
+document.getElementById('tray').innerHTML = CURVES.map(ic => `<div class="i16" title="${ic.name}">${svg(ic.fn, ic.name + ' at 16 px')}</div>`).join('') + '<div class="clock">21:40<br>09/11/2026</div>';
+
+function save(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const dlg = document.getElementById('focus');
+document.addEventListener('click', e => {
+  const fb = e.target.closest('[data-focus]');
+  if (fb) {
+    const ic = CURVES[+fb.dataset.focus];
+    document.getElementById('focus-big').innerHTML = svg(ic.fn, ic.name + ' icon, enlarged');
+    document.getElementById('focus-name').textContent = ic.name;
+    dlg.showModal();
+    return;
+  }
+  const b = e.target.closest('button[data-kind]'); if (!b) return;
+  const ic = CURVES[+b.dataset.i];
+  if (b.dataset.kind === 'svg') {
+    save(URL.createObjectURL(new Blob([svg(ic.fn, ic.name)], { type: 'image/svg+xml' })), `setu-${ic.key}.svg`);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = c.height = 1024;
+    c.getContext('2d').drawImage(img, 0, 0, 1024, 1024);
+    c.toBlob(blob => save(URL.createObjectURL(blob), `setu-${ic.key}-1024.png`));
+  };
+  img.src = URL.createObjectURL(new Blob([svg(ic.fn, ic.name, 'width="1024" height="1024"')], { type: 'image/svg+xml' }));
+});
+document.getElementById('focus-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.body.dataset.stage = b.dataset.stage;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setu — icon studies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C0C0F;
+  --card: #131317;
+  --line: #25252C;
+  --text: #EDECE8;
+  --muted: #A09EA8;
+  --chip: #1C1C22;
+  --stage: radial-gradient(120% 90% at 50% 0%, #22222A 0%, #141418 70%);
+  --stage-ink: #A09EA8;
+}
+body[data-stage="paper"] { --stage: radial-gradient(120% 90% at 50% 0%, #F7F3EC 0%, #E7E0D3 80%); --stage-ink: #5C574E; }
+body[data-stage="wall"] { --stage: linear-gradient(135deg, #2B2160 0%, #8A3F86 45%, #E2775E 80%, #F4B26A 100%); --stage-ink: #F6E9F0; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 40px; } }
+
+header.top { padding: 72px 0 40px; display: grid; gap: 24px; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.eyebrow a { color: var(--muted); }
+h1 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: clamp(48px, 8vw, 104px); line-height: .92; letter-spacing: -.02em; }
+h1 em { color: #FFB4A8; }
+.lede { margin: 0; max-width: 640px; color: var(--muted); font-size: 17px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: rgba(12,12,15,.86); backdrop-filter: blur(14px); z-index: 5; }
+.seg { display: inline-flex; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+.seg button { font: 500 13px Inter, sans-serif; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDECE8; color: #0C0C0F; }
+.bar nav { display: flex; gap: 18px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+
+section { padding: 56px 0 24px; }
+section > h2 { margin: 0 0 6px; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 44px; line-height: 1; }
+section > p.sub { margin: 0 0 28px; color: var(--muted); max-width: 640px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
+.stage { background: var(--stage); aspect-ratio: 1 / .82; display: grid; place-items: center; border: 0; padding: 0; width: 100%; cursor: zoom-in; }
+.stage .hero { width: 60%; aspect-ratio: 1; filter: drop-shadow(0 16px 26px rgba(0,0,0,.3)) drop-shadow(0 3px 6px rgba(0,0,0,.18)); transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.card:hover .stage .hero { transform: translateY(-4px) scale(1.02); }
+.stage .hero svg, .mini svg, .tile svg, .tb svg, .tray svg { width: 100%; height: 100%; display: block; }
+.ladder { background: var(--stage); display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.06); }
+.ladder div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ladder span { font: 500 10px 'JetBrains Mono', monospace; color: var(--stage-ink); }
+.meta { padding: 18px 20px 20px; display: grid; gap: 6px; }
+.meta .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.num { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); }
+.tag { font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .04em; color: #FFC9BF; background: rgba(255,140,120,.1); border: 1px solid rgba(255,140,120,.25); padding: 3px 9px; border-radius: 999px; }
+.meta h3 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 30px; line-height: 1.05; }
+.meta p { margin: 0; color: var(--muted); font-size: 14px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.actions button:hover { border-color: #3A3A44; background: #222229; }
+
+.ctx { display: grid; gap: 20px; }
+.ctx-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; }
+.env { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); padding: clamp(20px, 5vw, 56px); background:
+  radial-gradient(60% 80% at 15% 20%, #3C5A7A 0%, transparent 60%),
+  radial-gradient(50% 70% at 85% 30%, #6B4A7E 0%, transparent 60%),
+  radial-gradient(70% 60% at 50% 110%, #C98A5C 0%, transparent 60%), #1B1D28; }
+.panel { max-width: 940px; margin: 0 auto; border-radius: 28px; padding: 24px; background: rgba(20,22,32,.62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(24px); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-weight: 600; font-size: 18px; }
+.panel .ph span { font: 400 13px Inter, sans-serif; color: rgba(255,255,255,.6); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 20px 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12.5px; color: rgba(255,255,255,.85); text-align: center; }
+.tile .ic { width: 80px; height: 80px; }
+.tile.ph-tile .ic { border-radius: 20px; background: rgba(255,255,255,.07); }
+.desk { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--stage); min-height: 160px; display: flex; flex-direction: column; justify-content: flex-end; }
+.taskbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 14px; background: rgba(24,24,30,.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+.tb-apps { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; }
+.tb:hover { background: rgba(255,255,255,.08); }
+.tb .i24 { width: 24px; height: 24px; }
+.tray { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.75); font: 500 12px Inter, sans-serif; }
+.tray .i16 { width: 16px; height: 16px; }
+.tray .clock { margin-left: 8px; text-align: right; line-height: 1.25; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(6,6,9,.82); backdrop-filter: blur(10px); }
+.focus { width: min(92vw, 720px); border-radius: 28px; overflow: hidden; background: var(--stage); border: 1px solid var(--line); }
+.focus .big { width: min(72vw, 540px); aspect-ratio: 1; margin: 48px auto 20px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.35)); }
+.focus .big svg { width: 100%; height: 100%; display: block; }
+.focus .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; background: var(--card); color: var(--text); }
+.focus .cap strong { font: 400 26px 'Instrument Serif', serif; }
+.focus .cap button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+
+footer { padding: 48px 0 80px; color: var(--muted); font-size: 13px; }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body data-stage="graphite">
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Setu · app icon studies · round 3 · <a href="round-4.html">round 4</a> · <a href="round-2.html">round 2</a></span>
+    <h1>Meet the <em>wearer.</em></h1>
+    <p class="lede">One character, eight takes. A soft cream figure in a generic headset, with one pop per icon: a loud background, a bright visor, a bubble, a burst. Everything else stays quiet.</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Backdrop">
+      <button type="button" data-stage="graphite" aria-pressed="true">Graphite</button>
+      <button type="button" data-stage="paper" aria-pressed="false">Paper</button>
+      <button type="button" data-stage="wall" aria-pressed="false">Wallpaper</button>
+    </div>
+    <nav><a href="#studies">Studies</a><a href="#context">In context</a></nav>
+  </div>
+
+  <section id="studies">
+    <h2>Studies</h2>
+    <p class="sub">Click any icon to enlarge it. The ladder under each one runs from 64 down to 16 px.</p>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="context">
+    <h2>In context</h2>
+    <p class="sub">A generic headset library panel, and a desktop taskbar at 24 px with a 16 px tray.</p>
+    <div class="ctx">
+      <div>
+        <p class="ctx-label">Headset library</p>
+        <div class="env"><div class="panel"><div class="ph">Library<span>Sorted by recent</span></div><div class="tiles" id="tiles"></div></div></div>
+      </div>
+      <div>
+        <p class="ctx-label">Desktop taskbar &amp; tray</p>
+        <div class="desk"><div class="taskbar"><div class="tb-apps" id="tb"></div><div class="tray" id="tray"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="focus"><div class="focus"><div class="big" id="focus-big"></div><div class="cap"><strong id="focus-name"></strong><button type="button" id="focus-close">Close</button></div></div></dialog>
+
+  <footer>Each icon is a 100×100 SVG. Use the buttons under each one to download the vector or a 1024 px PNG. <a href="round-4.html">Round 4</a> · <a href="round-2.html">Round 2</a></footer>
+</div>
+
+<script>
+// Superellipse (n = 5) tile outline, close to a continuous-corner app icon.
+const SQ = (() => {
+  const n = 5, pts = [];
+  for (let i = 0; i < 240; i++) {
+    const t = i / 240 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+    pts.push([50 + 50 * Math.sign(c) * Math.abs(c) ** (2 / n), 50 + 50 * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return 'M' + pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+})();
+
+let N = 0;
+const uid = () => 'i' + (++N) + '_';
+
+const INK = '#2A2433';
+const HEAD = 'M50 26C64 26 74 35.5 74 48C74 60.5 64 70 50 70C36 70 26 60.5 26 48C26 35.5 36 26 50 26Z';
+const BODY = 'M24 104C24 83 35 65 50 65C65 65 76 83 76 104Z';
+
+/*
+ * The wearer. Options:
+ *   visor: [top, bottom] colours of the headset visor
+ *   ol:    outline colour for a comic-style line, or ''
+ *   ears:  round bear ears
+ *   mouth: 'smile' | 'none'
+ */
+function wearer(u, { visor = ['#3A3450', '#14111E'], ol = '', ears = false, mouth = 'smile' } = {}) {
+  const line = ol ? `stroke="${ol}" stroke-width="1.6" stroke-linejoin="round"` : '';
+  return `
+  <defs>
+    <radialGradient id="${u}hd" cx=".38" cy=".28" r=".85"><stop offset="0" stop-color="#FFFBF2"/><stop offset=".6" stop-color="#F6E8D2"/><stop offset="1" stop-color="#E9D5B6"/></radialGradient>
+    <linearGradient id="${u}bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7EAD5"/><stop offset="1" stop-color="#E4CFAD"/></linearGradient>
+    <linearGradient id="${u}vs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${visor[0]}"/><stop offset="1" stop-color="${visor[1]}"/></linearGradient>
+  </defs>
+  <path d="${BODY}" fill="url(#${u}bd)" ${line}/>
+  <ellipse cx="50" cy="70" rx="11.5" ry="3" fill="#C9AE86" opacity=".6"/>
+  ${ears ? `<g ${line}><circle cx="31" cy="30.5" r="7.5" fill="#F4E4CA"/><circle cx="69" cy="30.5" r="7.5" fill="#F4E4CA"/></g><circle cx="31" cy="30.5" r="3.6" fill="#FFB3BE"/><circle cx="69" cy="30.5" r="3.6" fill="#FFB3BE"/>` : ''}
+  <path d="${HEAD}" fill="url(#${u}hd)" ${line}/>
+  <path d="M27.6 41Q50 17.5 72.4 41" fill="none" stroke="${INK}" stroke-width="3.2" stroke-linecap="round"/>
+  <rect x="24.5" y="38.5" width="51" height="17" rx="8.5" fill="url(#${u}vs)" ${line}/>
+  <path d="M31.5 43H42" stroke="#fff" stroke-width="1.9" stroke-linecap="round" opacity=".85"/>
+  <circle cx="45.6" cy="43" r="1" fill="#fff" opacity=".85"/>
+  <ellipse cx="34" cy="60.5" rx="4" ry="2.5" fill="#FF97A6" opacity=".8"/>
+  <ellipse cx="66" cy="60.5" rx="4" ry="2.5" fill="#FF97A6" opacity=".8"/>
+  ${mouth === 'smile' ? `<path d="M46.5 62.5Q50 65.8 53.5 62.5" fill="none" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>` : ''}`;
+}
+
+// The wearer's outline, used for the die-cut sticker border.
+function silhouette(attrs) {
+  return `<g ${attrs}><path d="${BODY}"/><path d="${HEAD}"/><rect x="24.5" y="38.5" width="51" height="17" rx="8.5"/></g>`;
+}
+
+function tile(u, bg, inner, defs = '') {
+  return `<defs><clipPath id="${u}c"><path d="${SQ}"/></clipPath>${defs}</defs>
+  <g clip-path="url(#${u}c)">${bg}${inner}<path d="${SQ}" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width=".9"/></g>`;
+}
+
+const flatBg = (u, top, bottom) => ({
+  defs: `<radialGradient id="${u}bg" cx=".3" cy=".15" r="1.05"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></radialGradient>`,
+  rect: `<rect width="100" height="100" fill="url(#${u}bg)"/>`,
+});
+
+function sparkle(x, y, r, fill) {
+  const k = r * .28;
+  return `<path d="M${x} ${y - r}Q${x + k} ${y - k} ${x + r} ${y}Q${x + k} ${y + k} ${x} ${y + r}Q${x - k} ${y + k} ${x - r} ${y}Q${x - k} ${y - k} ${x} ${y - r}Z" fill="${fill}"/>`;
+}
+
+function burst(cx, cy, ro, ri, n) {
+  let d = '';
+  for (let i = 0; i < n * 2; i++) {
+    const a = i / (n * 2) * 2 * Math.PI - Math.PI / 2, r = i % 2 ? ri : ro;
+    d += (i ? 'L' : 'M') + (cx + r * Math.cos(a)).toFixed(2) + ' ' + (cy + r * Math.sin(a)).toFixed(2);
+  }
+  return d + 'Z';
+}
+
+const ICONS = [
+  { key: 'tomato', name: 'Tomato', tag: 'pop · colour', blurb: 'The plain version: the wearer on a loud tomato red. The only pop is the background.',
+    fn: u => { const b = flatBg(u, '#FF7457', '#EE3626'); return tile(u, b.rect, wearer(u + 'w'), b.defs); } },
+
+  { key: 'neon-visor', name: 'Neon Visor', tag: 'pop · visor', blurb: 'A quiet ink background, so the hot-pink visor and its glow carry all the colour.',
+    fn: u => { const b = flatBg(u, '#34304A', '#17151F');
+      return tile(u, b.rect, `<ellipse cx="50" cy="47" rx="30" ry="14" fill="#FF3D8B" opacity=".45" filter="url(#${u}gw)"/>` + wearer(u + 'w', { visor: ['#FF5C9A', '#E0306E'] }),
+        b.defs + `<filter id="${u}gw" filterUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><feGaussianBlur stdDeviation="6"/></filter>`); } },
+
+  { key: 'pop', name: 'Pop!', tag: 'pop · motion', blurb: 'The head tilts and three pop lines fly off the side, as if the sound just arrived. Sunshine yellow.',
+    fn: u => { const b = flatBg(u, '#FFD95A', '#FFB81F');
+      const rays = `<g stroke="${INK}" stroke-width="2.8" stroke-linecap="round"><path d="M80 27L86.5 21"/><path d="M83.5 36.5L91.5 35.5"/><path d="M76 19L78.5 11.5"/></g>${sparkle(17, 22, 5, '#fff')}${sparkle(25, 13, 2.4, '#fff')}`;
+      return tile(u, b.rect, rays + `<g transform="rotate(-9 50 80)">${wearer(u + 'w')}</g>`, b.defs); } },
+
+  { key: 'bubblegum', name: 'Bubblegum', tag: 'pop · literal', blurb: 'A pink bubblegum bubble mid-blow, ready to pop. Electric indigo behind. The most character of the set.',
+    fn: u => { const b = flatBg(u, '#7474FF', '#4A3FE0');
+      const bubble = `<circle cx="50" cy="67.5" r="9.5" fill="url(#${u}bb)"/><path d="M44.2 62.4A7.2 7.2 0 0 1 48.6 60.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".9"/><circle cx="43.6" cy="65.4" r=".9" fill="#fff" opacity=".9"/>`;
+      return tile(u, b.rect, wearer(u + 'w', { mouth: 'none' }) + bubble,
+        b.defs + `<radialGradient id="${u}bb" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#FFC2DE"/><stop offset=".7" stop-color="#FF7EB8"/><stop offset="1" stop-color="#F25C9F"/></radialGradient>`); } },
+
+  { key: 'peek', name: 'Peek', tag: 'pop · crop', blurb: 'Cropped close so the face fills the tile. It holds up best at 16 px, and the mint gives it a fresh pop.',
+    fn: u => { const b = flatBg(u, '#5BE6B8', '#20C493');
+      return tile(u, b.rect, `<g transform="translate(-22.5 -9.5) scale(1.45)">${wearer(u + 'w')}</g>`, b.defs); } },
+
+  { key: 'pop-art', name: 'Pop Art', tag: 'pop · comic', blurb: 'Comic-book pop: ink outlines, a white starburst and Ben-Day dots on yellow.',
+    fn: u => { const b = flatBg(u, '#FFE04A', '#FFC61A');
+      const bg = b.rect + `<rect width="100" height="100" fill="url(#${u}dt)"/><path d="${burst(50, 47, 44, 33, 14)}" fill="#fff" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>`;
+      return tile(u, bg, wearer(u + 'w', { ol: INK, visor: ['#2B2638', '#0E0C14'] }),
+        b.defs + `<pattern id="${u}dt" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><circle cx="2" cy="2" r="1.05" fill="#FF4F38" opacity=".55"/></pattern>`); } },
+
+  { key: 'cub', name: 'Cub', tag: 'pop · visor', blurb: 'Round ears turn the wearer into a cub, and an orange visor pops against cobalt.',
+    fn: u => { const b = flatBg(u, '#4F86FF', '#2350E0');
+      return tile(u, b.rect, `<g transform="translate(0 3)">${wearer(u + 'w', { ears: true, visor: ['#FFA033', '#FF6A1F'] })}</g>`, b.defs); } },
+
+  { key: 'sticker', name: 'Sticker', tag: 'pop · die-cut', blurb: 'A die-cut sticker with a thick white border and a soft shadow on lilac, with a couple of sparkles.',
+    fn: u => { const b = flatBg(u, '#CDBBFF', '#9E86F5');
+      const sticker = `<g filter="url(#${u}sh)">${silhouette('fill="#fff" stroke="#fff" stroke-width="7" stroke-linejoin="round"')}</g>`;
+      return tile(u, b.rect, sticker + wearer(u + 'w') + sparkle(82, 22, 5.5, '#FFE45C') + sparkle(17, 30, 3, '#fff'),
+        b.defs + `<filter id="${u}sh" filterUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><feDropShadow dx="0" dy="2.2" stdDeviation="2" flood-color="#3B2A8A" flood-opacity=".35"/></filter>`); } },
+];
+
+const svg = (fn, label, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" ${extra} role="img" aria-label="${label}">${fn(uid())}</svg>`;
+
+document.getElementById('grid').innerHTML = ICONS.map((ic, i) => `
+  <article class="card">
+    <button type="button" class="stage" data-focus="${i}" aria-label="Enlarge ${ic.name}"><div class="hero">${svg(ic.fn, ic.name + ' icon')}</div></button>
+    <div class="ladder">${[64, 48, 32, 24, 16].map(s => `<div><div class="mini" style="width:${s}px;height:${s}px">${svg(ic.fn, ic.name + ' at ' + s + ' px')}</div><span>${s}</span></div>`).join('')}</div>
+    <div class="meta">
+      <div class="row"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="tag">${ic.tag}</span></div>
+      <h3>${ic.name}</h3>
+      <p>${ic.blurb}</p>
+      <div class="actions"><button type="button" data-i="${i}" data-kind="svg">Download SVG</button><button type="button" data-i="${i}" data-kind="png">PNG 1024</button></div>
+    </div>
+  </article>`).join('');
+
+const placeholders = ['Browser', 'Files', 'Settings', 'Store'];
+document.getElementById('tiles').innerHTML =
+  ICONS.map(ic => `<div class="tile"><div class="ic">${svg(ic.fn, ic.name)}</div>${ic.name}</div>`).join('') +
+  placeholders.map(p => `<div class="tile ph-tile"><div class="ic" aria-hidden="true"></div>${p}</div>`).join('');
+document.getElementById('tb').innerHTML = ICONS.map(ic => `<div class="tb" title="${ic.name}"><div class="i24">${svg(ic.fn, ic.name + ' at 24 px')}</div></div>`).join('');
+document.getElementById('tray').innerHTML = ICONS.map(ic => `<div class="i16" title="${ic.name}">${svg(ic.fn, ic.name + ' at 16 px')}</div>`).join('') + '<div class="clock">21:40<br>09/11/2026</div>';
+
+function save(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const dlg = document.getElementById('focus');
+document.getElementById('grid').addEventListener('click', e => {
+  const f = e.target.closest('[data-focus]');
+  if (f) {
+    const ic = ICONS[+f.dataset.focus];
+    document.getElementById('focus-big').innerHTML = svg(ic.fn, ic.name + ' icon, enlarged');
+    document.getElementById('focus-name').textContent = ic.name;
+    dlg.showModal();
+    return;
+  }
+  const b = e.target.closest('button[data-kind]'); if (!b) return;
+  const ic = ICONS[+b.dataset.i];
+  if (b.dataset.kind === 'svg') {
+    save(URL.createObjectURL(new Blob([svg(ic.fn, ic.name)], { type: 'image/svg+xml' })), `setu-${ic.key}.svg`);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = c.height = 1024;
+    c.getContext('2d').drawImage(img, 0, 0, 1024, 1024);
+    c.toBlob(blob => save(URL.createObjectURL(blob), `setu-${ic.key}-1024.png`));
+  };
+  img.src = URL.createObjectURL(new Blob([svg(ic.fn, ic.name, 'width="1024" height="1024"')], { type: 'image/svg+xml' }));
+});
+document.getElementById('focus-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.body.dataset.stage = b.dataset.stage;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>

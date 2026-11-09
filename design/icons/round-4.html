@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setu icon studies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C0C0F;
+  --card: #131317;
+  --line: #25252C;
+  --text: #EDECE8;
+  --muted: #A09EA8;
+  --chip: #1C1C22;
+  --stage: radial-gradient(120% 90% at 50% 0%, #22222A 0%, #141418 70%);
+  --stage-ink: #A09EA8;
+}
+body[data-stage="paper"] { --stage: radial-gradient(120% 90% at 50% 0%, #F7F3EC 0%, #E7E0D3 80%); --stage-ink: #5C574E; }
+body[data-stage="wall"] { --stage: linear-gradient(135deg, #2B2160 0%, #8A3F86 45%, #E2775E 80%, #F4B26A 100%); --stage-ink: #F6E9F0; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 40px; } }
+
+header.top { padding: 72px 0 40px; display: grid; gap: 24px; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.eyebrow a { color: var(--muted); }
+h1 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: clamp(48px, 8vw, 104px); line-height: .92; letter-spacing: -.02em; }
+h1 em { color: #FFB4A8; }
+.lede { margin: 0; max-width: 640px; color: var(--muted); font-size: 17px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: rgba(12,12,15,.86); backdrop-filter: blur(14px); z-index: 5; }
+.seg { display: inline-flex; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+.seg button { font: 500 13px Inter, sans-serif; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDECE8; color: #0C0C0F; }
+.bar nav { display: flex; gap: 18px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+
+section { padding: 56px 0 24px; }
+section > h2 { margin: 0 0 6px; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 44px; line-height: 1; }
+section > p.sub { margin: 0 0 28px; color: var(--muted); max-width: 640px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
+.stage { background: var(--stage); aspect-ratio: 1 / .82; display: grid; place-items: center; border: 0; padding: 0; width: 100%; cursor: zoom-in; }
+.stage .hero { width: 60%; aspect-ratio: 1; filter: drop-shadow(0 16px 26px rgba(0,0,0,.3)) drop-shadow(0 3px 6px rgba(0,0,0,.18)); transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.card:hover .stage .hero { transform: translateY(-4px) scale(1.02); }
+.stage .hero svg, .mini svg, .tile svg, .tb svg, .tray svg { width: 100%; height: 100%; display: block; }
+.ladder { background: var(--stage); display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.06); }
+.ladder div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ladder span { font: 500 10px 'JetBrains Mono', monospace; color: var(--stage-ink); }
+.meta { padding: 18px 20px 20px; display: grid; gap: 6px; }
+.meta .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.num { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); }
+.tag { font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .04em; color: #FFC9BF; background: rgba(255,140,120,.1); border: 1px solid rgba(255,140,120,.25); padding: 3px 9px; border-radius: 999px; }
+.meta h3 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 30px; line-height: 1.05; }
+.meta p { margin: 0; color: var(--muted); font-size: 14px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.actions button:hover { border-color: #3A3A44; background: #222229; }
+
+.ctx { display: grid; gap: 20px; }
+.ctx-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; }
+.env { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); padding: clamp(20px, 5vw, 56px); background:
+  radial-gradient(60% 80% at 15% 20%, #3C5A7A 0%, transparent 60%),
+  radial-gradient(50% 70% at 85% 30%, #6B4A7E 0%, transparent 60%),
+  radial-gradient(70% 60% at 50% 110%, #C98A5C 0%, transparent 60%), #1B1D28; }
+.panel { max-width: 940px; margin: 0 auto; border-radius: 28px; padding: 24px; background: rgba(20,22,32,.62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(24px); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-weight: 600; font-size: 18px; }
+.panel .ph span { font: 400 13px Inter, sans-serif; color: rgba(255,255,255,.6); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 20px 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12.5px; color: rgba(255,255,255,.85); text-align: center; }
+.tile .ic { width: 80px; height: 80px; }
+.tile.ph-tile .ic { border-radius: 20px; background: rgba(255,255,255,.07); }
+.desk { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--stage); min-height: 160px; display: flex; flex-direction: column; justify-content: flex-end; }
+.taskbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 14px; background: rgba(24,24,30,.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+.tb-apps { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; }
+.tb:hover { background: rgba(255,255,255,.08); }
+.tb .i24 { width: 24px; height: 24px; }
+.tray { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.75); font: 500 12px Inter, sans-serif; }
+.tray .i16 { width: 16px; height: 16px; }
+.tray .clock { margin-left: 8px; text-align: right; line-height: 1.25; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(6,6,9,.82); backdrop-filter: blur(10px); }
+.focus { width: min(92vw, 720px); border-radius: 28px; overflow: hidden; background: var(--stage); border: 1px solid var(--line); }
+.focus .big { width: min(72vw, 540px); aspect-ratio: 1; margin: 48px auto 20px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.35)); }
+.focus .big svg { width: 100%; height: 100%; display: block; }
+.focus .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; background: var(--card); color: var(--text); }
+.focus .cap strong { font: 400 26px 'Instrument Serif', serif; }
+.focus .cap button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+
+footer { padding: 48px 0 80px; color: var(--muted); font-size: 13px; }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body data-stage="graphite">
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Setu · app icon studies · round 4 · <a href="round-5.html">round 5</a> · <a href="round-3.html">round 3</a> · <a href="round-2.html">round 2</a></span>
+    <h1>One idea, <em>drawn once.</em></h1>
+    <p class="lede">Eight flat marks, each built on a single idea where a bridge and sound turn out to be the same shape. No characters, no lighting, two or three colours each.</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Backdrop">
+      <button type="button" data-stage="graphite" aria-pressed="true">Graphite</button>
+      <button type="button" data-stage="paper" aria-pressed="false">Paper</button>
+      <button type="button" data-stage="wall" aria-pressed="false">Wallpaper</button>
+    </div>
+    <nav><a href="#studies">Studies</a><a href="#context">In context</a></nav>
+  </div>
+
+  <section id="studies">
+    <h2>Studies</h2>
+    <p class="sub">Click any icon to enlarge it. The ladder under each one runs from 64 down to 16 px.</p>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="context">
+    <h2>In context</h2>
+    <p class="sub">A generic headset library panel, and a desktop taskbar at 24 px with a 16 px tray.</p>
+    <div class="ctx">
+      <div>
+        <p class="ctx-label">Headset library</p>
+        <div class="env"><div class="panel"><div class="ph">Library<span>Sorted by recent</span></div><div class="tiles" id="tiles"></div></div></div>
+      </div>
+      <div>
+        <p class="ctx-label">Desktop taskbar &amp; tray</p>
+        <div class="desk"><div class="taskbar"><div class="tb-apps" id="tb"></div><div class="tray" id="tray"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="focus"><div class="focus"><div class="big" id="focus-big"></div><div class="cap"><strong id="focus-name"></strong><button type="button" id="focus-close">Close</button></div></div></dialog>
+
+  <footer>Each icon is a 100×100 SVG. Use the buttons under each one to download the vector or a 1024 px PNG. Other rounds: <a href="round-5.html">round 5</a> · <a href="round-3.html">round 3</a> · <a href="round-2.html">round 2</a>.</footer>
+</div>
+
+<script>
+// Superellipse (n = 5) tile outline, close to a continuous-corner app icon.
+const SQ = (() => {
+  const n = 5, pts = [];
+  for (let i = 0; i < 240; i++) {
+    const t = i / 240 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+    pts.push([50 + 50 * Math.sign(c) * Math.abs(c) ** (2 / n), 50 + 50 * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return 'M' + pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+})();
+
+let N = 0;
+const uid = () => 'i' + (++N) + '_';
+
+const INK = '#1D1B24';
+const CREAM = '#F5ECDC';
+const TOMATO = '#FF5A36';
+const COBALT = '#2D47F0';
+const SUN = '#FFC21A';
+
+function tile(u, fill, inner, defs = '') {
+  return `<defs><clipPath id="${u}c"><path d="${SQ}"/></clipPath>${defs}</defs>
+  <g clip-path="url(#${u}c)"><rect width="100" height="100" fill="${fill}"/>${inner}<path d="${SQ}" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".9"/></g>`;
+}
+
+const f = n => +n.toFixed(2);
+
+// Vertical bars at x = 18, 26 … 82, drawn as round-capped strokes from y1(x) to y2(x).
+function bars(y1, y2, color, w = 5.2) {
+  let d = '';
+  for (let x = 18; x <= 82; x += 8) d += `M${x} ${f(y1(x))}V${f(y2(x))}`;
+  return `<path d="${d}" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`;
+}
+
+// सेतु in Noto Sans Devanagari Bold, shaped with HarfBuzz and outlined to font units
+// (1000 upm, baseline at y 0, y down). Bounds: x 0…1373, y −896…268; headline y −622…−510.
+const SETU = `M277 23Q195 -59 141.5 -124.0Q88 -189 63 -233Q47 -261 40.0 -283.5Q33 -306 33 -325Q33 -357 52.0 -376.5Q71 -396 108 -396Q146 -396 175.5 -372.5Q205 -349 234 -316L152 -329Q188 -350 202.5 -378.0Q217 -406 217 -444Q217 -474 209.0 -500.0Q201 -526 187 -543L257 -510H0V-622H451V-510H308L331 -541Q343 -516 349.5 -489.5Q356 -463 356 -429Q356 -389 342.5 -358.0Q329 -327 307 -304L294 -289Q275 -270 251.5 -254.5Q228 -239 197 -227V-244Q222 -215 251.0 -184.5Q280 -154 313.0 -123.0Q346 -92 380 -61ZM431 -218Q388 -218 341.0 -228.5Q294 -239 249 -264L286 -357Q327 -342 359.0 -336.5Q391 -331 431 -331Q470 -331 507.0 -337.5Q544 -344 582 -360V-243Q550 -231 512.5 -224.5Q475 -218 431 -218ZM521 0V-510H418V-622H753V-510H661V0ZM526 -615Q509 -667 495.5 -700.0Q482 -733 468.5 -751.0Q455 -769 439.0 -775.5Q423 -782 402 -782Q384 -782 364.5 -778.0Q345 -774 328 -767L293 -876Q320 -886 349.5 -891.0Q379 -896 408 -896Q454 -896 487.5 -883.0Q521 -870 547.0 -838.5Q573 -807 596.5 -752.5Q620 -698 646 -615ZM1281 -510V0H1141V-291H1014Q965 -291 939.0 -272.0Q913 -253 913 -215Q913 -177 939.5 -140.5Q966 -104 1017 -57L914 23Q848 -42 810.5 -101.5Q773 -161 773 -231Q773 -318 830.5 -360.5Q888 -403 995 -403H1141V-510H738V-622H1373V-510ZM1173 268Q1107 268 1053.0 248.5Q999 229 953.5 193.5Q908 158 867 112L952 36Q994 83 1028.0 111.5Q1062 140 1095.5 152.0Q1129 164 1167 164Q1207 164 1226.0 151.0Q1245 138 1245 115Q1245 95 1232.5 83.5Q1220 72 1195 72Q1172 72 1150.0 81.0Q1128 90 1107 105L1055 17Q1084 -5 1120.0 -17.0Q1156 -29 1205 -29Q1282 -29 1325.5 13.0Q1369 55 1369 122Q1369 187 1320.5 227.5Q1272 268 1173 268Z`;
+
+const ICONS = [
+  { key: 'nose-bridge', name: 'Nose Bridge', tag: 'headset = bridge',
+    blurb: 'A headset seen from the front. Its nose cut-out is a bridge arch, and the strap runs out to the edges like the deck.',
+    fn: u => tile(u, COBALT, `
+      <defs><mask id="${u}m"><rect width="100" height="100" fill="#fff"/><path d="M40 72V60A10 10 0 0 1 60 60V72Z" fill="#000"/></mask></defs>
+      <path d="M0 44H100" stroke="${CREAM}" stroke-opacity=".5" stroke-width="5"/>
+      <rect x="15" y="33" width="70" height="36" rx="16" fill="${CREAM}" mask="url(#${u}m)"/>`) },
+
+  { key: 'suspension', name: 'Suspension', tag: 'bridge = equaliser',
+    blurb: 'Equaliser bars standing on a deck. Their tops sag like the cable of a suspension bridge, with the tallest bars as towers.',
+    fn: u => tile(u, SUN,
+      bars(x => 58 - .03125 * (x - 50) ** 2, () => 70, INK) +
+      `<path d="M13 77H87" stroke="${TOMATO}" stroke-width="4.4" stroke-linecap="round"/>`) },
+
+  { key: 'arch-bars', name: 'Viaduct', tag: 'bridge = equaliser',
+    blurb: 'Bars hang from a deck and stop where an arch would be. The arch is never drawn: the gap under the bars makes it.',
+    fn: u => tile(u, TOMATO,
+      `<path d="M13 31H87" stroke="${CREAM}" stroke-width="5.2" stroke-linecap="round"/>` +
+      bars(() => 38, x => 85 - Math.sqrt(34 ** 2 - (x - 50) ** 2) - 2.5, CREAM)) },
+
+  { key: 'grille', name: 'Grille', tag: 'bridge = speaker',
+    blurb: 'An arch bridge punched out of a speaker grille. One warm dot works as a power light.',
+    fn: u => {
+      let dots = '';
+      for (let y = 26; y <= 74; y += 6) for (let x = 14; x <= 86; x += 6) {
+        if (Math.hypot(x - 50, y - 76) < 25) continue;
+        const hot = x === 86 && y === 26;
+        dots += `<circle cx="${x}" cy="${y}" r="2.15" fill="${hot ? TOMATO : INK}"/>`;
+      }
+      return tile(u, CREAM, dots);
+    } },
+
+  { key: 'cable', name: 'Cable', tag: 'cable = bridge',
+    blurb: 'An audio cable climbs out of the bottom edge, arches over and plugs in on the other side.',
+    fn: u => tile(u, INK, `
+      <path d="M24 100V55A26 26 0 0 1 76 55V59" fill="none" stroke="${CREAM}" stroke-width="7"/>
+      <rect x="69.5" y="57" width="13" height="15" rx="3" fill="${TOMATO}"/>
+      <path d="M76 72V84" stroke="${CREAM}" stroke-width="4.6" stroke-linecap="round"/>
+      <path d="M73.4 76.5H78.6M73.4 80.5H78.6" stroke="${INK}" stroke-width="1.3"/>`) },
+
+  { key: 'stones', name: 'Stepping Stones', tag: 'stream = bridge',
+    blurb: 'Dots cross the tile on an arc and grow as they go, like sound getting closer. Read left to right: headset to PC.',
+    fn: u => {
+      const angles = [166, 143, 118, 90, 62, 37, 14], radii = [2.2, 3, 3.8, 4.6, 5.4, 6.2, 7.4];
+      const dots = angles.map((a, i) => {
+        const t = a * Math.PI / 180;
+        return `<circle cx="${f(50 + 37 * Math.cos(t))}" cy="${f(84 - 37 * Math.sin(t))}" r="${radii[i]}" fill="${i === angles.length - 1 ? SUN : CREAM}"/>`;
+      }).join('');
+      return tile(u, '#3A2E8C', dots);
+    } },
+
+  { key: 'shirorekha', name: 'Shirorekha', tag: 'letters = bridge',
+    blurb: 'सेतु in Devanagari. The shirorekha, the headline that joins its letters, runs out past the word to both edges.',
+    fn: u => {
+      const s = .046, cx = 686.5, cy = -314, ox = 50, oy = 54;
+      const top = oy + (-622 - cy) * s, h = 112 * s;
+      return tile(u, SUN,
+        `<path d="${SETU}" fill="${INK}" transform="translate(${ox} ${oy}) scale(${s}) translate(${-cx} ${-cy})"/>` +
+        `<rect x="0" y="${f(top)}" width="100" height="${f(h)}" fill="${INK}"/>`);
+    } },
+
+  { key: 'cans', name: 'Cans', tag: 'headphones = bridge',
+    blurb: 'Headphones standing in water, so the headband becomes the arch and the ear cups the piers.',
+    fn: u => tile(u, '#9FD9FF', `
+      <rect y="70" width="100" height="30" fill="${COBALT}"/>
+      <path d="M26 56A24 24 0 0 1 74 56" fill="none" stroke="${INK}" stroke-width="7.5"/>
+      <rect x="17" y="50" width="16" height="24" rx="6" fill="${INK}"/>
+      <rect x="67" y="50" width="16" height="24" rx="6" fill="${INK}"/>`) },
+];
+
+const svg = (fn, label, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" ${extra} role="img" aria-label="${label}">${fn(uid())}</svg>`;
+
+document.getElementById('grid').innerHTML = ICONS.map((ic, i) => `
+  <article class="card">
+    <button type="button" class="stage" data-focus="${i}" aria-label="Enlarge ${ic.name}"><div class="hero">${svg(ic.fn, ic.name + ' icon')}</div></button>
+    <div class="ladder">${[64, 48, 32, 24, 16].map(s => `<div><div class="mini" style="width:${s}px;height:${s}px">${svg(ic.fn, ic.name + ' at ' + s + ' px')}</div><span>${s}</span></div>`).join('')}</div>
+    <div class="meta">
+      <div class="row"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="tag">${ic.tag}</span></div>
+      <h3>${ic.name}</h3>
+      <p>${ic.blurb}</p>
+      <div class="actions"><button type="button" data-i="${i}" data-kind="svg">Download SVG</button><button type="button" data-i="${i}" data-kind="png">PNG 1024</button></div>
+    </div>
+  </article>`).join('');
+
+const placeholders = ['Browser', 'Files', 'Settings', 'Store'];
+document.getElementById('tiles').innerHTML =
+  ICONS.map(ic => `<div class="tile"><div class="ic">${svg(ic.fn, ic.name)}</div>${ic.name}</div>`).join('') +
+  placeholders.map(p => `<div class="tile ph-tile"><div class="ic" aria-hidden="true"></div>${p}</div>`).join('');
+document.getElementById('tb').innerHTML = ICONS.map(ic => `<div class="tb" title="${ic.name}"><div class="i24">${svg(ic.fn, ic.name + ' at 24 px')}</div></div>`).join('');
+document.getElementById('tray').innerHTML = ICONS.map(ic => `<div class="i16" title="${ic.name}">${svg(ic.fn, ic.name + ' at 16 px')}</div>`).join('') + '<div class="clock">21:40<br>09/11/2026</div>';
+
+function save(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const dlg = document.getElementById('focus');
+document.getElementById('grid').addEventListener('click', e => {
+  const fb = e.target.closest('[data-focus]');
+  if (fb) {
+    const ic = ICONS[+fb.dataset.focus];
+    document.getElementById('focus-big').innerHTML = svg(ic.fn, ic.name + ' icon, enlarged');
+    document.getElementById('focus-name').textContent = ic.name;
+    dlg.showModal();
+    return;
+  }
+  const b = e.target.closest('button[data-kind]'); if (!b) return;
+  const ic = ICONS[+b.dataset.i];
+  if (b.dataset.kind === 'svg') {
+    save(URL.createObjectURL(new Blob([svg(ic.fn, ic.name)], { type: 'image/svg+xml' })), `setu-${ic.key}.svg`);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = c.height = 1024;
+    c.getContext('2d').drawImage(img, 0, 0, 1024, 1024);
+    c.toBlob(blob => save(URL.createObjectURL(blob), `setu-${ic.key}-1024.png`));
+  };
+  img.src = URL.createObjectURL(new Blob([svg(ic.fn, ic.name, 'width="1024" height="1024"')], { type: 'image/svg+xml' }));
+});
+document.getElementById('focus-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.body.dataset.stage = b.dataset.stage;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>

@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setu — icon studies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C0C0F;
+  --card: #131317;
+  --line: #25252C;
+  --text: #EDECE8;
+  --muted: #A09EA8;
+  --chip: #1C1C22;
+  --stage: radial-gradient(120% 90% at 50% 0%, #22222A 0%, #141418 70%);
+  --stage-ink: #A09EA8;
+}
+body[data-stage="paper"] { --stage: radial-gradient(120% 90% at 50% 0%, #F7F3EC 0%, #E7E0D3 80%); --stage-ink: #5C574E; }
+body[data-stage="wall"] { --stage: linear-gradient(135deg, #2B2160 0%, #8A3F86 45%, #E2775E 80%, #F4B26A 100%); --stage-ink: #F6E9F0; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 40px; } }
+
+header.top { padding: 72px 0 40px; display: grid; gap: 28px; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: clamp(48px, 8vw, 104px); line-height: .92; letter-spacing: -.02em; }
+h1 em { color: #FF8A5B; }
+.lede { margin: 0; max-width: 680px; color: var(--muted); font-size: 17px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: rgba(12,12,15,.86); backdrop-filter: blur(14px); z-index: 5; }
+.seg { display: inline-flex; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+.seg button { font: 500 13px Inter, sans-serif; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDECE8; color: #0C0C0F; }
+.bar nav { display: flex; gap: 18px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+
+section { padding: 56px 0 24px; }
+section > h2 { margin: 0 0 6px; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 44px; line-height: 1; }
+section > p.sub { margin: 0 0 28px; color: var(--muted); max-width: 640px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
+.stage { background: var(--stage); aspect-ratio: 1 / .8; display: grid; place-items: center; position: relative; border: 0; padding: 0; width: 100%; cursor: zoom-in; }
+.stage .hero { width: 58%; aspect-ratio: 1; filter: drop-shadow(0 18px 30px rgba(0,0,0,.35)) drop-shadow(0 4px 8px rgba(0,0,0,.2)); transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.card:hover .stage .hero { transform: translateY(-4px) scale(1.015); }
+.stage .hero svg, .mini svg, .tile svg, .tb svg { width: 100%; height: 100%; display: block; }
+.ladder { background: var(--stage); display: flex; align-items: flex-end; gap: 14px; padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.06); }
+.ladder div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ladder span { font: 500 10px 'JetBrains Mono', monospace; color: var(--stage-ink); opacity: .85; }
+.meta { padding: 20px 22px 22px; display: grid; gap: 8px; }
+.meta .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.num { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); }
+.tag { font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .04em; color: #FFB08F; background: rgba(255,138,91,.1); border: 1px solid rgba(255,138,91,.25); padding: 3px 9px; border-radius: 999px; }
+.meta h3 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 34px; line-height: 1.05; }
+.meta p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.actions button:hover { border-color: #3A3A44; background: #222229; }
+
+.ctx { display: grid; gap: 20px; }
+.env { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); position: relative; padding: clamp(20px, 5vw, 56px); background:
+  radial-gradient(60% 80% at 15% 20%, #3C5A7A 0%, transparent 60%),
+  radial-gradient(50% 70% at 85% 30%, #6B4A7E 0%, transparent 60%),
+  radial-gradient(70% 60% at 50% 110%, #C98A5C 0%, transparent 60%), #1B1D28; }
+.panel { max-width: 940px; margin: 0 auto; border-radius: 28px; padding: 24px; background: rgba(20,22,32,.62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(24px); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-weight: 600; font-size: 18px; }
+.panel .ph span { font: 400 13px Inter, sans-serif; color: rgba(255,255,255,.6); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 20px 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12.5px; color: rgba(255,255,255,.85); text-align: center; }
+.tile .ic { width: 84px; height: 84px; }
+.tile.ph-tile .ic { border-radius: 20px; background: rgba(255,255,255,.07); }
+.desk { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--stage); min-height: 220px; display: flex; flex-direction: column; justify-content: flex-end; }
+.taskbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 14px; background: rgba(24,24,30,.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+.tb-apps { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; }
+.tb:hover { background: rgba(255,255,255,.08); }
+.tb .i24 { width: 24px; height: 24px; }
+.tray { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.75); font: 500 12px Inter, sans-serif; }
+.tray .i16 { width: 16px; height: 16px; }
+.tray .clock { margin-left: 8px; text-align: right; line-height: 1.25; }
+.ctx-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(6,6,9,.82); backdrop-filter: blur(10px); }
+.focus { width: min(92vw, 720px); border-radius: 28px; overflow: hidden; background: var(--stage); border: 1px solid var(--line); }
+.focus .big { width: min(72vw, 560px); aspect-ratio: 1; margin: 48px auto 20px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.4)); }
+.focus .big svg { width: 100%; height: 100%; display: block; }
+.focus .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; background: var(--card); color: var(--text); }
+.focus .cap strong { font: 400 26px 'Instrument Serif', serif; }
+.focus .cap button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+
+footer { padding: 48px 0 80px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body data-stage="graphite">
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Setu · app icon studies · round 2</span>
+    <h1>A bridge you can <em>hear.</em></h1>
+    <p class="lede">Seven directions drawn as vectors. Each is built around one idea: a signal crossing a span, a wearer whose visor reflects a bridge, or the Bauhaus blocks made into glazed ceramic. Change the backdrop to test them on graphite, paper or a wallpaper, then see them in a headset library and on a desktop taskbar.</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Backdrop">
+      <button type="button" data-stage="graphite" aria-pressed="true">Graphite</button>
+      <button type="button" data-stage="paper" aria-pressed="false">Paper</button>
+      <button type="button" data-stage="wall" aria-pressed="false">Wallpaper</button>
+    </div>
+    <nav><a href="#studies">Studies</a><a href="#context">In context</a></nav>
+  </div>
+
+  <section id="studies">
+    <h2>Studies</h2>
+    <p class="sub">The large view is for store and library art. The ladder under each one, from 96 down to 16 px, is the test that counts for the taskbar and tray. Click any study to enlarge it.</p>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="context">
+    <h2>In context</h2>
+    <p class="sub">A generic headset library panel at 84 px and a desktop taskbar at 24 px with a 16 px tray. Neither mock-up copies any real OS.</p>
+    <div class="ctx">
+      <div>
+        <p class="ctx-label">Headset library</p>
+        <div class="env"><div class="panel"><div class="ph">Library<span>Sorted by recent</span></div><div class="tiles" id="tiles"></div></div></div>
+      </div>
+      <div>
+        <p class="ctx-label">Desktop taskbar &amp; tray</p>
+        <div class="desk"><div class="taskbar"><div class="tb-apps" id="tb"></div><div class="tray" id="tray"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="focus"><div class="focus"><div class="big" id="focus-big"></div><div class="cap"><strong id="focus-name"></strong><button type="button" id="focus-close">Close</button></div></div></dialog>
+
+  <footer>Every icon is a 100×100 SVG drawn in code. Use SVG to download the vector, or PNG for a 1024 px render.</footer>
+</div>
+
+<script>
+// Superellipse (n = 5) tile outline, close to a continuous-corner app icon.
+const SQ = (() => {
+  const n = 5, pts = [];
+  for (let i = 0; i < 240; i++) {
+    const t = i / 240 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+    pts.push([50 + 50 * Math.sign(c) * Math.abs(c) ** (2 / n), 50 + 50 * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return 'M' + pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+})();
+
+let N = 0;
+const uid = () => 'i' + (++N) + '_';
+const f2 = v => v.toFixed(2);
+
+function wavePath(x0, x1, yc, amp, f1, f2_, ph = 0, step = 0.4) {
+  let d = '';
+  for (let x = x0; x <= x1 + 1e-6; x += step) {
+    const y = yc - amp(x) * (0.62 * Math.sin(f1 * x + ph) + 0.38 * Math.sin(f2_ * x + 1.3 + ph));
+    d += (d ? 'L' : 'M') + f2(x) + ' ' + f2(y);
+  }
+  return d;
+}
+
+const blur = (id, sd) => `<filter id="${id}" filterUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><feGaussianBlur stdDeviation="${sd}"/></filter>`;
+const tileEdge = `<path d="${SQ}" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".9"/>`;
+
+/* 01 — Reflection: an abstract wearer whose visor reflects a bridge at dusk. */
+function reflection(u) {
+  const V = 'M26.5 41Q50 33 73.5 41Q74.6 46.5 72 51.2Q50 58.5 28 51.2Q25.4 46.5 26.5 41Z';
+  const body = 'M10 104C12 82 28 71 50 71C72 71 88 82 90 104Z';
+  return `<defs>
+  <clipPath id="${u}c"><path d="${SQ}"/></clipPath>
+  <clipPath id="${u}v"><path d="${V}"/></clipPath>
+  <radialGradient id="${u}bg" cx=".28" cy=".16" r="1.05"><stop offset="0" stop-color="#FFE7CF"/><stop offset=".38" stop-color="#F5A8B6"/><stop offset=".74" stop-color="#8A6CE0"/><stop offset="1" stop-color="#3F3596"/></radialGradient>
+  <radialGradient id="${u}hd" cx=".36" cy=".26" r=".85"><stop offset="0" stop-color="#6E6792"/><stop offset=".5" stop-color="#2F2A45"/><stop offset="1" stop-color="#15121E"/></radialGradient>
+  <linearGradient id="${u}bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3D3757"/><stop offset="1" stop-color="#16131F"/></linearGradient>
+  <linearGradient id="${u}rim" x1="0" y1="0" x2="1" y2="0"><stop offset=".55" stop-color="#FFD3B4" stop-opacity="0"/><stop offset="1" stop-color="#FFE0C8" stop-opacity=".95"/></linearGradient>
+  <linearGradient id="${u}rimL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B9A6FF" stop-opacity=".7"/><stop offset=".35" stop-color="#B9A6FF" stop-opacity="0"/></linearGradient>
+  <linearGradient id="${u}sky" gradientUnits="userSpaceOnUse" x1="0" y1="36" x2="0" y2="50"><stop offset="0" stop-color="#22175A"/><stop offset=".5" stop-color="#D24F8C"/><stop offset=".9" stop-color="#FFB467"/></linearGradient>
+  <radialGradient id="${u}vig" cx=".5" cy=".55" r=".62"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".65" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".75"/></radialGradient>
+  <linearGradient id="${u}gl" gradientUnits="userSpaceOnUse" x1="0" y1="35" x2="0" y2="46"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  ${blur(u + 'b6', 6)}${blur(u + 'b15', 1.5)}${blur(u + 'b1', 1)}${blur(u + 'b05', .5)}
+</defs>
+<g clip-path="url(#${u}c)">
+  <rect width="100" height="100" fill="url(#${u}bg)"/>
+  <circle cx="50" cy="46" r="29" fill="#fff" opacity=".32" filter="url(#${u}b6)"/>
+  <path d="${body}" fill="url(#${u}bd)"/>
+  <path d="${body}" fill="none" stroke="url(#${u}rim)" stroke-width="1.1" filter="url(#${u}b05)"/>
+  <path d="M43.5 58L43 72.5Q50 76 57 72.5L56.5 58Z" fill="#1C1828"/>
+  <ellipse cx="50" cy="64.5" rx="8.5" ry="3" fill="#000" opacity=".5" filter="url(#${u}b1)"/>
+  <ellipse cx="50" cy="44" rx="17.5" ry="20.5" fill="url(#${u}hd)"/>
+  <ellipse cx="50" cy="44" rx="17.5" ry="20.5" fill="none" stroke="url(#${u}rim)" stroke-width="1.2" filter="url(#${u}b05)"/>
+  <ellipse cx="50" cy="44" rx="17.5" ry="20.5" fill="none" stroke="url(#${u}rimL)" stroke-width=".8" filter="url(#${u}b05)"/>
+  <path d="M36.2 33Q50 19.5 63.8 33" fill="none" stroke="#0D0B14" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M38.6 31Q50 20.6 61.4 31" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width=".45" stroke-linecap="round"/>
+  <path d="${V}" transform="translate(0 2.4)" fill="#000" opacity=".5" filter="url(#${u}b1)"/>
+  <rect x="23.6" y="42" width="4.2" height="7.6" rx="1.7" fill="#121019"/>
+  <rect x="72.2" y="42" width="4.2" height="7.6" rx="1.7" fill="#121019"/>
+  <path d="${V}" fill="#07060C"/>
+  <g clip-path="url(#${u}v)">
+    <rect x="20" y="30" width="60" height="30" fill="url(#${u}sky)"/>
+    <circle cx="57" cy="47.4" r="6.5" fill="#FFB067" opacity=".55" filter="url(#${u}b15)"/>
+    <circle cx="57" cy="47.6" r="3.4" fill="#FFE6A6"/>
+    <rect x="20" y="49" width="60" height="12" fill="#2A1856"/>
+    <rect x="54.4" y="50.3" width="5.2" height=".5" rx=".25" fill="#FFC27A" opacity=".9"/>
+    <rect x="55.1" y="51.5" width="3.8" height=".5" rx=".25" fill="#FFC27A" opacity=".65"/>
+    <rect x="55.7" y="52.7" width="2.6" height=".5" rx=".25" fill="#FFC27A" opacity=".45"/>
+    <rect x="20" y="48.3" width="60" height=".9" fill="#140C2A"/>
+    <path d="M33 48.6Q50 37.6 67 48.6" fill="none" stroke="#140C2A" stroke-width="1.05"/>
+    <path d="M41.5 44.5V48.6M50 43.1V48.6M58.5 44.5V48.6" stroke="#140C2A" stroke-width=".45"/>
+    <rect x="26" y="33" width="49" height="26" fill="url(#${u}vig)"/>
+    <rect x="26" y="33" width="49" height="12" fill="url(#${u}gl)" opacity=".55"/>
+    <path d="M28 41.4Q50 34.2 72 41.4Q50 37.4 28 41.4Z" fill="#fff" opacity=".8"/>
+    <path d="M65.5 43.2L70 42.4L68.4 50.3L64.4 51.1Z" fill="#fff" opacity=".1"/>
+  </g>
+  <path d="${V}" fill="none" stroke="#000" stroke-width=".7"/>
+  <path d="M27 41.2Q50 33.4 73 41.2" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width=".35"/>
+  ${tileEdge}
+</g>`;
+}
+
+/* 02 — Glazed Bauhaus: the liked F3 blocks, as lit ceramic, with the wearer in the arch. */
+function ceramic(u) {
+  const S = [
+    ['rect', 'x="14" y="24" width="72" height="11" rx="2"', '#2A2944'],
+    ['rect', 'x="14" y="35.4" width="18" height="41.6" rx="1.6"', '#F2A007'],
+    ['rect', 'x="68" y="35.4" width="18" height="41.6" rx="1.6"', '#2456C8'],
+    ['path', 'd="M32.4 35.4H67.6V77A17.6 17.6 0 0 0 32.4 77Z"', '#E6492D'],
+    ['path', 'd="M37 77A13 13 0 0 1 63 77Z"', '#2A2944'],
+    ['circle', 'cx="50" cy="61" r="7.6"', '#F7B21E'],
+    ['rect', 'x="40.4" y="58" width="19.2" height="5.2" rx="2.6"', '#2A2944'],
+  ];
+  const shapes = (attrs) => S.map(([t, a, c]) => `<${t} ${a} fill="${c}" ${attrs}/>`).join('');
+  const glaze = (az, el) => `<filter id="${u}gz" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="b"/>
+    <feDiffuseLighting in="b" surfaceScale="2.6" diffuseConstant="1.18" lighting-color="#fff" result="d"><feDistantLight azimuth="${az}" elevation="${el}"/></feDiffuseLighting>
+    <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="sh"/>
+    <feSpecularLighting in="b" surfaceScale="2.6" specularConstant=".6" specularExponent="34" lighting-color="#fff" result="s"><feDistantLight azimuth="${az}" elevation="${el}"/></feSpecularLighting>
+    <feComposite in="s" in2="SourceAlpha" operator="in" result="si"/>
+    <feComposite in="sh" in2="si" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="lit"/>
+    <feComposite in="lit" in2="SourceAlpha" operator="in"/>
+  </filter>`;
+  return `<defs>
+  <clipPath id="${u}c"><path d="${SQ}"/></clipPath>
+  <clipPath id="${u}vd"><path d="M32.4 77A17.6 17.6 0 0 1 67.6 77Z"/></clipPath>
+  <linearGradient id="${u}bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6EFE3"/><stop offset="1" stop-color="#E2D4BC"/></linearGradient>
+  <radialGradient id="${u}vg" cx=".5" cy=".42" r=".75"><stop offset=".55" stop-color="#5A4220" stop-opacity="0"/><stop offset="1" stop-color="#5A4220" stop-opacity=".22"/></radialGradient>
+  <filter id="${u}gr" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="11" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .2  0 0 0 0 .15  0 0 0 0 .08  0 0 0 .22 -.08"/></filter>
+  ${glaze(225, 48)}
+  ${blur(u + 'sb', 1.4)}${blur(u + 'cb', .8)}
+</defs>
+<g clip-path="url(#${u}c)">
+  <rect width="100" height="100" fill="url(#${u}bg)"/>
+  <rect width="100" height="100" fill="#000" filter="url(#${u}gr)"/>
+  <g clip-path="url(#${u}vd)" fill="none" stroke="#2A2944" stroke-width=".55" opacity=".35"><circle cx="50" cy="61" r="11.6"/><circle cx="50" cy="61" r="15.4"/></g>
+  <ellipse cx="51" cy="77.6" rx="38" ry="1.5" fill="#3A2A10" opacity=".45" filter="url(#${u}cb)"/>
+  <g transform="translate(1.6 2.6)" opacity=".3" filter="url(#${u}sb)">${S.map(([t, a]) => `<${t} ${a} fill="#4A3520"/>`).join('')}</g>
+  ${shapes(`filter="url(#${u}gz)"`)}
+  <path d="M52 59.3H57.4" stroke="#FFF7E6" stroke-width="1.1" stroke-linecap="round" opacity=".9"/>
+  <rect width="100" height="100" fill="url(#${u}vg)"/>
+  ${tileEdge}
+</g>`;
+}
+
+/* 03 — Lumen Arch: a glass span with a signal of light passing beneath it. */
+function lumen(u) {
+  const arch = 'M17 70Q50 -12 83 70L71 70Q50 8 29 70Z';
+  let streak = '';
+  for (let t = .1; t <= .36; t += .02) { streak += (streak ? 'L' : 'M') + f2(19 + 62 * t) + ' ' + f2(70 - 152 * t * (1 - t)); }
+  const wv = wavePath(-2, 102, 63, x => { const d = (x - 50) / 13; return 0.45 + 6.4 * Math.exp(-d * d); }, 0.95, 2.2);
+  return `<defs>
+  <clipPath id="${u}c"><path d="${SQ}"/></clipPath>
+  <clipPath id="${u}a"><path d="${arch}"/></clipPath>
+  <radialGradient id="${u}bg" cx=".5" cy=".12" r="1"><stop offset="0" stop-color="#3337A0"/><stop offset=".45" stop-color="#12133F"/><stop offset="1" stop-color="#04040D"/></radialGradient>
+  <linearGradient id="${u}w" gradientUnits="userSpaceOnUse" x1="8" y1="0" x2="92" y2="0"><stop offset="0" stop-color="#3AF2FF"/><stop offset=".5" stop-color="#8B5CFF"/><stop offset="1" stop-color="#FF4FD8"/></linearGradient>
+  <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset="1" stop-color="#fff" stop-opacity=".05"/></linearGradient>
+  <linearGradient id="${u}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".55" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity=".4"/></linearGradient>
+  <radialGradient id="${u}f" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7C6CFF" stop-opacity=".6"/><stop offset="1" stop-color="#7C6CFF" stop-opacity="0"/></radialGradient>
+  <linearGradient id="${u}fd" gradientUnits="userSpaceOnUse" x1="0" y1="70" x2="0" y2="94"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <mask id="${u}m" maskUnits="userSpaceOnUse" x="0" y="70" width="100" height="30"><rect x="0" y="70" width="100" height="30" fill="url(#${u}fd)"/></mask>
+  ${blur(u + 'b6', 3.4)}${blur(u + 'b2', 1.2)}${blur(u + 'b05', .45)}
+</defs>
+<g clip-path="url(#${u}c)">
+  <rect width="100" height="100" fill="url(#${u}bg)"/>
+  <ellipse cx="50" cy="71" rx="46" ry="10" fill="url(#${u}f)"/>
+  <rect x="0" y="70" width="100" height="30" fill="#020208" opacity=".5"/>
+  <rect x="0" y="69.85" width="100" height=".3" fill="#fff" opacity=".14"/>
+  <g mask="url(#${u}m)">
+    <path d="${arch}" transform="translate(0 105) scale(1 -.5)" fill="#C9D2FF" opacity=".16"/>
+    <path d="${wv}" transform="translate(0 140) scale(1 -1)" fill="none" stroke="url(#${u}w)" stroke-width="1.8" opacity=".45"/>
+  </g>
+  <path d="${wv}" fill="none" stroke="url(#${u}w)" stroke-width="7" filter="url(#${u}b6)" opacity=".6"/>
+  <path d="${wv}" fill="none" stroke="url(#${u}w)" stroke-width="2.6" filter="url(#${u}b2)" opacity=".9"/>
+  <path d="${wv}" fill="none" stroke="url(#${u}w)" stroke-width="1.2"/>
+  <path d="${wv}" fill="none" stroke="#fff" stroke-width=".42" opacity=".9"/>
+  <path d="${arch}" fill="url(#${u}g)"/>
+  <g clip-path="url(#${u}a)">
+    <path d="${wv}" fill="none" stroke="url(#${u}w)" stroke-width="10" filter="url(#${u}b2)" opacity=".8"/>
+    <rect width="100" height="100" fill="#A9BCFF" opacity=".07"/>
+  </g>
+  <path d="${arch}" fill="none" stroke="url(#${u}r)" stroke-width=".7"/>
+  <path d="M71 70Q50 8 29 70" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width=".5"/>
+  <path d="${streak}" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" filter="url(#${u}b05)" opacity=".9"/>
+  ${tileEdge}
+</g>`;
+}
+
+/* 04 — Portal: a brushed-metal arch; the signal turns to light as it crosses. */
+function portal(u) {
+  const Fo = 'M22 86V56A28 28 0 0 1 78 56V86Z', Fi = 'M30 86V56A20 20 0 0 1 70 56V86Z';
+  const wv = wavePath(-2, 102, 70, x => { const d = (x - 50) / 11; return 0.35 + 6.2 * Math.exp(-d * d); }, 1.05, 2.6, 0.4);
+  return `<defs>
+  <clipPath id="${u}c"><path d="${SQ}"/></clipPath>
+  <clipPath id="${u}i"><path d="${Fi}"/></clipPath>
+  <radialGradient id="${u}bg" cx=".5" cy=".3" r=".9"><stop offset="0" stop-color="#262738"/><stop offset="1" stop-color="#0A0A10"/></radialGradient>
+  <linearGradient id="${u}mt" gradientUnits="userSpaceOnUse" x1="22" y1="0" x2="78" y2="0"><stop offset="0" stop-color="#5D6273"/><stop offset=".12" stop-color="#C9CFDB"/><stop offset=".22" stop-color="#7D8396"/><stop offset=".42" stop-color="#F2F4F8"/><stop offset=".58" stop-color="#9097A8"/><stop offset=".78" stop-color="#DCE0E8"/><stop offset=".9" stop-color="#6E7486"/><stop offset="1" stop-color="#A9AFBD"/></linearGradient>
+  <linearGradient id="${u}sh" gradientUnits="userSpaceOnUse" x1="0" y1="28" x2="0" y2="86"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>
+  <linearGradient id="${u}wg" gradientUnits="userSpaceOnUse" x1="30" y1="0" x2="70" y2="0"><stop offset="0" stop-color="#6CF3FF"/><stop offset=".5" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FF7BD5"/></linearGradient>
+  <linearGradient id="${u}fd" gradientUnits="userSpaceOnUse" x1="0" y1="86" x2="0" y2="100"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <mask id="${u}m" maskUnits="userSpaceOnUse" x="0" y="86" width="100" height="14"><rect x="0" y="86" width="100" height="14" fill="url(#${u}fd)"/></mask>
+  ${blur(u + 'b5', 5)}${blur(u + 'b2', 1.4)}${blur(u + 'b03', .3)}
+</defs>
+<g clip-path="url(#${u}c)">
+  <rect width="100" height="100" fill="url(#${u}bg)"/>
+  <rect x="0" y="86" width="100" height="14" fill="#060609"/>
+  <ellipse cx="50" cy="60" rx="34" ry="30" fill="#6A4DFF" opacity=".2" filter="url(#${u}b5)"/>
+  <path d="${wv}" fill="none" stroke="#666B80" stroke-width=".7" opacity=".9"/>
+  <g clip-path="url(#${u}i)">
+    <rect width="100" height="100" fill="#0A0D2C"/>
+    <circle cx="40" cy="76" r="14" fill="#FF3D9A" opacity=".9" filter="url(#${u}b5)"/>
+    <circle cx="63" cy="60" r="13" fill="#25D9FF" opacity=".85" filter="url(#${u}b5)"/>
+    <circle cx="53" cy="88" r="12" fill="#7B4DFF" filter="url(#${u}b5)"/>
+    <circle cx="44" cy="48" r="8" fill="#FFB347" opacity=".55" filter="url(#${u}b5)"/>
+    <path d="${wv}" fill="none" stroke="url(#${u}wg)" stroke-width="5" filter="url(#${u}b2)" opacity=".85"/>
+    <path d="${wv}" fill="none" stroke="#fff" stroke-width="1.1"/>
+  </g>
+  <g mask="url(#${u}m)" transform="translate(0 172) scale(1 -1)" opacity=".5">
+    <path d="${Fi}" fill="#7B4DFF" opacity=".7"/>
+    <path d="${Fo} ${Fi}" fill-rule="evenodd" fill="#9AA0B2"/>
+  </g>
+  <ellipse cx="50" cy="87.4" rx="21" ry="2.4" fill="#B07CFF" opacity=".7" filter="url(#${u}b2)"/>
+  <path d="${Fo} ${Fi}" fill-rule="evenodd" fill="url(#${u}mt)"/>
+  <path d="${Fo} ${Fi}" fill-rule="evenodd" fill="url(#${u}sh)"/>
+  <path d="${Fi}" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".9"/>
+  <path d="${Fo}" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width=".4"/>
+  <path d="M27.45 47.79A24 24 0 0 1 39.86 34.25" fill="none" stroke="#fff" stroke-width=".8" stroke-linecap="round" opacity=".75" filter="url(#${u}b03)"/>
+  <rect x="0" y="85.9" width="100" height=".25" fill="#fff" opacity=".12"/>
+  ${tileEdge}
+</g>`;
+}
+
+/* 05 — Night Span: a cable-stayed bridge whose fan of stays reads as a spectrum. */
+function nightspan(u) {
+  const stops = [[255, 95, 210], [139, 124, 255], [70, 230, 255]];
+  const col = t => { const s = t < .5 ? 0 : 1, tt = t < .5 ? t * 2 : (t - .5) * 2, a = stops[s], b = stops[s + 1]; return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * tt)).join(',')})`; };
+  let cables = '', dots = '';
+  const n = 12;
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1), ay = 20.5 + i * 2.1, lx = 10.5 + i * 3.15, c = col(t);
+    cables += `<path d="M50 ${f2(ay)}L${f2(lx)} 59.6M50 ${f2(ay)}L${f2(100 - lx)} 59.6" stroke="${c}" stroke-width=".42"/>`;
+    dots += `<circle cx="${f2(lx)}" cy="59.6" r=".5" fill="${c}"/><circle cx="${f2(100 - lx)}" cy="59.6" r=".5" fill="${c}"/>`;
+  }
+  const stars = [[14, 14, .5], [24, 26, .35], [33, 9, .4], [72, 11, .5], [83, 24, .35], [88, 13, .3], [62, 7, .3], [8, 34, .3], [92, 38, .3]]
+    .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity=".7"/>`).join('');
+  return `<defs>
+  <clipPath id="${u}c"><path d="${SQ}"/></clipPath>
+  <linearGradient id="${u}sky" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="60.6"><stop offset="0" stop-color="#080F2A"/><stop offset=".7" stop-color="#16295C"/><stop offset="1" stop-color="#2C4C8F"/></linearGradient>
+  <linearGradient id="${u}wt" gradientUnits="userSpaceOnUse" x1="0" y1="60.6" x2="0" y2="100"><stop offset="0" stop-color="#0E1D43"/><stop offset="1" stop-color="#03060F"/></linearGradient>
+  <linearGradient id="${u}st" gradientUnits="userSpaceOnUse" x1="48.6" y1="0" x2="51.4" y2="0"><stop offset="0" stop-color="#7C89B3"/><stop offset=".45" stop-color="#F0F4FF"/><stop offset="1" stop-color="#5B678D"/></linearGradient>
+  <linearGradient id="${u}fd" gradientUnits="userSpaceOnUse" x1="0" y1="60.6" x2="0" y2="96"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <mask id="${u}m" maskUnits="userSpaceOnUse" x="0" y="60.6" width="100" height="40"><rect x="0" y="60.6" width="100" height="40" fill="url(#${u}fd)"/></mask>
+  <filter id="${u}rp" filterUnits="userSpaceOnUse" x="0" y="55" width="100" height="45"><feTurbulence type="fractalNoise" baseFrequency=".03 .22" numOctaves="3" seed="4" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="3.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+  ${blur(u + 'b1', 1.1)}${blur(u + 'b25', 2.5)}
+  <g id="${u}br">
+    ${cables}
+    <path d="M48.7 62L49.3 19Q50 16.8 50.7 19L51.3 62Z" fill="url(#${u}st)"/>
+    <rect x="8" y="59.2" width="84" height="1.3" rx=".65" fill="#E9F1FF"/>
+    ${dots}
+  </g>
+</defs>
+<g clip-path="url(#${u}c)">
+  <rect width="100" height="61" fill="url(#${u}sky)"/>
+  ${stars}
+  <rect y="60.6" width="100" height="40" fill="url(#${u}wt)"/>
+  <ellipse cx="50" cy="60.5" rx="48" ry="4.5" fill="#5EEBFF" opacity=".28" filter="url(#${u}b25)"/>
+  <use href="#${u}br" filter="url(#${u}b1)" opacity=".75"/>
+  <use href="#${u}br"/>
+  <g mask="url(#${u}m)"><use href="#${u}br" transform="translate(0 121.2) scale(1 -1)" filter="url(#${u}rp)" opacity=".55"/></g>
+  <circle cx="50" cy="17.4" r="2.2" fill="#FF4D6D" opacity=".55" filter="url(#${u}b1)"/>
+  <circle cx="50" cy="17.4" r=".65" fill="#FF8FA3"/>
+  ${tileEdge}
+</g>`;
+}
+
+/* 06 — Arch Wave: a waveform made of alternating spans. */
+function archwave(u) {
+  const d = 'M14 54H23A7 7 0 0 0 37 54A13 13 0 0 1 63 54A7 7 0 0 0 77 54H86';
+  return `<defs>
+  <clipPath id="${u}c"><path d="${SQ}"/></clipPath>
+  <linearGradient id="${u}bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF9A3D"/><stop offset=".5" stop-color="#FF3B6B"/><stop offset="1" stop-color="#7A2BE0"/></linearGradient>
+  <radialGradient id="${u}gl" cx=".25" cy=".1" r=".75"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="${u}rb" gradientUnits="userSpaceOnUse" x1="0" y1="38" x2="0" y2="62"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFE1EC"/></linearGradient>
+  <filter id="${u}ds" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><feDropShadow dx="0" dy="2" stdDeviation="1.8" flood-color="#4A0630" flood-opacity=".45"/></filter>
+</defs>
+<g clip-path="url(#${u}c)">
+  <rect width="100" height="100" fill="url(#${u}bg)"/>
+  <rect width="100" height="100" fill="url(#${u}gl)"/>
+  <g fill="none" stroke="#fff" stroke-width=".6" opacity=".12"><circle cx="50" cy="54" r="22"/><circle cx="50" cy="54" r="32"/><circle cx="50" cy="54" r="42"/></g>
+  <path d="${d}" fill="none" stroke="url(#${u}rb)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#${u}ds)"/>
+  <g filter="url(#${u}ds)" fill="url(#${u}rb)"><circle cx="14" cy="54" r="5.4"/><circle cx="86" cy="54" r="5.4"/></g>
+  ${tileEdge}
+</g>`;
+}
+
+/* 07 — Wearer: a glyph for small sizes. The shoulders are the arch. */
+function wearer(u) {
+  const sh = 'M20 80A30 30 0 0 1 80 80L64 80A14 14 0 0 0 36 80Z';
+  return `<defs>
+  <clipPath id="${u}c"><path d="${SQ}"/></clipPath>
+  <linearGradient id="${u}bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C86FF"/><stop offset=".5" stop-color="#2447D6"/><stop offset="1" stop-color="#141D66"/></linearGradient>
+  <radialGradient id="${u}gl" cx=".25" cy=".1" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <filter id="${u}ds" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><feDropShadow dx="0" dy="1.6" stdDeviation="1.6" flood-color="#0A1040" flood-opacity=".5"/></filter>
+</defs>
+<g clip-path="url(#${u}c)">
+  <rect width="100" height="100" fill="url(#${u}bg)"/>
+  <rect width="100" height="100" fill="url(#${u}gl)"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="2.6">
+    <path d="M68.02 23.38A22 22 0 0 1 68.02 48.62M31.98 48.62A22 22 0 0 1 31.98 23.38" opacity=".6"/>
+    <path d="M72.94 19.94A28 28 0 0 1 72.94 52.06M27.06 52.06A28 28 0 0 1 27.06 19.94" opacity=".3"/>
+  </g>
+  <g filter="url(#${u}ds)">
+    <path d="${sh}" fill="#fff"/>
+    <circle cx="50" cy="36" r="13" fill="#fff"/>
+    <rect x="34" y="31.5" width="32" height="9" rx="4.5" fill="#0E1A52"/>
+    <rect x="51" y="33.6" width="11" height="1.6" rx=".8" fill="#5EEBFF"/>
+  </g>
+  ${tileEdge}
+</g>`;
+}
+
+const ICONS = [
+  { key: 'reflection', name: 'Reflection', tag: 'avatar · hi-fi', fn: reflection,
+    blurb: 'An abstract wearer in a matte bust with rim lighting. Their visor reflects a bridge at dusk, so the person, the headset and the bridge all fit in one frame.' },
+  { key: 'glazed-bauhaus', name: 'Glazed Bauhaus', tag: 'avatar · ceramic', fn: ceramic,
+    blurb: 'The Bauhaus Bridge you liked, made as glazed ceramic blocks. Each block is lit from the top left and casts a shadow on grainy plaster. A wearer sits in the arch with faint sound rings around their head.' },
+  { key: 'lumen-arch', name: 'Lumen Arch', tag: 'glass · hi-fi', fn: lumen,
+    blurb: 'A glass span with a signal of light passing beneath it. The glass diffuses the beam, and the floor reflects both the span and the signal.' },
+  { key: 'portal', name: 'Portal', tag: 'metal · hi-fi', fn: portal,
+    blurb: 'A brushed-metal arch. The signal is a dull grey line outside it and turns to coloured light inside, which shows the bridge changing what passes through it.' },
+  { key: 'night-span', name: 'Night Span', tag: 'scene · hi-fi', fn: nightspan,
+    blurb: 'A cable-stayed bridge at night. The fan of stays shades from cyan to magenta like a spectrum, and its reflection ripples on the water.' },
+  { key: 'arch-wave', name: 'Arch Wave', tag: 'mark', fn: archwave,
+    blurb: 'Two devices as dots, joined by one line that rises into a span and dips on either side, so it reads as both a bridge and a waveform. One white stroke on a hot gradient, readable at any size.' },
+  { key: 'wearer', name: 'Wearer', tag: 'avatar · glyph', fn: wearer,
+    blurb: 'A glyph built for the tray: the shoulders form the arch, with a visor and sound lines on either side. It pairs with Reflection as its small-size sibling.' },
+];
+
+const svg = (fn, label, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" ${extra} role="img" aria-label="${label}">${fn(uid())}</svg>`;
+
+document.getElementById('grid').innerHTML = ICONS.map((ic, i) => `
+  <article class="card">
+    <button type="button" class="stage" data-focus="${i}" aria-label="Enlarge ${ic.name}">
+      <div class="hero">${svg(ic.fn, ic.name + ' icon')}</div>
+    </button>
+    <div class="ladder">${[96, 64, 48, 32, 24, 16].map(s => `<div><div class="mini" style="width:${s}px;height:${s}px">${svg(ic.fn, ic.name + ' at ' + s + ' px')}</div><span>${s}</span></div>`).join('')}</div>
+    <div class="meta">
+      <div class="row"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="tag">${ic.tag}</span></div>
+      <h3>${ic.name}</h3>
+      <p>${ic.blurb}</p>
+      <div class="actions"><button type="button" data-i="${i}" data-kind="svg">Download SVG</button><button type="button" data-i="${i}" data-kind="png">PNG 1024</button></div>
+    </div>
+  </article>`).join('');
+
+const placeholders = ['Browser', 'Files', 'Settings', 'Store', 'Camera'];
+document.getElementById('tiles').innerHTML =
+  ICONS.map(ic => `<div class="tile"><div class="ic">${svg(ic.fn, ic.name)}</div>${ic.name}</div>`).join('') +
+  placeholders.map(p => `<div class="tile ph-tile"><div class="ic" aria-hidden="true"></div>${p}</div>`).join('');
+document.getElementById('tb').innerHTML = ICONS.map(ic => `<div class="tb" title="${ic.name}"><div class="i24">${svg(ic.fn, ic.name + ' at 24 px')}</div></div>`).join('');
+document.getElementById('tray').innerHTML = ICONS.map(ic => `<div class="i16" title="${ic.name}">${svg(ic.fn, ic.name + ' at 16 px')}</div>`).join('') + '<div class="clock">21:40<br>09/11/2026</div>';
+
+function save(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+document.getElementById('grid').addEventListener('click', e => {
+  const f = e.target.closest('[data-focus]');
+  if (f) {
+    const ic = ICONS[+f.dataset.focus];
+    document.getElementById('focus-big').innerHTML = svg(ic.fn, ic.name + ' icon, enlarged');
+    document.getElementById('focus-name').textContent = ic.name;
+    document.getElementById('focus').showModal();
+    return;
+  }
+  const b = e.target.closest('button[data-kind]'); if (!b) return;
+  const ic = ICONS[+b.dataset.i];
+  if (b.dataset.kind === 'svg') {
+    save(URL.createObjectURL(new Blob([svg(ic.fn, ic.name)], { type: 'image/svg+xml' })), `setu-${ic.key}.svg`);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = c.height = 1024;
+    c.getContext('2d').drawImage(img, 0, 0, 1024, 1024);
+    c.toBlob(blob => save(URL.createObjectURL(blob), `setu-${ic.key}-1024.png`));
+  };
+  img.src = URL.createObjectURL(new Blob([svg(ic.fn, ic.name, 'width="1024" height="1024"')], { type: 'image/svg+xml' }));
+});
+
+const dlg = document.getElementById('focus');
+document.getElementById('focus-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.body.dataset.stage = b.dataset.stage;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>

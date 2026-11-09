@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setu icon studies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C0C0F;
+  --card: #131317;
+  --line: #25252C;
+  --text: #EDECE8;
+  --muted: #A09EA8;
+  --chip: #1C1C22;
+  --stage: radial-gradient(120% 90% at 50% 0%, #22222A 0%, #141418 70%);
+  --stage-ink: #A09EA8;
+}
+body[data-stage="paper"] { --stage: radial-gradient(120% 90% at 50% 0%, #F7F3EC 0%, #E7E0D3 80%); --stage-ink: #5C574E; }
+body[data-stage="wall"] { --stage: linear-gradient(135deg, #2B2160 0%, #8A3F86 45%, #E2775E 80%, #F4B26A 100%); --stage-ink: #F6E9F0; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 40px; } }
+
+header.top { padding: 72px 0 40px; display: grid; gap: 24px; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.eyebrow a { color: var(--muted); }
+h1 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: clamp(48px, 8vw, 104px); line-height: .92; letter-spacing: -.02em; }
+h1 em { color: #FFB4A8; }
+.lede { margin: 0; max-width: 640px; color: var(--muted); font-size: 17px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: rgba(12,12,15,.86); backdrop-filter: blur(14px); z-index: 5; }
+.seg { display: inline-flex; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+.seg button { font: 500 13px Inter, sans-serif; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #EDECE8; color: #0C0C0F; }
+.bar nav { display: flex; gap: 18px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+
+section { padding: 56px 0 24px; }
+section > h2 { margin: 0 0 6px; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 44px; line-height: 1; }
+section > p.sub { margin: 0 0 28px; color: var(--muted); max-width: 640px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
+.stage { background: var(--stage); aspect-ratio: 1 / .82; display: grid; place-items: center; border: 0; padding: 0; width: 100%; cursor: zoom-in; }
+.stage .hero { width: 60%; aspect-ratio: 1; filter: drop-shadow(0 16px 26px rgba(0,0,0,.3)) drop-shadow(0 3px 6px rgba(0,0,0,.18)); transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.card:hover .stage .hero { transform: translateY(-4px) scale(1.02); }
+.stage .hero svg, .mini svg, .tile svg, .tb svg, .tray svg { width: 100%; height: 100%; display: block; }
+.ladder { background: var(--stage); display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.06); }
+.ladder div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ladder span { font: 500 10px 'JetBrains Mono', monospace; color: var(--stage-ink); }
+.meta { padding: 18px 20px 20px; display: grid; gap: 6px; }
+.meta .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.num { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); }
+.tag { font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .04em; color: #FFC9BF; background: rgba(255,140,120,.1); border: 1px solid rgba(255,140,120,.25); padding: 3px 9px; border-radius: 999px; }
+.meta h3 { margin: 0; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 30px; line-height: 1.05; }
+.meta p { margin: 0; color: var(--muted); font-size: 14px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.actions button:hover { border-color: #3A3A44; background: #222229; }
+
+.ctx { display: grid; gap: 20px; }
+.ctx-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); margin: 0 0 10px; letter-spacing: .06em; text-transform: uppercase; }
+.env { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); padding: clamp(20px, 5vw, 56px); background:
+  radial-gradient(60% 80% at 15% 20%, #3C5A7A 0%, transparent 60%),
+  radial-gradient(50% 70% at 85% 30%, #6B4A7E 0%, transparent 60%),
+  radial-gradient(70% 60% at 50% 110%, #C98A5C 0%, transparent 60%), #1B1D28; }
+.panel { max-width: 940px; margin: 0 auto; border-radius: 28px; padding: 24px; background: rgba(20,22,32,.62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(24px); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-weight: 600; font-size: 18px; }
+.panel .ph span { font: 400 13px Inter, sans-serif; color: rgba(255,255,255,.6); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 20px 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12.5px; color: rgba(255,255,255,.85); text-align: center; }
+.tile .ic { width: 80px; height: 80px; }
+.tile.ph-tile .ic { border-radius: 20px; background: rgba(255,255,255,.07); }
+.desk { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--stage); min-height: 160px; display: flex; flex-direction: column; justify-content: flex-end; }
+.taskbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 14px; background: rgba(24,24,30,.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+.tb-apps { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; }
+.tb:hover { background: rgba(255,255,255,.08); }
+.tb .i24 { width: 24px; height: 24px; }
+.tray { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.75); font: 500 12px Inter, sans-serif; }
+.tray .i16 { width: 16px; height: 16px; }
+.tray .clock { margin-left: 8px; text-align: right; line-height: 1.25; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(6,6,9,.82); backdrop-filter: blur(10px); }
+.focus { width: min(92vw, 720px); border-radius: 28px; overflow: hidden; background: var(--stage); border: 1px solid var(--line); }
+.focus .big { width: min(72vw, 540px); aspect-ratio: 1; margin: 48px auto 20px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.35)); }
+.focus .big svg { width: 100%; height: 100%; display: block; }
+.focus .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; background: var(--card); color: var(--text); }
+.focus .cap strong { font: 400 26px 'Instrument Serif', serif; }
+.focus .cap button { font: 500 13px Inter, sans-serif; color: var(--text); background: var(--chip); border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+
+footer { padding: 48px 0 80px; color: var(--muted); font-size: 13px; }
+footer a { color: var(--muted); }
+</style>
+<style>
+.pal { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pal-label { font: 500 12px 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-right: 4px; }
+.pal button { width: 36px; height: 36px; border-radius: 999px; border: 2px solid transparent; padding: 3px; background: transparent; cursor: pointer; }
+.pal button[aria-pressed="true"] { border-color: var(--text); }
+.pal button span { display: block; width: 100%; height: 100%; border-radius: 999px; }
+.grid.sm { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
+.grid.sm .meta h3 { font-size: 26px; }
+.sw { display: flex; gap: 6px; margin-top: 2px; }
+.sw i { width: 18px; height: 18px; border-radius: 6px; border: 1px solid rgba(255,255,255,.12); }
+.sw code { font: 500 11px 'JetBrains Mono', monospace; color: var(--muted); align-self: center; margin-left: 4px; }
+</style>
+</head>
+<body data-stage="graphite">
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Setu · app icon studies · round 5 · <a href="round-6.html">round 6</a> · <a href="round-4.html">round 4</a> · <a href="round-3.html">round 3</a> · <a href="round-2.html">round 2</a></span>
+    <h1>Grille, <em>three ways.</em></h1>
+    <p class="lede">The arch punched out of a speaker grille, pushed in three directions: the dot pattern itself, the colours, and materials that feel like they shouldn't be possible in a flat vector file.</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Backdrop">
+      <button type="button" data-stage="graphite" aria-pressed="true">Graphite</button>
+      <button type="button" data-stage="paper" aria-pressed="false">Paper</button>
+      <button type="button" data-stage="wall" aria-pressed="false">Wallpaper</button>
+    </div>
+    <div class="pal" role="group" aria-label="Palette for shapes"><span class="pal-label">Shapes in</span><span id="pal"></span></div>
+    <nav><a href="#shapes">Shapes</a><a href="#palettes">Palettes</a><a href="#materials">Materials</a><a href="#context">In context</a></nav>
+  </div>
+
+  <section id="shapes">
+    <h2>Shapes</h2>
+    <p class="sub">Eight ways to lay out the dots. Pick a palette in the bar above to recolour all of them. Click any icon to enlarge it.</p>
+    <div class="grid" id="g-shapes"></div>
+  </section>
+
+  <section id="palettes">
+    <h2>Palettes</h2>
+    <p class="sub">The classic grille in ten colourways: background, dots and the one warm power light.</p>
+    <div class="grid sm" id="g-palettes"></div>
+  </section>
+
+  <section id="materials">
+    <h2>Materials</h2>
+    <p class="sub">The same grille faked into physical things. Every one is a single SVG: the texture, light and glow come from SVG filters (noise, lighting, blur and displacement), not bitmaps.</p>
+    <div class="grid" id="g-materials"></div>
+  </section>
+
+  <section id="context">
+    <h2>In context</h2>
+    <p class="sub">Shapes in the selected palette, then the materials. A generic headset library panel, and a desktop taskbar at 24 px with a 16 px tray.</p>
+    <div class="ctx">
+      <div>
+        <p class="ctx-label">Headset library</p>
+        <div class="env"><div class="panel"><div class="ph">Library<span>Sorted by recent</span></div><div class="tiles" id="tiles"></div></div></div>
+      </div>
+      <div>
+        <p class="ctx-label">Desktop taskbar &amp; tray</p>
+        <div class="desk"><div class="taskbar"><div class="tb-apps" id="tb"></div><div class="tray" id="tray"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="focus"><div class="focus"><div class="big" id="focus-big"></div><div class="cap"><strong id="focus-name"></strong><button type="button" id="focus-close">Close</button></div></div></dialog>
+
+  <footer>Each icon is a 100×100 SVG. Use the buttons under each one to download the vector or a 1024 px PNG. Other rounds: <a href="round-6.html">round 6</a> · <a href="round-4.html">round 4</a> · <a href="round-3.html">round 3</a> · <a href="round-2.html">round 2</a>.</footer>
+</div>
+
+<script>
+// Superellipse (n = 5) tile outline, close to a continuous-corner app icon.
+const SQ = (() => {
+  const n = 5, pts = [];
+  for (let i = 0; i < 240; i++) {
+    const t = i / 240 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+    pts.push([50 + 50 * Math.sign(c) * Math.abs(c) ** (2 / n), 50 + 50 * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return 'M' + pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+})();
+
+let N = 0;
+const uid = () => 'i' + (++N) + '_';
+const f = n => +n.toFixed(2);
+
+function tile(u, fill, inner, defs = '') {
+  return `<defs><clipPath id="${u}c"><path d="${SQ}"/></clipPath>${defs}</defs>
+  <g clip-path="url(#${u}c)"><rect width="100" height="100" fill="${fill}"/>${inner}<path d="${SQ}" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".9"/></g>`;
+}
+
+/* ---------- Geometry ---------- */
+
+// Dot centres on a grid, minus an arch of radius ar centred at (ax, ay).
+function grid({ x0 = 14, x1 = 86, y0 = 26, y1 = 74, dx = 6, dy = 6, stagger = 0, ax = 50, ay = 76, ar = 25 } = {}) {
+  const pts = [];
+  let row = 0;
+  for (let y = y0; y <= y1 + 1e-6; y += dy, row++) {
+    for (let x = x0 + (row % 2 ? stagger : 0); x <= x1 + 1e-6; x += dx) {
+      if (Math.hypot(x - ax, y - ay) < ar) continue;
+      pts.push([f(x), f(y)]);
+    }
+  }
+  return pts;
+}
+
+// The top-right dot, which carries the power light.
+function hotIndex(pts) {
+  const top = Math.min(...pts.map(p => p[1]));
+  let best = -1;
+  pts.forEach((p, i) => { if (Math.abs(p[1] - top) < .01 && (best < 0 || p[0] > pts[best][0])) best = i; });
+  return best;
+}
+
+const CLASSIC = grid();
+const CLASSIC_HOT = hotIndex(CLASSIC);
+const ALL = grid({ ar: 0 });
+
+const dotsSvg = (pts, r, p, hot = hotIndex(pts)) =>
+  pts.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${typeof r === 'function' ? f(r(x, y)) : r}" fill="${i === hot ? p.hot : p.dot}"/>`).join('');
+
+/* ---------- Palettes ---------- */
+
+const PALETTES = [
+  { key: 'paper', name: 'Paper', bg: '#F5ECDC', dot: '#1D1B24', hot: '#FF5A36' },
+  { key: 'braun', name: 'Braun', bg: '#E4E2DC', dot: '#3A3A3C', hot: '#F2711C' },
+  { key: 'night', name: 'Night', bg: '#15141A', dot: '#F5ECDC', hot: '#FFC21A' },
+  { key: 'cobalt', name: 'Cobalt', bg: '#2D47F0', dot: '#F5ECDC', hot: '#FFC21A' },
+  { key: 'tomato', name: 'Tomato', bg: '#FF5A36', dot: '#FFF3E6', hot: '#1D1B24' },
+  { key: 'sun', name: 'Sun', bg: '#FFC21A', dot: '#1D1B24', hot: '#FFFFFF' },
+  { key: 'sage', name: 'Sage', bg: '#D7E2CD', dot: '#284335', hot: '#FF6B35' },
+  { key: 'lilac', name: 'Lilac', bg: '#D8CCFF', dot: '#33287F', hot: '#FF4F9A' },
+  { key: 'forest', name: 'Forest', bg: '#14533F', dot: '#BFF0C8', hot: '#FFB020' },
+  { key: 'oxblood', name: 'Oxblood', bg: '#5A1420', dot: '#F7D9C4', hot: '#4DE0C0' },
+];
+let pal = PALETTES[0];
+
+/* ---------- Shapes (take a palette) ---------- */
+
+const SHAPES = [
+  { key: 'classic', name: 'Classic', tag: 'square grid',
+    blurb: 'The round 4 grille: thirteen by nine, with the arch cut from the bottom edge.',
+    fn: (u, p) => tile(u, p.bg, dotsSvg(CLASSIC, 2.15, p)) },
+
+  { key: 'honeycomb', name: 'Honeycomb', tag: 'staggered grid',
+    blurb: 'Every other row shifts half a step, like the perforations in a real speaker grille.',
+    fn: (u, p) => tile(u, p.bg, dotsSvg(grid({ dy: 5.2, y0: 26, y1: 74, stagger: 3, x1: 86 }), 2.15, p)) },
+
+  { key: 'halftone', name: 'Halftone', tag: 'dot size',
+    blurb: 'A full-bleed field where dots shrink as they near the arch, so its edge glows soft like a printed gradient.',
+    fn: (u, p) => {
+      const ar = 30, pts = grid({ x0: 8, x1: 92, y0: 8, y1: 92, ay: 96, ar: 0 });
+      const r = (x, y) => Math.max(0, Math.min(2.6, (Math.hypot(x - 50, y - 96) - ar) * .14));
+      const live = pts.filter(([x, y]) => r(x, y) > .25);
+      return tile(u, p.bg, dotsSvg(live, r, p));
+    } },
+
+  { key: 'keystone', name: 'Keystone', tag: 'concentric arches',
+    blurb: 'Dots laid on four nested arches like the stones of a Roman bridge, with the power light as the keystone.',
+    fn: (u, p) => {
+      let out = '';
+      [27, 33, 39, 45].forEach((r, ring) => {
+        const n = Math.round(Math.PI * r / 6.2);
+        for (let i = 0; i <= n; i++) {
+          const a = Math.PI * i / n, x = 50 - r * Math.cos(a), y = 80 - r * Math.sin(a);
+          const hot = ring === 3 && i === n / 2;
+          out += `<circle cx="${f(x)}" cy="${f(y)}" r="2.15" fill="${hot ? p.hot : p.dot}"/>`;
+        }
+      });
+      return tile(u, p.bg, out);
+    } },
+
+  { key: 'slots', name: 'Slots', tag: 'vent lines',
+    blurb: 'Horizontal vent slots instead of holes. The arch is where the slots stop.',
+    fn: (u, p) => {
+      let d = '';
+      for (let y = 28; y <= 74; y += 6.5) {
+        const dy = y - 76, w = 28 ** 2 - dy * dy > 0 ? Math.sqrt(28 ** 2 - dy * dy) : 0;
+        const right = y === 28 ? 77 : 86;
+        d += w ? `M14 ${y}H${f(50 - w)}M${f(50 + w)} ${y}H${right}` : `M14 ${y}H${right}`;
+      }
+      return tile(u, p.bg, `<path d="${d}" stroke="${p.dot}" stroke-width="3.4" stroke-linecap="round"/><circle cx="86" cy="28" r="2.4" fill="${p.hot}"/>`);
+    } },
+
+  { key: 'bold', name: 'Bold', tag: 'coarse grid',
+    blurb: 'Six by five with big dots, built to survive 16 px in a system tray.',
+    fn: (u, p) => tile(u, p.bg, dotsSvg(grid({ x0: 20, x1: 80, y0: 24, y1: 76, dx: 12, dy: 13, ay: 80, ar: 22 }), 4.3, p)) },
+
+  { key: 'pixel', name: 'Pixel', tag: 'square dots',
+    blurb: 'Rounded squares instead of circles, so the grille reads as an LED matrix.',
+    fn: (u, p) => {
+      const hot = CLASSIC_HOT;
+      return tile(u, p.bg, CLASSIC.map(([x, y], i) => `<rect x="${f(x - 2.3)}" y="${f(y - 2.3)}" width="4.6" height="4.6" rx="1" fill="${i === hot ? p.hot : p.dot}"/>`).join(''));
+    } },
+
+  { key: 'full-bleed', name: 'Full Bleed', tag: 'edge to edge',
+    blurb: 'The grille runs off every edge and the arch grows, so the tile itself becomes the panel.',
+    fn: (u, p) => tile(u, p.bg, dotsSvg(grid({ x0: 5, x1: 95, y0: 5, y1: 95, ay: 100, ar: 31 }), 2.15, p)) },
+];
+
+/* ---------- Materials ---------- */
+
+// The sunset's arch opening, one dot row inside the grille's own arch.
+const ARCH_BLOCK = 'M29 100V76A21 21 0 0 1 71 76V100Z';
+
+const MATERIALS = [
+  { key: 'aluminium', name: 'Aluminium', tag: 'brushed metal',
+    blurb: 'Brushed aluminium in the spirit of a 1960s Braun radio. Each hole has a lit lower lip; the power light is a raised orange button.',
+    fn: u => {
+      const holes = CLASSIC.map(([x, y], i) => i === CLASSIC_HOT ? '' :
+        `<circle cx="${x}" cy="${f(y + .5)}" r="2.15" fill="#fff" opacity=".85"/><circle cx="${x}" cy="${y}" r="2.15" fill="url(#${u}hole)"/>`).join('');
+      const [hx, hy] = CLASSIC[CLASSIC_HOT];
+      return tile(u, `url(#${u}al)`, `
+        <rect width="100" height="100" filter="url(#${u}br)"/>
+        <rect width="100" height="100" fill="url(#${u}sheen)"/>
+        ${holes}
+        <circle cx="${hx}" cy="${hy + .9}" r="2.9" fill="#000" opacity=".25" filter="url(#${u}soft)"/>
+        <circle cx="${hx}" cy="${hy}" r="2.8" fill="url(#${u}btn)"/>
+        <ellipse cx="${hx - .7}" cy="${hy - 1}" rx="1.1" ry=".6" fill="#fff" opacity=".7"/>`,
+        `<linearGradient id="${u}al" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4F4F1"/><stop offset=".55" stop-color="#D8D9D6"/><stop offset="1" stop-color="#BDBEBB"/></linearGradient>
+         <linearGradient id="${u}sheen" x1="0" y1="0" x2="1" y2="1"><stop offset=".25" stop-color="#fff" stop-opacity="0"/><stop offset=".42" stop-color="#fff" stop-opacity=".55"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
+         <radialGradient id="${u}hole" cx=".5" cy=".3" r=".75"><stop offset="0" stop-color="#0B0C0E"/><stop offset="1" stop-color="#45474B"/></radialGradient>
+         <radialGradient id="${u}btn" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#FFB27A"/><stop offset=".55" stop-color="#F2711C"/><stop offset="1" stop-color="#B9470A"/></radialGradient>
+         <filter id="${u}soft" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation=".6"/></filter>
+         <filter id="${u}br" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+           <feTurbulence type="fractalNoise" baseFrequency=".035 2.4" numOctaves="2" seed="4"/>
+           <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .7 0 0 0 -.22"/>
+         </filter>`);
+    } },
+
+  { key: 'led', name: 'LED Matrix', tag: 'glow',
+    blurb: 'An amber dot-matrix display behind dark glass. Lit pixels bloom, unlit ones stay faintly visible, and a green pixel is the status light.',
+    fn: u => {
+      const off = ALL.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.9" fill="#2B1D15"/>`).join('');
+      const lit = CLASSIC.map(([x, y], i) => {
+        const c = i === CLASSIC_HOT ? ['#58F59A', '#E4FFEE'] : ['#FF9440', '#FFE6C7'];
+        return `<circle cx="${x}" cy="${y}" r="1.9" fill="${c[0]}"/><circle cx="${x}" cy="${y}" r=".85" fill="${c[1]}"/>`;
+      }).join('');
+      return tile(u, '#0C0B0F', `
+        <rect width="100" height="100" fill="url(#${u}vig)"/>
+        ${off}
+        <g filter="url(#${u}glow)">${lit}</g>
+        <path d="M0 0H62L28 100H0Z" fill="url(#${u}glass)"/>`,
+        `<radialGradient id="${u}vig" cx=".5" cy=".45" r=".7"><stop offset="0" stop-color="#1A1520"/><stop offset="1" stop-color="#060508"/></radialGradient>
+         <linearGradient id="${u}glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".09"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+         <filter id="${u}glow" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+           <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b2"/>
+           <feGaussianBlur in="SourceGraphic" stdDeviation="1.3" result="b1"/>
+           <feMerge><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="SourceGraphic"/></feMerge>
+         </filter>`);
+    } },
+
+  { key: 'letterpress', name: 'Letterpress', tag: 'blind deboss',
+    blurb: 'Dots pressed into thick cotton paper with no ink. Only the power light is printed, in vermilion.',
+    fn: u => {
+      const [hx, hy] = CLASSIC[CLASSIC_HOT];
+      return tile(u, '#F3ECE0', `
+        <g filter="url(#${u}lp)">${CLASSIC.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.15"/>`).join('')}</g>
+        <circle cx="${hx}" cy="${hy}" r="2.15" fill="#F04A23" style="mix-blend-mode:multiply" opacity=".92"/>`,
+        `<filter id="${u}lp" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100" color-interpolation-filters="sRGB">
+           <feGaussianBlur in="SourceAlpha" stdDeviation=".45" result="b"/>
+           <feDiffuseLighting in="b" surfaceScale="-1.1" diffuseConstant="1.17" lighting-color="#F3ECE0" result="l">
+             <feDistantLight azimuth="225" elevation="58"/>
+           </feDiffuseLighting>
+           <feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="3" seed="9" result="n"/>
+           <feColorMatrix in="n" type="saturate" values="0" result="g"/>
+           <feComponentTransfer in="g" result="grain">
+             <feFuncR type="linear" slope=".16" intercept=".88"/><feFuncG type="linear" slope=".16" intercept=".88"/>
+             <feFuncB type="linear" slope=".16" intercept=".88"/><feFuncA type="linear" slope="0" intercept="1"/>
+           </feComponentTransfer>
+           <feBlend in="l" in2="grain" mode="multiply"/>
+         </filter>`);
+    } },
+
+  { key: 'felt', name: 'Felt', tag: 'fuzzy',
+    blurb: 'Wool felt balls stitched to a green felt board. The fuzz is noise pushed through a displacement map.',
+    fn: u => {
+      const balls = CLASSIC.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="2.45" fill="url(#${u}${i === CLASSIC_HOT ? 'bh' : 'b'})"/>`).join('');
+      return tile(u, '#2E5A4B', `
+        <rect width="100" height="100" filter="url(#${u}fib)"/>
+        <g filter="url(#${u}fuzz)">${balls}</g>`,
+        `<radialGradient id="${u}b" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#FFF8EC"/><stop offset=".6" stop-color="#EFE2CB"/><stop offset="1" stop-color="#C9B794"/></radialGradient>
+         <radialGradient id="${u}bh" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#FFB49B"/><stop offset=".6" stop-color="#FF6A45"/><stop offset="1" stop-color="#B83B1E"/></radialGradient>
+         <filter id="${u}fib" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+           <feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="3" seed="2"/>
+           <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 .95  1.1 0 0 0 -.45"/>
+         </filter>
+         <filter id="${u}fuzz" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+           <feTurbulence type="fractalNoise" baseFrequency="3.2" numOctaves="2" seed="5" result="n"/>
+           <feDisplacementMap in="SourceGraphic" in2="n" scale="1.3" xChannelSelector="R" yChannelSelector="G" result="d"/>
+           <feDropShadow in="d" dx=".35" dy=".7" stdDeviation=".55" flood-color="#0B2219" flood-opacity=".6"/>
+         </filter>`);
+    } },
+
+  { key: 'riso', name: 'Riso', tag: 'two-ink print',
+    blurb: 'A two-colour risograph print: a fluorescent pink block and blue dots, slightly off register, with speckled ink.',
+    fn: u => {
+      const [hx, hy] = CLASSIC[CLASSIC_HOT];
+      const blue = CLASSIC.filter((_, i) => i !== CLASSIC_HOT).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.25"/>`).join('');
+      return tile(u, '#F5F0E6', `
+        <g style="mix-blend-mode:multiply" filter="url(#${u}g1)" fill="#FF48B0" transform="translate(1.3 1.1)">
+          <path d="M11 22H89V79H78V76A28 28 0 0 0 22 76V79H11Z"/>
+          <circle cx="${hx}" cy="${hy}" r="2.6"/>
+        </g>
+        <g style="mix-blend-mode:multiply" filter="url(#${u}g2)" fill="#0078BF">${blue}</g>`,
+        ['g1', 'g2'].map((id, k) => `<filter id="${u}${id}" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+           <feTurbulence type="fractalNoise" baseFrequency="1.7" numOctaves="2" seed="${k ? 11 : 3}" result="n"/>
+           <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  ${k ? '-7 0 0 0 4.4' : '-6 0 0 0 3.6'}" result="m"/>
+           <feComposite in="SourceGraphic" in2="m" operator="in"/>
+         </filter>`).join(''));
+    } },
+
+  { key: 'stitch', name: 'Cross-stitch', tag: 'thread',
+    blurb: 'Each dot is a cross-stitch in navy thread on Aida cloth. The power light is one red stitch.',
+    fn: u => {
+      const st = CLASSIC.map(([x, y], i) => {
+        const c = i === CLASSIC_HOT ? ['#C22B2B', '#E8534F'] : ['#1F2E78', '#33479E'];
+        const k = 1.6;
+        return `<path d="M${x - k} ${y + k}L${x + k} ${y - k}" stroke="${c[0]}"/><path d="M${x - k} ${y - k}L${x + k} ${y + k}" stroke="${c[1]}"/>`;
+      }).join('');
+      return tile(u, '#F1EADB', `
+        <rect width="100" height="100" fill="url(#${u}aida)"/>
+        <g stroke-width="1.35" stroke-linecap="round" filter="url(#${u}sh)">${st}</g>`,
+        `<pattern id="${u}aida" width="1.5" height="1.5" patternUnits="userSpaceOnUse"><rect width="1.5" height="1.5" fill="#F1EADB"/><path d="M0 .75H1.5M.75 0V1.5" stroke="#E2D7C1" stroke-width=".35"/><circle cx="0" cy="0" r=".22" fill="#CDBFA4"/></pattern>
+         <filter id="${u}sh" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><feDropShadow dx=".2" dy=".35" stdDeviation=".25" flood-color="#5A4A2C" flood-opacity=".5"/></filter>`);
+    } },
+
+  { key: 'sunset', name: 'Sunset', tag: 'backlit plate',
+    blurb: 'A black steel plate with a sunset behind it. The light comes through the holes and the arch and bleeds onto the metal.',
+    fn: u => {
+      const holes = CLASSIC.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.15" fill="#fff"/>`).join('');
+      const sky = `<rect width="100" height="100" fill="url(#${u}sky)"/><circle cx="50" cy="88" r="9" fill="#FFF0C4"/>`;
+      return tile(u, 'url(#' + u + 'plate)', `
+        <g mask="url(#${u}m)">${sky}</g>
+        <g mask="url(#${u}m)" filter="url(#${u}bloom)" opacity=".85" style="mix-blend-mode:screen">${sky}</g>`,
+        `<linearGradient id="${u}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A2E8F"/><stop offset=".45" stop-color="#E04A7A"/><stop offset=".78" stop-color="#FF9A3D"/><stop offset="1" stop-color="#FFD27A"/></linearGradient>
+         <linearGradient id="${u}plate" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#26222F"/><stop offset="1" stop-color="#0E0C13"/></linearGradient>
+         <mask id="${u}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#000"/>${holes}<path d="${ARCH_BLOCK}" fill="#fff"/></mask>
+         <filter id="${u}bloom" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><feGaussianBlur stdDeviation="2.2"/></filter>`);
+    } },
+
+  { key: 'pegs', name: 'Pegs', tag: 'glossy plastic',
+    blurb: 'Glossy plastic pegs on a navy pegboard. The arch is the empty holes where no pegs went in.',
+    fn: u => {
+      const set = new Set(CLASSIC.map(p => p.join()));
+      const empty = ALL.filter(p => !set.has(p.join())).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.1" fill="#0D1838"/>`).join('');
+      const pegs = CLASSIC.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="2.55" fill="url(#${u}${i === CLASSIC_HOT ? 'ph' : 'p'})"/>`).join('');
+      return tile(u, '#1E3672', `${empty}<g filter="url(#${u}sh)">${pegs}</g>
+        ${CLASSIC.map(([x, y]) => `<ellipse cx="${f(x - .8)}" cy="${f(y - 1)}" rx=".9" ry=".55" fill="#fff" opacity=".85"/>`).join('')}`,
+        `<radialGradient id="${u}p" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#F3E7D3"/><stop offset="1" stop-color="#B9A27F"/></radialGradient>
+         <radialGradient id="${u}ph" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#FFD0BF"/><stop offset=".5" stop-color="#FF5A36"/><stop offset="1" stop-color="#A62C10"/></radialGradient>
+         <filter id="${u}sh" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><feDropShadow dx=".6" dy="1" stdDeviation=".6" flood-color="#050A1C" flood-opacity=".7"/></filter>`);
+    } },
+];
+
+/* ---------- Rendering ---------- */
+
+const svg = (fn, label, extra = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" ${extra} role="img" aria-label="${label}">${fn(uid())}</svg>`;
+
+// Every rendered icon, by id, so the click handler can find it.
+const REG = [];
+const register = (name, key, fn) => REG.push({ name, key, fn }) - 1;
+
+function card(item, i, { ladder = [64, 48, 32, 24, 16], extra = '' } = {}) {
+  const id = register(item.name, item.key, item.fn);
+  return `
+  <article class="card">
+    <button type="button" class="stage" data-focus="${id}" aria-label="Enlarge ${item.name}"><div class="hero">${svg(item.fn, item.name + ' icon')}</div></button>
+    <div class="ladder">${ladder.map(s => `<div><div class="mini" style="width:${s}px;height:${s}px">${svg(item.fn, item.name + ' at ' + s + ' px')}</div><span>${s}</span></div>`).join('')}</div>
+    <div class="meta">
+      <div class="row"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="tag">${item.tag}</span></div>
+      <h3>${item.name}</h3>
+      ${item.blurb ? `<p>${item.blurb}</p>` : ''}${extra}
+      <div class="actions"><button type="button" data-id="${id}" data-kind="svg">Download SVG</button><button type="button" data-id="${id}" data-kind="png">PNG 1024</button></div>
+    </div>
+  </article>`;
+}
+
+const shapeItems = () => SHAPES.map(s => ({ ...s, key: `${s.key}-${pal.key}`, fn: u => s.fn(u, pal) }));
+
+function renderShapes() {
+  document.getElementById('g-shapes').innerHTML = shapeItems().map((s, i) => card(s, i)).join('');
+  renderContext();
+}
+
+function renderContext() {
+  const items = [...shapeItems(), ...MATERIALS];
+  document.getElementById('tiles').innerHTML = items.map(ic => `<div class="tile"><div class="ic">${svg(ic.fn, ic.name)}</div>${ic.name}</div>`).join('');
+  document.getElementById('tb').innerHTML = items.map(ic => `<div class="tb" title="${ic.name}"><div class="i24">${svg(ic.fn, ic.name + ' at 24 px')}</div></div>`).join('');
+  document.getElementById('tray').innerHTML = MATERIALS.map(ic => `<div class="i16" title="${ic.name}">${svg(ic.fn, ic.name + ' at 16 px')}</div>`).join('') + '<div class="clock">21:40<br>09/11/2026</div>';
+}
+
+document.getElementById('pal').innerHTML = PALETTES.map((p, i) =>
+  `<button type="button" data-pal="${i}" aria-pressed="${i === 0}" aria-label="${p.name}" title="${p.name}"><span style="background:conic-gradient(${p.hot} 0 25%, ${p.dot} 25% 60%, ${p.bg} 60%)"></span></button>`).join('');
+document.getElementById('pal').addEventListener('click', e => {
+  const b = e.target.closest('[data-pal]'); if (!b) return;
+  pal = PALETTES[+b.dataset.pal];
+  document.querySelectorAll('#pal button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  renderShapes();
+});
+
+document.getElementById('g-palettes').innerHTML = PALETTES.map((p, i) => card(
+  { key: `classic-${p.key}`, name: p.name, tag: 'classic', fn: u => SHAPES[0].fn(u, p) }, i,
+  { ladder: [48, 32, 24, 16], extra: `<div class="sw"><i style="background:${p.bg}"></i><i style="background:${p.dot}"></i><i style="background:${p.hot}"></i><code>${p.bg} ${p.dot} ${p.hot}</code></div>` })).join('');
+document.getElementById('g-materials').innerHTML = MATERIALS.map((m, i) => card(m, i)).join('');
+renderShapes();
+
+function save(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const dlg = document.getElementById('focus');
+document.addEventListener('click', e => {
+  const fb = e.target.closest('[data-focus]');
+  if (fb) {
+    const ic = REG[+fb.dataset.focus];
+    document.getElementById('focus-big').innerHTML = svg(ic.fn, ic.name + ' icon, enlarged');
+    document.getElementById('focus-name').textContent = ic.name;
+    dlg.showModal();
+    return;
+  }
+  const b = e.target.closest('button[data-kind]'); if (!b) return;
+  const ic = REG[+b.dataset.id];
+  if (b.dataset.kind === 'svg') {
+    save(URL.createObjectURL(new Blob([svg(ic.fn, ic.name)], { type: 'image/svg+xml' })), `setu-${ic.key}.svg`);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = c.height = 1024;
+    c.getContext('2d').drawImage(img, 0, 0, 1024, 1024);
+    c.toBlob(blob => save(URL.createObjectURL(blob), `setu-${ic.key}-1024.png`));
+  };
+  img.src = URL.createObjectURL(new Blob([svg(ic.fn, ic.name, 'width="1024" height="1024"')], { type: 'image/svg+xml' }));
+});
+document.getElementById('focus-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.body.dataset.stage = b.dataset.stage;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+</script>
+</body>
+</html>
