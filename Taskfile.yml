@@ -77,10 +77,16 @@ tasks:
       "{{.CARGO}}" build --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)"
 
   desktop:run:
-    desc: "Build and run the desktop app (Windows), e.g. task desktop:run -- <headset-ip>"
+    desc: Build and open the desktop app's window (Windows)
     cmd: >-
       cd /mnt/c && CARGO_TARGET_DIR='{{.CARGO_TARGET_DIR}}' WSLENV=CARGO_TARGET_DIR
-      "{{.CARGO}}" run --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)" -- {{.CLI_ARGS}}
+      "{{.CARGO}}" run --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)" --bin setu
+
+  desktop:cli:
+    desc: "Build and run the desktop app's command line (Windows), e.g. task desktop:cli -- status"
+    cmd: >-
+      cd /mnt/c && CARGO_TARGET_DIR='{{.CARGO_TARGET_DIR}}' WSLENV=CARGO_TARGET_DIR
+      "{{.CARGO}}" run --manifest-path "$(wslpath -w {{.ROOT_DIR}}/Cargo.toml)" --bin setu-cli -- {{.CLI_ARGS}}
 
   desktop:test:
     desc: Run the desktop app's tests (Windows)

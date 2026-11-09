@@ -1,4 +1,32 @@
-# Setu
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="design/brand/setu-icon-dark.svg">
+    <img src="design/brand/setu-icon-light.svg" width="112" alt="Setu">
+  </picture>
+</p>
+
+<h1 align="center">Setu</h1>
+
+<p align="center">
+  <b>Your Meta Quest's audio, on your PC.</b><br>
+  <sub>Setu (सेतु) means "bridge".</sub>
+</p>
+
+<p align="center">
+  <img alt="Status: work in progress" src="https://img.shields.io/badge/status-work_in_progress-FF3B2F?labelColor=15141A">
+  <img alt="Headset: Meta Quest 3" src="https://img.shields.io/badge/headset-Meta_Quest_3-F5ECDC?labelColor=15141A">
+  <img alt="PC: Windows" src="https://img.shields.io/badge/PC-Windows-F5ECDC?labelColor=15141A">
+</p>
+
+<p align="center">
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#vban">VBAN</a> ·
+  <a href="#measurements">Measurements</a> ·
+  <a href="#build">Build</a> ·
+  <a href="#roadmap">Roadmap</a>
+</p>
+
+---
 
 Setu streams a Meta Quest 3's audio to a PC with as little delay as the headset allows. An
 earlier prototype measured about 20 ms behind the headset's own speakers over USB and 25–35 ms
@@ -7,10 +35,10 @@ streams. Play it with Setu's desktop app, or with any [VBAN](#vban) receiver suc
 Setu means "bridge"; audio is the first thing it carries.
 
 **Status: work in progress.** The capture server, the protocol, VBAN output and the desktop
-receiver work; the receiver runs from the command line until its UI lands. The agent shows the
-server's status and holds the VBAN settings, but cannot start the server yet. The agent's start
-flow and the installers are being built, so parts of "How it works" describe the design rather
-than finished code.
+receiver work. The desktop app has a window: connect to the headset, watch the level and the
+delay, pick the output. The agent shows the server's status and holds the VBAN settings, but
+cannot start the server yet. The agent's start flow and the installers are being built, so parts
+of "How it works" describe the design rather than finished code.
 
 ## How it works
 
@@ -34,7 +62,7 @@ start. Setu sets that up once over USB, after which the headset can start it on 
 |---|---|
 | Agent (`apps/agent`) | Android app, Kotlin and Compose. Starts the capture server, shows its status and keeps it in step with the settings, such as where to send VBAN. |
 | Capture server (`apps/agent/.../server`) | Java, shipped inside the agent's APK, run with `app_process` using the APK as its classpath. Captures playback and streams it to the desktop app and to a VBAN receiver. |
-| Desktop app (`apps/desktop`) | Rust. Finds the headset, receives the stream and plays it. Windows first, then Linux. |
+| Desktop app (`apps/desktop`) | Rust, with a [GPUI](https://www.gpui.rs) window. Finds the headset, receives the stream and plays it. Windows first, then Linux. |
 | Installers (planned) | A PC installer inside the desktop app, and a browser installer over WebUSB. Both only install the APK and run the setup routine it contains, so they cannot drift apart. |
 | Protocol (`protocol`) | The wire format, with byte fixtures that the Java and Rust sides both test against. |
 
@@ -184,7 +212,8 @@ These come from the prototype receiver; the desktop app's playout follows them.
 | Path | What |
 |---|---|
 | `apps/agent` | The agent app: `Agent` is the screen's logic, with the server and settings behind `CaptureServer` and `SettingsStore`. `.../server` is the capture server, where `ReceiverSession` sends each block to every route in `Routes` (the Setu receiver, the VBAN target) in its `PacketFormat`. `.../protocol` holds the shared protocol module and the VBAN encoder. |
-| `apps/desktop` | The desktop app, a member of the root Cargo workspace. `Receiver` wires `link` (UDP to the server), `playout` (jitter buffer) and `output` (the device, WASAPI on Windows). |
+| `apps/desktop` | The desktop app, a member of the root Cargo workspace. `Receiver` wires `link` (UDP to the server), `playout` (jitter buffer) and `output` (the device, WASAPI on Windows). `Session` is the app around it: the settings, the receiver while connected, and the commands that change them. The window (`main.rs`, `ui.rs`) and `setu-cli play` host a session; `control` lets `setu-cli` drive the running one over 127.0.0.1. |
+| `design/brand` | The icon, colours and the scripts that generate every icon file ([design/brand/README.md](design/brand/README.md)). |
 | `protocol` | Protocol spec ([protocol/README.md](protocol/README.md)) and byte fixtures. |
 
 ## Build
@@ -199,8 +228,21 @@ task build                    # agent APK and desktop app
 task test                     # JVM and Rust tests
 task agent:install            # install the agent on a USB-connected headset
 task agent:server -- probe 6  # run the server's latency probe from the installed APK
-task desktop:run -- --list-devices
-task desktop:run -- <headset-ip>   # play the headset's audio; --help lists the options
+task desktop:run              # open the desktop app's window
+task desktop:cli -- devices   # list output devices
+task desktop:cli -- play <headset-ip>   # play without a window; --help lists the options
+```
+
+`setu-cli` also controls the Setu already running on the PC, the window or a `play`, through
+a control port on 127.0.0.1. Each command prints the app's state as `key=value` lines and
+exits non-zero when the command fails:
+
+```bash
+task desktop:cli -- status              # phase, title, headset, device, stats, ...
+task desktop:cli -- connect <headset-ip>   # or no address for the saved one
+task desktop:cli -- device realtek      # part of a device name; no name for the default
+task desktop:cli -- exclusive on
+task desktop:cli -- disconnect
 ```
 
 Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames] [--vban
@@ -213,7 +255,7 @@ host[:port][/name]]`,
 1. Agent: start and stop the server itself. With the browser installer, this makes VBAN work
    with no Setu software on the PC. The agent then passes the server a secret that control
    messages and local receivers must carry.
-2. Desktop app: UI and tray on top of the receiver.
+2. Desktop app: a tray icon, so it can play with the window closed.
 3. Installers: setup routine in the APK, then the PC installer, then the browser installer.
 4. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
    address from the last Setu receiver, and find VBAN receivers with VBAN's PING0 service.

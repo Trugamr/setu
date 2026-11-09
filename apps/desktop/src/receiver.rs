@@ -5,7 +5,7 @@
 //! yet, goes quiet or restarts is picked up again, and so is an output device that comes back.
 //! [`Receiver::status`] is everything a UI shows; dropping the receiver stops it.
 
-use std::net::SocketAddr;
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use crate::link::{Event, Link};
@@ -169,6 +169,24 @@ fn headset_capture_ms(format: Format) -> f64 {
 }
 
 /// The computer's name, as the headset's status shows it.
+/// Resolves a headset typed as `host` or `host:port`; the port defaults to the protocol's.
+pub fn resolve_headset(headset: &str) -> Result<SocketAddr, String> {
+    let headset = headset.trim();
+    if headset.is_empty() {
+        return Err("enter the headset's address".into());
+    }
+    let with_port = if headset.contains(':') {
+        headset.to_string()
+    } else {
+        format!("{headset}:{}", crate::protocol::UDP_PORT)
+    };
+    with_port
+        .to_socket_addrs()
+        .map_err(|e| format!("{headset}: {e}"))?
+        .next()
+        .ok_or_else(|| format!("{headset}: no address"))
+}
+
 fn default_name() -> String {
     ["COMPUTERNAME", "HOSTNAME"]
         .into_iter()

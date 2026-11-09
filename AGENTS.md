@@ -11,6 +11,10 @@ before changing the capture path.
   an interface and an Android adapter, as `Capture` and `Transport` do.
 - The protocol has a Java side (agent) and a Rust side (desktop) pinned by `protocol/fixtures`;
   change the spec, the fixtures and both sides together.
+- Desktop front ends change the app only through `Session` commands. A new action becomes a
+  `Command`, so the window and `setu-cli` (through `control`) get it together.
+- To check the running desktop app, drive it with `task desktop:cli -- status` (or `connect`,
+  `device`, `exclusive`, `disconnect`) instead of clicking the window.
 
 ## On the headset
 
