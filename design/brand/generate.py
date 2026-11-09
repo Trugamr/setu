@@ -16,19 +16,20 @@ INK = "#15141A"
 CREAM = "#F5ECDC"
 SIGNAL = "#FF3B2F"
 
-# The mark, "Soft Top": a 9 × 7 grille on an 8-unit grid inside a 100-unit tile, with an arch cut
-# from the bottom edge and the two top corners dropped so the silhouette reads as a headset.
-DOT_R = 2.8
-LIGHT = (74, 26)
+# The mark, "Seven": a 7 × 5 grille on a 9-unit grid, centred in a 100-unit tile with about 20
+# units of clear space on every side. An arch cut from the bottom takes three dots and the one
+# above them, and the two top corners are dropped so the silhouette reads as a headset.
+DOT_R = 2.9
+LIGHT = (68, 32)
 
 
 def mark_dots():
     dots = []
-    for y in range(26, 75, 8):
-        for x in range(18, 83, 8):
-            if math.hypot(x - 50, y - 78) < 23:
+    for y in range(32, 69, 9):
+        for x in range(23, 78, 9):
+            if math.hypot(x - 50, y - 72.5) < 14.4:
                 continue
-            if y == 26 and x in (18, 82):
+            if y == 32 and x in (23, 77):
                 continue
             dots.append((x, y))
     return dots

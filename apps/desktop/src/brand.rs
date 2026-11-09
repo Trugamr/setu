@@ -95,34 +95,34 @@ pub fn apply(cx: &mut App) {
     });
 }
 
-/// The mark's dots in its 100-unit tile: a 9 × 7 grille on an 8-unit grid, an arch of radius 23
-/// at (50, 78) cut from the bottom, and the two top corners dropped.
+/// The mark's dots in its 100-unit tile: a 7 × 5 grille on a 9-unit grid, an arch of radius 14.4
+/// at (50, 72.5) cut from the bottom, and the two top corners dropped.
 fn mark_dots() -> impl Iterator<Item = (f32, f32)> {
-    (0..7)
-        .flat_map(|row| (0..9).map(move |col| (18.0 + 8.0 * col as f32, 26.0 + 8.0 * row as f32)))
-        .filter(|&(x, y)| ((x - 50.0).powi(2) + (y - 78.0).powi(2)).sqrt() >= 23.0)
-        .filter(|&(x, y)| !(y == 26.0 && (x == 18.0 || x == 82.0)))
+    (0..5)
+        .flat_map(|row| (0..7).map(move |col| (23.0 + 9.0 * col as f32, 32.0 + 9.0 * row as f32)))
+        .filter(|&(x, y)| ((x - 50.0).powi(2) + (y - 72.5).powi(2)).sqrt() >= 14.4)
+        .filter(|&(x, y)| !(y == 32.0 && (x == 23.0 || x == 77.0)))
 }
 
 /// The red power light.
-const LIGHT: (f32, f32) = (74.0, 26.0);
+const LIGHT: (f32, f32) = (68.0, 32.0);
 
 /// The mark without its tile, cropped to the dots, `width` wide.
 pub fn mark(width: f32) -> impl IntoElement {
-    // The dots span x 15.2 to 84.8 and y 23.2 to 76.8 in tile units.
-    let scale = width / 69.6;
+    // The dots span x 20.1 to 79.9 and y 29.1 to 70.9 in tile units.
+    let scale = width / 59.8;
     let mut el = div()
         .relative()
         .flex_none()
         .w(px(width))
-        .h(px(53.6 * scale));
+        .h(px(41.8 * scale));
     for (x, y) in mark_dots() {
         el = el.child(
             div()
                 .absolute()
-                .left(px((x - 18.0) * scale))
-                .top(px((y - 26.0) * scale))
-                .size(px(5.6 * scale))
+                .left(px((x - 23.0) * scale))
+                .top(px((y - 32.0) * scale))
+                .size(px(5.8 * scale))
                 .rounded_full()
                 .bg(if (x, y) == LIGHT { signal() } else { cream() }),
         );

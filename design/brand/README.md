@@ -20,10 +20,11 @@ contrast. The agent's UI steps up from Ink for raised surfaces and lines (`Theme
 
 ## The mark
 
-- A 9 × 7 grille on an 8-unit grid inside a 100-unit tile, dots of radius 2.8.
+- A 7 × 5 grille on a 9-unit grid, centred in a 100-unit tile, dots of radius 2.9. It spans
+  60 × 42 units, which leaves about 20 units of clear space on every side.
 - An arch of radius 23, centred at (50, 78), removes the dots at the bottom centre.
 - The two top-corner dots are dropped.
-- The top row's rightmost dot, at (74, 26), is Signal.
+- The top row's rightmost dot, at (68, 32), is Signal.
 
 It comes in two themes, and Signal is the same in both:
 
@@ -59,4 +60,4 @@ python3 design/brand/generate.py
 python3 design/brand/render.py
 ```
 
-The explorations that led here are in `design/icons/` (round 8 is the last).
+The explorations that led here are in `design/icons/` (round 9 is the last).

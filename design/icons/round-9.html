@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setu breathing room</title>
+<style>
+:root { --bg:#0C0C0F; --card:#131317; --line:#25252C; --text:#EDECE8; --muted:#A09EA8; --stage:#1B1B21; }
+body[data-stage="paper"] { --stage:#ECE6DA; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+.wrap { max-width:1320px; margin:0 auto; padding:32px 16px 64px; }
+h1 { margin:0 0 6px; font-size:28px; font-weight:600; letter-spacing:-.01em; }
+.lede { margin:0 0 20px; color:var(--muted); max-width:720px; }
+.bar { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+.seg { display:inline-flex; background:#1C1C22; border:1px solid var(--line); border-radius:999px; padding:3px; }
+.seg button { font:500 13px Inter, sans-serif; color:var(--muted); background:none; border:0; border-radius:999px; padding:7px 13px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:#EDECE8; color:#0C0C0F; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+.stage { background:var(--stage); padding:24px; display:flex; align-items:flex-end; justify-content:center; gap:18px; }
+.stage .big { width:180px; height:180px; }
+.stage .small { display:flex; flex-direction:column; gap:10px; align-items:center; }
+.meta { padding:14px 16px 16px; }
+.meta h3 { margin:0; font-size:15px; font-weight:600; }
+.meta .tag { font:12px 'JetBrains Mono', monospace; color:#FFB4A8; margin-left:6px; }
+.meta p { margin:6px 0 8px; color:var(--muted); font-size:13.5px; }
+.nums { font:12px 'JetBrains Mono', monospace; color:var(--muted); }
+svg { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="lede" style="margin-bottom:8px">Setu · app icon studies · round 9 · <a href="index.html" style="color:inherit">round 8</a> · <a href="round-7.html" style="color:inherit">round 7</a></p>
+  <h1>Breathing room</h1>
+  <p class="lede">The same grille, arch, dropped corners and red dot each time. What changes is how much of the tile the mark fills, how many dots it has, and the gap between them. "Margin" is the clear space from the mark to the tile's edge; "air" is the gap between two dots as a share of one dot's width.</p>
+  <div class="bar">
+    <div class="seg" id="theme"><button aria-pressed="true" data-v="dark">Dark</button><button aria-pressed="false" data-v="light">Light</button></div>
+    <div class="seg" id="guides"><button aria-pressed="false" data-v="on">Keylines</button><button aria-pressed="true" data-v="off">Clean</button></div>
+    <div class="seg" id="stage"><button aria-pressed="true" data-v="dark">On dark</button><button aria-pressed="false" data-v="paper">On paper</button></div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const INK = '#15141A', CREAM = '#F5ECDC', SIGNAL = '#FF3B2F';
+const SQ = (() => {
+  const n = 5, pts = [];
+  for (let i = 0; i < 240; i++) {
+    const t = i / 240 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+    pts.push([50 + 50 * Math.sign(c) * Math.abs(c) ** (2 / n), 50 + 50 * Math.sign(s) * Math.abs(s) ** (2 / n)]);
+  }
+  return 'M' + pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+})();
+
+// A grille of cols × rows on pitch p, centred on the tile (shifted by dy), with an arch of
+// radius arch·p centred archDy·p below the bottom row, and `drop` dots taken off each top corner.
+function mark({ cols, rows, p, r, arch, archDy = .5, drop = 1, dy = 0 }) {
+  const x0 = 50 - (cols - 1) * p / 2, y0 = 50 - (rows - 1) * p / 2 + dy;
+  const yb = y0 + (rows - 1) * p, ac = [50, yb + archDy * p];
+  const pts = [];
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    const x = x0 + i * p, y = y0 + j * p;
+    if (Math.hypot(x - ac[0], y - ac[1]) < arch * p) continue;
+    if (j === 0 && (i < drop || i >= cols - drop)) continue;
+    pts.push([x, y]);
+  }
+  const top = Math.min(...pts.map(q => q[1]));
+  const red = pts.reduce((b, q, k) => (Math.abs(q[1] - top) < .01 && (b < 0 || q[0] > pts[b][0]) ? k : b), -1);
+  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+  const box = [Math.min(...xs) - r, Math.min(...ys) - r, Math.max(...xs) + r, Math.max(...ys) + r];
+  return { pts, red, r, box, p };
+}
+
+const V = [
+  { name: 'Current', tag: 'reference', blurb: 'Nine by seven, the grille spanning 70% of the tile. Tight to the edges and tight between dots.',
+    m: { cols: 9, rows: 7, p: 8, r: 2.8, arch: 2.875 } },
+  { name: 'Inset', tag: 'same mark, smaller', blurb: 'The current mark scaled to 58% of the tile. Nothing redrawn, just a proper margin.',
+    m: { cols: 9, rows: 7, p: 6.6, r: 2.31, arch: 2.875 } },
+  { name: 'Airy', tag: 'smaller dots', blurb: 'Same nine by seven, a bit smaller, with dots shrunk so the gaps nearly match the dots. Reads as a mesh.',
+    m: { cols: 9, rows: 7, p: 7, r: 1.95, arch: 2.875 } },
+  { name: 'Seven', tag: '7 × 5', blurb: 'Fewer, larger dots. The arch takes three at the bottom and one above, a true arch shape, and leaves legs two dots wide.',
+    m: { cols: 7, rows: 5, p: 9, r: 2.9, arch: 1.6 } },
+  { name: 'Square', tag: '7 × 7', blurb: 'As tall as it is wide, so the margin is even on all four sides instead of loose above and below.',
+    m: { cols: 7, rows: 7, p: 8.2, r: 2.6, arch: 2.2 } },
+  { name: 'Eight', tag: '9 × 6, lifted', blurb: 'One row fewer than today, set 2 units high so the arch opening doesn\'t make the mark look like it\'s sinking.',
+    m: { cols: 9, rows: 6, p: 7, r: 2.3, arch: 2.875, dy: -2 } },
+  { name: 'Soft shoulders', tag: '9 × 7, two dropped', blurb: 'Two dots off each top corner: a rounder headset, and the corners of the tile get the air.',
+    m: { cols: 9, rows: 7, p: 7, r: 2.3, arch: 2.875, drop: 2 } },
+  { name: 'Square airy', tag: '7 × 7, small dots', blurb: 'The square grille with mesh-like gaps and a wider margin. The quietest of the set.',
+    m: { cols: 7, rows: 7, p: 7.6, r: 2.05, arch: 2.2 } },
+  { name: 'Keyline', tag: '7 × 5, 50%', blurb: 'Seven by five fitted to half the tile, about where platform icon grids put a centred glyph.',
+    m: { cols: 7, rows: 5, p: 8, r: 2.6, arch: 1.6 } },
+];
+
+const state = { theme: 'dark', guides: 'off' };
+
+function icon(m, size, guides) {
+  const t = state.theme === 'dark' ? { tile: INK, dot: CREAM, edge: '#fff', eo: .14 } : { tile: CREAM, dot: INK, edge: INK, eo: .08 };
+  const id = 'c' + Math.random().toString(36).slice(2);
+  const dots = m.pts.map(([x, y], k) => `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${m.r}" fill="${k === m.red ? SIGNAL : t.dot}"/>`).join('');
+  const g = guides ? `<g fill="none" stroke="#3AA7FF" stroke-width=".35" opacity=".9">
+      <rect x="${m.box[0]}" y="${m.box[1]}" width="${m.box[2] - m.box[0]}" height="${m.box[3] - m.box[1]}" stroke-dasharray="1.2 1"/>
+      <circle cx="50" cy="50" r="33" stroke-opacity=".6"/><rect x="16" y="16" width="68" height="68" rx="4" stroke-opacity=".4"/>
+      <line x1="50" y1="0" x2="50" y2="100" stroke-opacity=".35"/><line x1="0" y1="50" x2="100" y2="50" stroke-opacity=".35"/></g>` : '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><defs><clipPath id="${id}"><path d="${SQ}"/></clipPath></defs>
+    <g clip-path="url(#${id})"><rect width="100" height="100" fill="${t.tile}"/>${dots}${g}
+    <path d="${SQ}" fill="none" stroke="${t.edge}" stroke-opacity="${t.eo}" stroke-width=".9"/></g></svg>`;
+}
+
+function render() {
+  document.getElementById('grid').innerHTML = V.map(v => {
+    const m = mark(v.m), b = m.box;
+    const margin = Math.min(b[0], b[1], 100 - b[2], 100 - b[3]);
+    const air = (m.p - 2 * m.r) / (2 * m.r);
+    return `<div class="card"><div class="stage"><div class="big">${icon(m, 180, state.guides === 'on')}</div>
+      <div class="small">${icon(m, 64)}${icon(m, 32)}${icon(m, 20)}</div></div>
+      <div class="meta"><h3>${v.name}<span class="tag">${v.tag}</span></h3><p>${v.blurb}</p>
+      <div class="nums">${m.pts.length} dots · spans ${(b[2] - b[0]).toFixed(0)}% × ${(b[3] - b[1]).toFixed(0)}% · margin ${margin.toFixed(0)} · air ${air.toFixed(2)}</div></div></div>`;
+  }).join('');
+}
+
+for (const id of ['theme', 'guides', 'stage']) {
+  document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    for (const x of e.currentTarget.children) x.setAttribute('aria-pressed', x === b);
+    if (id === 'stage') document.body.dataset.stage = b.dataset.v; else { state[id] = b.dataset.v; render(); }
+  });
+}
+render();
+</script>
+</body>
+</html>
