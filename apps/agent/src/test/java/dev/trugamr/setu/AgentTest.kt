@@ -39,8 +39,8 @@ class AgentTest {
         val progress = mutableListOf<String>()
 
         override fun approve(progress: (String) -> Unit): AdbResult {
-            progress("tick Always allow")
-            this.progress += "tick Always allow"
+            progress("choose Always allow")
+            this.progress += "choose Always allow"
             return failure?.let(AdbResult::Failed) ?: AdbResult.Done("allowed")
         }
 
@@ -183,7 +183,7 @@ class AgentTest {
     fun approveShowsTheHeadsetsAnswer() = runBlocking {
         val agent = agent()
         agent.approve()
-        assertEquals(listOf("tick Always allow"), adb.progress)
+        assertEquals(listOf("choose Always allow"), adb.progress)
         assertEquals(Operation.Done(Task.Approve, "allowed"), agent.state.value.operation)
     }
 }

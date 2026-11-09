@@ -10,6 +10,7 @@ import dev.trugamr.setu.protocol.Vban;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ public final class Server {
 
     private static final int DEFAULT_BLOCK_FRAMES = 96;
     private static final String SOCKET_NAME = "setu";
+    /** How long an ended server has to free the port. */
+    private static final long TAKEOVER_TIMEOUT_MS = 3000;
     /** Held for the life of the process so the locks are not released by the garbage collector. */
     private static final List<WifiManager.WifiLock> WIFI_LOCKS = new ArrayList<>();
 
@@ -46,7 +49,20 @@ public final class Server {
 
     public static void main(String[] args) throws Exception {
         ShellRuntime.init();
+        // Android services start threads that never end, such as WifiManager's for the Wi-Fi
+        // locks, and the VM waits for them: without an explicit exit, a stopped or failed server
+        // lives on and keeps its UDP port, so the next server can't bind it.
+        int status = 0;
+        try {
+            run(args);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            status = 1;
+        }
+        System.exit(status);
+    }
 
+    private static void run(String[] args) throws Exception {
         String command = args.length > 0 ? args[0] : "udp";
         switch (command) {
             case "udp": {
@@ -122,14 +138,39 @@ public final class Server {
 
     private static void serveUdp(int port, int blockFrames, StreamProtocol.VbanTarget vban)
             throws IOException, InterruptedException {
+        Transport transport = bind(port);
         holdWifiLocks();
-        Transport transport = new Transport.Udp(port);
         Log.info("udp: listening on port " + port + " (block " + blockFrames + " frames)");
         ReceiverSession session =
                 new ReceiverSession(transport, PlaybackCapture.source(blockFrames), () -> System.nanoTime() / 1_000_000);
         session.setVban(vban);
         session.run();
         Log.info("udp: stopped");
+    }
+
+    /** Binds {@code port}, ending another Setu server that holds it first. */
+    private static Transport bind(int port) throws IOException, InterruptedException {
+        try {
+            return new Transport.Udp(port);
+        } catch (BindException e) {
+            List<Integer> ended = PortTakeover.endHolders(port);
+            if (ended.isEmpty()) {
+                throw e;
+            }
+            Log.info("udp: ended the server that held port " + port + " (pid " + ended + ")");
+        }
+        // The port frees once the ended process is gone.
+        long deadline = System.nanoTime() + TAKEOVER_TIMEOUT_MS * 1_000_000;
+        while (true) {
+            try {
+                return new Transport.Udp(port);
+            } catch (BindException e) {
+                if (System.nanoTime() >= deadline) {
+                    throw e;
+                }
+                Thread.sleep(50);
+            }
+        }
     }
 
     private static void serveAdb(int blockFrames) throws IOException {
