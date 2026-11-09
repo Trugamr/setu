@@ -35,6 +35,14 @@ earlier prototype (estimates, see [Measurements](#measurements)). The headset ke
 it streams. Play it with Setu's desktop app, or with any [VBAN](#vban) receiver such as
 Voicemeeter. Setu means "bridge"; audio is the first thing it carries.
 
+<p align="center">
+  <img src="docs/screenshots/agent.png" width="302" alt="The agent on the headset: a cream Sending card with its block size, receivers and the headset's address, and Stop; below it the outputs, the desktop app connected and VBAN on, and the VBAN settings.">
+  &nbsp;
+  <img src="docs/screenshots/desktop.png" width="440" alt="The desktop app's window: a cream Playing card with the delay behind the headset, the buffer and underruns, and Disconnect; below it the output device and exclusive mode.">
+  <br>
+  <sub>The agent on the headset, sending, and the desktop app on the PC, playing it.</sub>
+</p>
+
 **Status: work in progress.** Working: the capture server, the protocol, VBAN output, the agent
 (start and stop the server, VBAN settings) and the desktop app (connect, level and delay, output
 device). Not built yet: the installers, so setup needs a development machine, and discovery, so
@@ -277,6 +285,7 @@ These come from the prototype receiver; the desktop app's playout follows them.
 | `apps/agent` | The agent app: `Agent` is the screen's logic, with the server and settings behind `CaptureServer` and `SettingsStore`. `.../server` is the capture server, where `ReceiverSession` sends each block to every route in `Routes` (the Setu receiver, the VBAN target) in its `PacketFormat`. `.../protocol` holds the shared protocol module and the VBAN encoder. |
 | `apps/desktop` | The desktop app, a member of the root Cargo workspace. `Receiver` wires `link` (UDP to the server), `playout` (jitter buffer) and `output` (the device, WASAPI on Windows). `Session` is the app around it: the settings, the receiver while connected, and the commands that change them. The window (`main.rs`, `ui.rs`) and `setu-cli play` host a session; `control` lets `setu-cli` drive the running one over 127.0.0.1. |
 | `design/brand` | The icon, colours and the scripts that generate every icon file ([design/brand/README.md](design/brand/README.md)). |
+| `docs/screenshots` | The screenshots above: the agent's Sending preview from `task agent:screenshots`, cropped, and the desktop window while playing. |
 | `protocol` | Protocol spec ([protocol/README.md](protocol/README.md)) and byte fixtures. |
 
 ## Build
