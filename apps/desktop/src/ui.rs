@@ -2,6 +2,8 @@
 //! lets `setu-cli` send it more, and a poll ten times a second answers those and renders the
 //! session's [`Snapshot`].
 
+use std::cell::Cell;
+use std::rc::Rc;
 use std::time::Duration;
 
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants};
@@ -23,6 +25,11 @@ use crate::palette::*;
 /// The device list's first entry, which follows the system's default output.
 const SYSTEM_DEFAULT: &str = "System default";
 const POLL: Duration = Duration::from_millis(100);
+/// The select's own maximum, 20rem.
+const DEVICE_MENU_MAX: f32 = 320.;
+/// The device menu's 6 px gap from the select, its 8 px margin from the window's edge, and its
+/// padding and border.
+const DEVICE_MENU_INSET: f32 = 26.;
 
 pub fn run() {
     // The component icons, such as the select's chevron.
@@ -66,6 +73,11 @@ struct Setu {
     /// [`SYSTEM_DEFAULT`], then the output devices.
     device_names: Vec<SharedString>,
     device: Entity<SelectState<Vec<SharedString>>>,
+    /// Where the select ends, from its last paint, to fit its menu below it.
+    device_bottom: Rc<Cell<Pixels>>,
+    /// The page's own focus, which a click on the background takes, so the field or select that
+    /// had it lets go. GPUI focuses the innermost focusable element under a click.
+    focus: FocusHandle,
     snapshot: Snapshot,
     _subscriptions: Vec<Subscription>,
 }
@@ -146,6 +158,8 @@ impl Setu {
             headset,
             device_names,
             device,
+            device_bottom: Rc::default(),
+            focus: cx.focus_handle(),
             snapshot,
             _subscriptions: subscriptions,
         }
@@ -211,12 +225,21 @@ impl Setu {
             h_flex()
                 .mt(px(dimens::GAP))
                 .gap(px(8.))
-                .child(div().flex_1().child(Input::new(&self.headset).large()))
+                .child(
+                    div()
+                        .flex_1()
+                        // `Input::h` sizes only a multi-line field; the frame takes `Styled::h`.
+                        .child(Styled::h(
+                            Input::new(&self.headset).large(),
+                            px(dimens::CONTROL_HEIGHT),
+                        )),
+                )
                 .child(
                     Button::new("connect")
                         .label("Connect")
                         .primary()
                         .large()
+                        .h(px(dimens::CONTROL_HEIGHT))
                         .px(px(20.))
                         .font_weight(FontWeight::SEMIBOLD)
                         .on_click(toggle),
@@ -228,30 +251,38 @@ impl Setu {
                 .w_full()
                 .font_weight(FontWeight::SEMIBOLD)
                 .on_click(toggle);
+            // The kit fills a custom variant with its colour at 20%, so `bg` sets the fill; the
+            // variant's hover and active colours are solid.
             let button = match look {
                 // Ink on the Cream card.
-                Look::Flowing => button.label("Disconnect").custom(
-                    ButtonCustomVariant::new(cx)
-                        .color(hsla(INK))
-                        .foreground(hsla(CREAM))
-                        .hover(hsla(INK_RAISED))
-                        .active(hsla(INK_HIGH)),
-                ),
+                Look::Flowing => button
+                    .label("Disconnect")
+                    .h(px(dimens::CONTROL_HEIGHT))
+                    .custom(
+                        ButtonCustomVariant::new(cx)
+                            .color(hsla(INK))
+                            .foreground(hsla(CREAM))
+                            .hover(hsla(INK_RAISED))
+                            .active(hsla(INK_HIGH)),
+                    )
+                    .bg(hsla(INK)),
                 // Outlined in Edge with no fill: the kit's outline style fills with Edge too.
+                // The border sits outside the button, so the two together are a control high.
                 _ => button
                     .label(if headset.is_empty() {
                         "Disconnect".to_string()
                     } else {
                         format!("Disconnect from {headset}")
                     })
-                    .h(px(38.))
+                    .h(px(dimens::CONTROL_HEIGHT - 2.))
                     .custom(
                         ButtonCustomVariant::new(cx)
                             .color(hsla(INK_RAISED))
                             .foreground(hsla(CREAM))
                             .hover(hsla(INK_HIGH))
                             .active(hsla(INK_HOVER)),
-                    ),
+                    )
+                    .bg(hsla(INK_RAISED)),
             };
             let button = if look == Look::Flowing {
                 div().child(button)
@@ -323,11 +354,17 @@ fn device_index(names: &[SharedString], device: Option<&str>) -> usize {
 }
 
 impl Render for Setu {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let exclusive = self.snapshot.settings.exclusive;
         let footer = self.snapshot.summary.footer.clone();
+        // The menu opens below the select, or above when that has more room. Taller than both,
+        // the kit pushes it over the select, so it is kept to the room below.
+        let below = window.viewport_size().height - self.device_bottom.get() - px(DEVICE_MENU_INSET);
+        let menu_max = px(f32::from(below).clamp(DEVICE_MENU_MAX / 2., DEVICE_MENU_MAX));
+        let device_bottom = self.device_bottom.clone();
 
         v_flex()
+            .track_focus(&self.focus)
             .size_full()
             .bg(hsla(INK))
             .text_color(hsla(CREAM))
@@ -340,11 +377,21 @@ impl Render for Setu {
                     .bg(hsla(INK_RAISED))
                     .child(
                         row()
-                            .child(text(&dimens::ROW).flex_1().child("Device"))
+                            .child(text(&dimens::ROW).child("Device"))
                             .child(
-                                div().w(px(220.)).child(
-                                    Select::new(&self.device).menu_width(px(280.)),
-                                ),
+                                div()
+                                    .relative()
+                                    .flex_1()
+                                    .min_w_0()
+                                    .child(Select::new(&self.device).menu_max_h(menu_max))
+                                    .child(
+                                        canvas(
+                                            move |bounds, _, _| device_bottom.set(bounds.bottom()),
+                                            |_, _, _, _| {},
+                                        )
+                                        .absolute()
+                                        .size_full(),
+                                    ),
                             ),
                     )
                     .child(div().h(px(1.)).bg(hsla(INK_HIGH)))

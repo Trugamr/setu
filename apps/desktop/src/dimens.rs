@@ -13,8 +13,10 @@ pub const GAP: f32 = 16.;
 pub const SECTION_GAP: f32 = 20.;
 
 pub const CARD_RADIUS: f32 = 8.;
-/// Buttons, fields and selects, which are the component kit's large size, 40 tall.
 pub const CONTROL_RADIUS: f32 = 4.;
+/// The card's field and buttons. Set explicitly: the component kit's large field is 44 tall and
+/// its large button 32.
+pub const CONTROL_HEIGHT: f32 = 40.;
 pub const ROW_HEIGHT: f32 = 52.;
 
 /// Font size and line height.
