@@ -14,8 +14,8 @@ pub fn hsla(token: u32) -> Hsla {
 }
 
 /// Recolours the component theme in the brand: dark only, Signal as the one accent, Edge
-/// outlining every control. Text on Signal is Ink, since Cream on red is 3:1. Controls are 4
-/// round, popovers 8, as in [`dimens`].
+/// outlining every control, Cream for focus. Text on Signal is Ink, since Cream on red is 3:1.
+/// Controls are 4 round, popovers 8, as in [`dimens`].
 pub fn apply(cx: &mut App) {
     Theme::change(ThemeMode::Dark, None, cx);
     // `update` carries colour edits through to the tokens the components paint with; switching
@@ -23,6 +23,8 @@ pub fn apply(cx: &mut App) {
     Theme::update(cx, |theme| {
         theme.radius = px(dimens::CONTROL_RADIUS);
         theme.radius_lg = px(dimens::CARD_RADIUS);
+        // A focused control shows a 1px border in `ring`, not the kit's soft band around it.
+        theme.focus_ring = false;
         let c = &mut theme.colors;
 
         c.background = hsla(INK);
@@ -31,9 +33,10 @@ pub fn apply(cx: &mut App) {
         // (inputs, selects, outline buttons) are `input`, in Edge.
         c.border = hsla(LINE);
         c.input = hsla(EDGE);
-        c.ring = hsla(SIGNAL);
-        c.caret = hsla(SIGNAL);
-        c.selection = hsla(SIGNAL).opacity(0.35);
+        // Focus is Cream: a field being typed in must not look like an error.
+        c.ring = hsla(CREAM);
+        c.caret = hsla(CREAM);
+        c.selection = hsla(CREAM).opacity(0.25);
         c.title_bar = hsla(INK);
         c.window_border = hsla(LINE);
 
@@ -65,7 +68,7 @@ pub fn apply(cx: &mut App) {
         c.list = hsla(INK_RAISED);
         c.list_hover = hsla(INK_HOVER);
         c.list_active = hsla(INK_HOVER);
-        c.list_active_border = hsla(SIGNAL);
+        c.list_active_border = hsla(CREAM);
         c.danger = hsla(SIGNAL);
         c.danger_foreground = hsla(INK);
     });

@@ -14,8 +14,10 @@ Three brand colours, Ink, Cream and Signal, and the UI steps between them. The a
 only.
 
 - **Signal is the one accent**, used once per view where possible, the way the icon uses one red
-  dot among twenty-eight cream ones: the action that starts things (Start, Connect), focus,
-  errors. Switches, outputs and status are never red.
+  dot among twenty-eight cream ones: the action that starts things (Start, Connect) and errors.
+  Switches, outputs, status and focus are never red.
+- **Focus is Cream.** The focus ring, the text cursor and selected text are Cream, so a field
+  being typed in never looks like an error.
 - **Cream means sound is flowing.** The status card turns Cream, with Ink text, while the
   headset sends or the desktop plays. While on but waiting for the other side, the card keeps
   its Ink fill with a Cream outline. Off and problems use the plain card.
@@ -35,8 +37,8 @@ for the agent, `palette.rs` for the desktop app, `palette.svg`, and the tables b
 | Token | Hex | Use |
 | --- | --- | --- |
 | Ink | `#15141A` | Page background, the icon tile, text on Signal and on Cream |
-| Cream | `#F5ECDC` | Text, the grille, the status card while sound flows, and on switches |
-| Signal | `#FF3B2F` | The one accent: the power light, the action that starts things, focus, errors |
+| Cream | `#F5ECDC` | Text, the grille, focus, the status card while sound flows, and on switches |
+| Signal | `#FF3B2F` | The one accent: the power light, the action that starts things, errors |
 | InkRaised | `#1F1E25` | Cards, groups, dialogs, popovers and menus |
 | InkHigh | `#2A2930` | Dividers inside groups, disabled buttons, off switch tracks |
 | InkHover | `#36353D` | Hover and pressed on raised surfaces, the selected menu item |
@@ -66,13 +68,15 @@ Contrast, checked by `generate.py`:
 | Ink | Signal | 5.16:1 | 4.5:1 | Primary button label |
 | Ink | SignalHover | 5.95:1 | 4.5:1 | Primary button label, hovered |
 | Ink | SignalPressed | 4.63:1 | 4.5:1 | Primary button label, pressed |
-| Cream | Signal 35% over Ink | 9.80:1 | 4.5:1 | Selected text |
+| Cream | Cream 25% over Ink | 7.48:1 | 4.5:1 | Selected text |
+| Cream | Cream 25% over InkRaised | 6.61:1 | 4.5:1 | Selected text on a card or in a dialog |
 | Edge | Ink | 3.89:1 | 3.0:1 | Input, select and outline button outlines |
 | Edge | InkRaised | 3.51:1 | 3.0:1 | Control outlines on a card, the off switch |
 | Edge | InkHigh | 3.06:1 | 3.0:1 | The off switch thumb on its track |
-| Cream | InkRaised | 14.10:1 | 3.0:1 | The on switch track, the outline of the status card while waiting |
+| Cream | InkRaised | 14.10:1 | 3.0:1 | The on switch track, the outline of the status card while waiting, focus on a card |
 | Ink | Cream | 15.62:1 | 3.0:1 | The on switch thumb on its track |
-| Signal | Ink | 5.16:1 | 3.0:1 | Focus ring, the power light |
+| Cream | Ink | 15.62:1 | 3.0:1 | The focus ring and the text cursor |
+| Signal | Ink | 5.16:1 | 3.0:1 | The power light |
 | Unlit | InkRaised | 1.59:1 | 1.4:1 | Grille dots that are off |
 | Ink 20% over Cream | Cream | 1.52:1 | 1.4:1 | Level meter dots that are off, on the status card |
 <!-- palette:end -->

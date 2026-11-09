@@ -8,9 +8,9 @@ import androidx.compose.ui.graphics.Color
 object Palette {
     /** Page background, the icon tile, text on Signal and on Cream. */
     val Ink = Color(0xFF15141A)
-    /** Text, the grille, the status card while sound flows, and on switches. */
+    /** Text, the grille, focus, the status card while sound flows, and on switches. */
     val Cream = Color(0xFFF5ECDC)
-    /** The one accent: the power light, the action that starts things, focus, errors. */
+    /** The one accent: the power light, the action that starts things, errors. */
     val Signal = Color(0xFFFF3B2F)
     /** Cards, groups, dialogs, popovers and menus. */
     val InkRaised = Color(0xFF1F1E25)

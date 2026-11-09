@@ -3,9 +3,9 @@
 
 /// Page background, the icon tile, text on Signal and on Cream.
 pub const INK: u32 = 0x15141A;
-/// Text, the grille, the status card while sound flows, and on switches.
+/// Text, the grille, focus, the status card while sound flows, and on switches.
 pub const CREAM: u32 = 0xF5ECDC;
-/// The one accent: the power light, the action that starts things, focus, errors.
+/// The one accent: the power light, the action that starts things, errors.
 pub const SIGNAL: u32 = 0xFF3B2F;
 /// Cards, groups, dialogs, popovers and menus.
 pub const INK_RAISED: u32 = 0x1F1E25;

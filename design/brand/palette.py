@@ -9,8 +9,8 @@ refuses to write anything while a pairing below falls short of its minimum.
 TOKENS = [
     # The brand.
     ("Ink", "#15141A", "Page background, the icon tile, text on Signal and on Cream"),
-    ("Cream", "#F5ECDC", "Text, the grille, the status card while sound flows, and on switches"),
-    ("Signal", "#FF3B2F", "The one accent: the power light, the action that starts things, focus, errors"),
+    ("Cream", "#F5ECDC", "Text, the grille, focus, the status card while sound flows, and on switches"),
+    ("Signal", "#FF3B2F", "The one accent: the power light, the action that starts things, errors"),
     # Steps up from Ink for the UI.
     ("InkRaised", "#1F1E25", "Cards, groups, dialogs, popovers and menus"),
     ("InkHigh", "#2A2930", "Dividers inside groups, disabled buttons, off switch tracks"),
@@ -29,7 +29,7 @@ HEX = {name: hex_ for name, hex_, _ in TOKENS}
 # what it is and its state (1.4.11). "Quiet" marks must be seen without competing: 1.4:1.
 TEXT, CONTROL, QUIET = 4.5, 3.0, 1.4
 
-# (foreground, background, minimum, where). A background may be "Signal 35% over Ink": the
+# (foreground, background, minimum, where). A background may be "Cream 25% over Ink": the
 # text selection, which is translucent.
 PAIRS = [
     ("Cream", "Ink", TEXT, "Body text"),
@@ -47,13 +47,15 @@ PAIRS = [
     ("Ink", "Signal", TEXT, "Primary button label"),
     ("Ink", "SignalHover", TEXT, "Primary button label, hovered"),
     ("Ink", "SignalPressed", TEXT, "Primary button label, pressed"),
-    ("Cream", "Signal 35% over Ink", TEXT, "Selected text"),
+    ("Cream", "Cream 25% over Ink", TEXT, "Selected text"),
+    ("Cream", "Cream 25% over InkRaised", TEXT, "Selected text on a card or in a dialog"),
     ("Edge", "Ink", CONTROL, "Input, select and outline button outlines"),
     ("Edge", "InkRaised", CONTROL, "Control outlines on a card, the off switch"),
     ("Edge", "InkHigh", CONTROL, "The off switch thumb on its track"),
-    ("Cream", "InkRaised", CONTROL, "The on switch track, the outline of the status card while waiting"),
+    ("Cream", "InkRaised", CONTROL, "The on switch track, the outline of the status card while waiting, focus on a card"),
     ("Ink", "Cream", CONTROL, "The on switch thumb on its track"),
-    ("Signal", "Ink", CONTROL, "Focus ring, the power light"),
+    ("Cream", "Ink", CONTROL, "The focus ring and the text cursor"),
+    ("Signal", "Ink", CONTROL, "The power light"),
     ("Unlit", "InkRaised", QUIET, "Grille dots that are off"),
     ("Ink 20% over Cream", "Cream", QUIET, "Level meter dots that are off, on the status card"),
 ]

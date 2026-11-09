@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -32,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -492,6 +494,7 @@ private fun EditDialog(field: VbanField, initial: String, onSave: (String) -> Un
             isError = showProblem,
             supportingText = if (showProblem) ({ Text(problem!!, style = Type.Label) }) else null,
             shape = Shapes.Control,
+            colors = fieldColors(),
             textStyle = Type.Row.copy(fontFeatureSettings = "tnum"),
             keyboardOptions = KeyboardOptions(keyboardType = field.keyboard, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { if (problem == null) onSave(value) }),
@@ -503,6 +506,18 @@ private fun EditDialog(field: VbanField, initial: String, onSave: (String) -> Un
         }
     }
 }
+
+/**
+ * Focus in Cream rather than Material's primary, Signal: the field is focused as the dialog opens,
+ * and must not look like an error until it is one.
+ */
+@Composable
+private fun fieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = Palette.Cream,
+    focusedLabelColor = Palette.Cream,
+    cursorColor = Palette.Cream,
+    selectionColors = TextSelectionColors(handleColor = Palette.Cream, backgroundColor = Palette.Cream.copy(alpha = 0.25f)),
+)
 
 /** What to set up on the PC's side for VBAN, with this headset's values filled in. */
 @Composable

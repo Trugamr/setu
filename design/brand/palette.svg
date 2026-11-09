@@ -6,10 +6,10 @@
 <text x="80" y="66" font-size="12.5" fill="#A9A398">Page background, the icon tile, text on Signal and on Cream</text>
 <rect x="24" y="82" width="40" height="40" rx="10" fill="#F5ECDC" stroke="#4A4851"/>
 <text x="80" y="100" font-size="15" font-weight="600" fill="#F5ECDC">Cream<tspan fill="#A9A398" font-weight="400" dx="10">#F5ECDC</tspan></text>
-<text x="80" y="118" font-size="12.5" fill="#A9A398">Text, the grille, the status card while sound flows, and on switches</text>
+<text x="80" y="118" font-size="12.5" fill="#A9A398">Text, the grille, focus, the status card while sound flows, and on switches</text>
 <rect x="24" y="134" width="40" height="40" rx="10" fill="#FF3B2F" stroke="#4A4851"/>
 <text x="80" y="152" font-size="15" font-weight="600" fill="#F5ECDC">Signal<tspan fill="#A9A398" font-weight="400" dx="10">#FF3B2F</tspan></text>
-<text x="80" y="170" font-size="12.5" fill="#A9A398">The one accent: the power light, the action that starts things, focus, errors</text>
+<text x="80" y="170" font-size="12.5" fill="#A9A398">The one accent: the power light, the action that starts things, errors</text>
 <rect x="24" y="186" width="40" height="40" rx="10" fill="#1F1E25" stroke="#4A4851"/>
 <text x="80" y="204" font-size="15" font-weight="600" fill="#F5ECDC">InkRaised<tspan fill="#A9A398" font-weight="400" dx="10">#1F1E25</tspan></text>
 <text x="80" y="222" font-size="12.5" fill="#A9A398">Cards, groups, dialogs, popovers and menus</text>
