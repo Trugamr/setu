@@ -8,6 +8,15 @@
 //! of the same length, so timing survives loss. `Jitter` measures how late each datagram
 //! arrives.
 //!
+//! Running dry, restarting, skipping and losing a datagram never cut the audio abruptly.
+//! Playback fades out over [`FADE_OUT_MS`] before the buffer runs dry, from a reserve kept for
+//! it, and fades in over [`FADE_IN_MS`] when it starts again. A skip fades out, jumps and fades
+//! back in. Where the stream itself breaks, at a lost datagram's silence or a position jump too
+//! large to conceal, the audio either side fades too. A new format or output still restarts
+//! playback at once. Playback restarts at one block, one output period and the margin,
+//! dropping whatever piled up beyond that while it was stopped, so a stall costs latency only
+//! while it lasts.
+//!
 //! `Playout` is plain single-threaded state with no I/O. The receiver shares it between the
 //! network and device threads behind a mutex, held only to copy a datagram in or a device
 //! period out. Inside, `Ring` stores and interpolates the audio and `Control` decides when
@@ -35,6 +44,11 @@ const MARGIN_DECAY_AFTER_S: f64 = 15.0;
 const MARGIN_DECAY_STEP_MS: f64 = 0.5;
 /// The controller acts once per window of output.
 const WINDOW_S: f64 = 0.5;
+/// Playback fades to silence over this long before the buffer runs dry or the position jumps,
+/// and the buffer keeps that much in reserve for it.
+const FADE_OUT_MS: f64 = 1.0;
+/// Playback fades in over this long when it starts or after a jump.
+const FADE_IN_MS: f64 = 2.0;
 /// A position gap up to this long is concealed with silence; a larger jump (such as a capture
 /// restarting from position 0) resynchronizes instead.
 const MAX_CONCEAL_S: f64 = 0.1;
@@ -48,6 +62,9 @@ pub struct Playout {
     next_position: Option<u64>,
     /// Exists once both the format and the output are known.
     control: Option<Control>,
+    /// A fade-in over ring frames `[from, to)` that the frames written so far do not reach the
+    /// end of.
+    fade_in: Option<(u64, u64)>,
     jitter: Jitter,
     /// Buffer level, signal peak and lateness, for [`Playout::stats`].
     window: Window,
@@ -145,6 +162,7 @@ impl Playout {
             ring: Ring::new(0),
             next_position: None,
             control: None,
+            fade_in: None,
             jitter: Jitter::new(),
             window: Window::new(0),
             last_window: Window::new(0),
@@ -164,6 +182,7 @@ impl Playout {
         self.format = Some(format);
         self.ring = Ring::new(usize::from(format.channels));
         self.next_position = None;
+        self.fade_in = None;
         self.retune();
         Ok(())
     }
@@ -184,19 +203,28 @@ impl Playout {
         let frame_bytes = format.frame_bytes();
         let frames = (pcm.len() / frame_bytes) as u64;
         let max_conceal = (f64::from(format.sample_rate) * MAX_CONCEAL_S) as u64;
+        let fade = |ms: f64| (ms * f64::from(format.sample_rate) / 1000.0) as u64;
         let mut skip = 0;
+        let mut gap = 0;
+        let mut joined = true;
         match self.next_position {
             Some(next) if frame_position > next && frame_position - next <= max_conceal => {
-                let gap = frame_position - next;
-                self.ring.push_silence(gap);
-                self.totals.lost_frames += gap;
+                gap = frame_position - next;
             }
             Some(next) if frame_position < next && next - frame_position <= max_conceal => {
                 // Late or duplicate: keep only frames not yet written.
                 skip = next - frame_position;
             }
-            // The first datagram, the next in order, or a jump too large to conceal.
+            // A jump too large to conceal, such as a capture restarting from position 0.
+            Some(next) if frame_position != next => joined = false,
+            // The first datagram, or the next in order.
             _ => {}
+        }
+        let broken = gap > 0 || !joined;
+        if broken {
+            self.ring.fade_out_tail(fade(FADE_OUT_MS));
+            self.ring.push_silence(gap);
+            self.totals.lost_frames += gap;
         }
         // A late datagram counts even when its frames were concealed already.
         let stream_s = frame_position as f64 / f64::from(format.sample_rate);
@@ -205,9 +233,20 @@ impl Playout {
         if skip > 0 && skip >= frames {
             return;
         }
+        let start = self.ring.write;
         let peak = self
             .ring
             .push_pcm(&pcm[skip as usize * frame_bytes..frames as usize * frame_bytes]);
+        if broken {
+            self.fade_in = Some((start, start + fade(FADE_IN_MS)));
+        }
+        if let Some((from, to)) = self.fade_in {
+            // Only the frames just written, as earlier ones had their share already.
+            self.ring.ramp(from.max(start), from, to, true);
+            if self.ring.write >= to {
+                self.fade_in = None;
+            }
+        }
         self.window.peak = self.window.peak.max(peak);
         self.window.max_level = self.window.max_level.max(self.ring.level());
         self.next_position = Some(frame_position + frames);
@@ -223,21 +262,42 @@ impl Playout {
         let channels = control.tuning.out_channels;
         if control.should_play(self.ring.level()) {
             let step = control.step();
-            for frame in out.chunks_exact_mut(channels) {
-                if !self.ring.play(frame, step) {
+            let frames = out.len() / channels;
+            for (i, frame) in out.chunks_exact_mut(channels).enumerate() {
+                if control.gain <= 0.0 && control.pending_skip > 0 {
+                    // Silent at this point, so the jump is inaudible. Enough stays for the rest
+                    // of this pull and the reserve.
+                    let rest = ((frames - i) as f64 * step).ceil() as u64;
+                    let keep = rest + control.tuning.reserve;
+                    let skip = control
+                        .pending_skip
+                        .min(self.ring.level().saturating_sub(keep));
+                    self.ring.skip(skip);
+                    self.totals.skipped_frames += skip;
+                    control.pending_skip = 0;
+                }
+                let fading = control.pending_skip > 0 || self.ring.level() < control.tuning.reserve;
+                if (fading && control.gain <= 0.0) || !self.ring.play(frame, step) {
+                    // The reserve is spent; this frame and the rest stay silent.
                     control.underrun();
                     self.totals.underruns += 1;
                     break;
+                }
+                control.gain = if fading {
+                    (control.gain - control.tuning.fade_out_step).max(0.0)
+                } else {
+                    (control.gain + control.tuning.fade_in_step).min(1.0)
+                };
+                for sample in frame {
+                    *sample *= control.gain;
                 }
             }
         }
         let level = self.ring.level();
         self.window.min_level = self.window.min_level.min(level);
-        if let Some(skip) = control.after_pull((out.len() / channels) as u64, level) {
-            self.ring.skip(skip);
-            self.totals.skipped_frames += skip;
+        if control.after_pull((out.len() / channels) as u64, level) {
             self.last_window = self.window;
-            self.window = Window::new(self.ring.level());
+            self.window = Window::new(level);
         }
     }
 
@@ -344,6 +404,34 @@ impl Ring {
         self.read += frames.min(self.level());
     }
 
+    /// Fades the last `frames` written out to silence, or as many of them as have not started
+    /// playing, so the fade never starts with a jump.
+    fn fade_out_tail(&mut self, frames: u64) {
+        let to = self.write;
+        let from = to.saturating_sub(frames).max(self.read + 2);
+        if from < to {
+            self.ramp(from, from, to, false);
+        }
+    }
+
+    /// Scales frames from `first` on, of a fade over `[from, to)` that rises from silence when
+    /// `rising`, else falls to it. Frames already playing, and frames not yet written, are left
+    /// as they are.
+    fn ramp(&mut self, first: u64, from: u64, to: u64, rising: bool) {
+        let span = (to - from) as f32 + 1.0;
+        for k in first.max(from).max(self.read + 2)..to.min(self.write) {
+            let gain = if rising {
+                (k - from + 1) as f32 / span
+            } else {
+                (to - k) as f32 / span
+            };
+            let base = (k as usize & Self::MASK) * self.channels;
+            for sample in &mut self.samples[base..base + self.channels] {
+                *sample = (f32::from(*sample) * gain).round() as i16;
+            }
+        }
+    }
+
     /// Plays one output frame into `out`, interpolated between frames `read` and `read + 1`,
     /// then advances by `step` input frames. Output channels beyond the stream's stay as they
     /// are. Returns false, playing nothing, when fewer than two frames are buffered.
@@ -381,6 +469,10 @@ struct Control {
     window_min: u64,
     /// Output frames pulled in the current window.
     window_pulled: u64,
+    /// Playback gain, 0 to 1, which moves by at most a fade step per output frame.
+    gain: f32,
+    /// Input frames to drop once playback has faded to silence.
+    pending_skip: u64,
 }
 
 impl Control {
@@ -393,14 +485,20 @@ impl Control {
             rate_adjust: 0.0,
             window_min: u64::MAX,
             window_pulled: 0,
+            gain: 0.0,
+            pending_skip: 0,
         }
     }
 
     /// Whether to play this period. Once stopped, playback restarts when `level` reaches one
-    /// block plus the margin.
+    /// block, one output period and the margin, and drops anything beyond that first: what
+    /// piled up while stopped would only add latency. The margin is steered as the level after
+    /// a pull, so before one it needs a period more.
     fn should_play(&mut self, level: u64) -> bool {
-        if !self.playing && level >= self.tuning.block + self.margin {
+        let start = self.tuning.block + self.tuning.period + self.margin;
+        if !self.playing && level >= start {
             self.playing = true;
+            self.pending_skip = level - start;
             self.window_min = u64::MAX;
             self.window_pulled = 0;
         }
@@ -416,13 +514,15 @@ impl Control {
     fn underrun(&mut self) {
         let t = &self.tuning;
         self.playing = false;
+        self.gain = 0.0;
+        self.pending_skip = 0;
         self.calm_frames = 0;
         self.margin = (self.margin + t.backoff).min(t.max_margin);
     }
 
     /// Records the post-pull `level` (the bottom of the sawtooth) after `frames` output
-    /// frames. At the end of each window returns the frames to skip at once, usually 0.
-    fn after_pull(&mut self, frames: u64, level: u64) -> Option<u64> {
+    /// frames. Returns true at the end of each window, after steering.
+    fn after_pull(&mut self, frames: u64, level: u64) -> bool {
         let t = &self.tuning;
         self.window_min = self.window_min.min(level);
         self.window_pulled += frames;
@@ -436,12 +536,14 @@ impl Control {
             }
         }
         if self.window_pulled < t.window_frames {
-            return None;
+            return false;
         }
-        let skip = if self.playing { self.steer() } else { 0 };
+        if self.playing {
+            self.pending_skip = self.steer();
+        }
         self.window_min = u64::MAX;
         self.window_pulled = 0;
-        Some(skip)
+        true
     }
 
     /// Sets the playback rate from the window's minimum level and returns frames to skip.
@@ -476,6 +578,8 @@ struct Tuning {
     step: f64,
     out_channels: usize,
     block: u64,
+    /// One output period.
+    period: u64,
     /// How far the measured minimum moves with arrival phase alone: min(block, output
     /// period). It is part of the margin and the controller's deadband.
     quantum: u64,
@@ -488,6 +592,12 @@ struct Tuning {
     window_frames: u64,
     /// In output frames.
     calm_after: u64,
+    /// Gain change per output frame while fading out, and while fading in.
+    fade_out_step: f32,
+    fade_in_step: f32,
+    /// Below this level playback fades out: enough for the whole fade at the fastest rate,
+    /// plus the two frames interpolation reads.
+    reserve: u64,
 }
 
 impl Tuning {
@@ -496,19 +606,26 @@ impl Tuning {
         let out_rate = f64::from(output.sample_rate);
         let frames = |ms: f64| (ms * in_rate / 1000.0) as u64;
         let quantum_ms = format.block_ms().min(output.period_ms());
+        let step = in_rate / out_rate;
+        let out_frames = |ms: f64| (ms * out_rate / 1000.0).max(1.0);
+        let reserve = (out_frames(FADE_OUT_MS) * step * (1.0 + MAX_RATE_ADJUST)).ceil() as u64 + 2;
         Tuning {
             in_rate,
-            step: in_rate / out_rate,
+            step,
             out_channels: usize::from(output.channels.max(1)),
             block: u64::from(format.block_frames),
+            period: (f64::from(output.period_frames) * step).ceil() as u64,
             quantum: frames(quantum_ms),
-            min_margin: frames(margin_ms + quantum_ms),
+            min_margin: frames(margin_ms + quantum_ms).max(reserve),
             max_margin: frames(MAX_MARGIN_MS + quantum_ms),
             backoff: frames(UNDERRUN_BACKOFF_MS),
             decay_step: frames(MARGIN_DECAY_STEP_MS),
             skip_threshold: frames(SKIP_THRESHOLD_MS),
             window_frames: (out_rate * WINDOW_S) as u64,
             calm_after: (out_rate * MARGIN_DECAY_AFTER_S) as u64,
+            fade_out_step: 1.0 / out_frames(FADE_OUT_MS) as f32,
+            fade_in_step: 1.0 / out_frames(FADE_IN_MS) as f32,
+            reserve,
         }
     }
 }
@@ -558,18 +675,19 @@ mod tests {
     }
 
     #[test]
-    fn buffers_one_block_plus_margin_then_plays_the_stream() {
+    fn buffers_a_block_a_period_and_the_margin_then_plays_the_stream() {
         let mut p = playout(96, 96);
-        // Margin = 1.5 ms + min(block, period) = 3.5 ms = 168 frames; prime to 96 + 168.
-        p.push(Instant::now(), 0, &pcm(200, 16384));
+        // Margin = 1.5 ms + min(block, period) = 3.5 ms = 168 frames; prime to 96 + 96 + 168.
+        p.push(Instant::now(), 0, &pcm(300, 16384));
         let mut out = vec![1.0; 2 * 32];
         p.pull(&mut out);
         assert!(out.iter().all(|&s| s == 0.0));
         assert_eq!(p.stats().state, PlayoutState::Buffering);
 
-        p.push(Instant::now(), 200, &pcm(100, 16384));
+        p.push(Instant::now(), 300, &pcm(100, 16384));
         p.pull(&mut out);
-        assert!(out.iter().all(|&s| s == 0.5));
+        // Fading in.
+        assert!(out[0] > 0.0 && out[0] < out[out.len() - 1] && out[out.len() - 1] <= 0.5);
         assert_eq!(p.stats().state, PlayoutState::Playing);
     }
 
@@ -582,8 +700,173 @@ mod tests {
         let mut out = vec![1.0; 4 * 8];
         p.pull(&mut out);
         for frame in out.chunks_exact(4) {
-            assert_eq!(frame, [0.5, 0.5, 0.0, 0.0]);
+            assert!(frame[0] > 0.0);
+            assert_eq!(frame[0], frame[1]);
+            assert_eq!(frame[2..], [0.0, 0.0]);
         }
+    }
+
+    /// Stereo frames from `first` of a triangle wave at half scale, so any jump in position
+    /// shows as a step between samples.
+    fn triangle(first: u64, frames: usize) -> Vec<u8> {
+        const PERIOD: u64 = 997;
+        (first..first + frames as u64)
+            .flat_map(|i| {
+                let phase = (i % PERIOD) as f64 / PERIOD as f64;
+                let v = (16384.0 * (1.0 - 4.0 * (phase - 0.5).abs())) as i16;
+                [v, v]
+            })
+            .flat_map(i16::to_le_bytes)
+            .collect()
+    }
+
+    /// The largest change between consecutive output samples of the same channel.
+    fn largest_step(out: &[f32]) -> f32 {
+        out.chunks_exact(2)
+            .zip(out.chunks_exact(2).skip(1))
+            .map(|(a, b)| (a[0] - b[0]).abs().max((a[1] - b[1]).abs()))
+            .fold(0.0, f32::max)
+    }
+
+    /// The most a sample may move when fading: a 1 ms fade at half scale moves it by 0.5 / 48,
+    /// on top of the triangle wave's own slope.
+    const FADE_STEP: f32 = 0.5 / 48.0 + 4.0 * 0.5 / 997.0 + 1e-4;
+
+    #[test]
+    fn fades_in_when_playback_starts() {
+        let mut p = playout(96, 96);
+        p.push(Instant::now(), 0, &pcm(400, 16384));
+        let mut out = vec![0.0; 2 * 200];
+        p.pull(&mut out);
+        assert!(out[0] > 0.0 && out[0] < 0.02, "{}", out[0]);
+        assert_eq!(out[out.len() - 1], 0.5);
+        assert!(largest_step(&out) <= FADE_STEP);
+    }
+
+    #[test]
+    fn fades_out_before_running_dry() {
+        let mut p = playout(96, 96);
+        p.push(Instant::now(), 0, &pcm(400, 16384));
+        let mut played = Vec::new();
+        let mut out = vec![0.0; 2 * 32];
+        while p.stats().underruns == 0 {
+            p.pull(&mut out);
+            played.extend_from_slice(&out);
+        }
+        assert!(played.contains(&0.5));
+        assert!(largest_step(&played) <= FADE_STEP);
+        assert_eq!(p.stats().state, PlayoutState::Buffering);
+    }
+
+    #[test]
+    fn resumes_after_a_stall_at_the_target_instead_of_behind() {
+        let mut p = playout(96, 96);
+        p.push(Instant::now(), 0, &pcm(400, 16384));
+        let mut out = vec![0.0; 2 * 32];
+        while p.stats().underruns == 0 {
+            p.pull(&mut out);
+        }
+        // The stall's datagrams arrive together: 30 ms.
+        p.push(Instant::now(), 400, &pcm(1440, 16384));
+        p.pull(&mut out);
+        let control = p.control.as_ref().unwrap();
+        let target = control.tuning.block + control.tuning.period + control.margin;
+        assert!(p.ring.level() < target, "{} buffered", p.ring.level());
+        assert!(p.stats().skipped_ms > 20.0);
+    }
+
+    #[test]
+    fn a_lost_datagram_fades_around_its_gap() {
+        let mut p = playout(96, 96);
+        p.push(Instant::now(), 0, &triangle(0, 400));
+        let mut out = vec![0.0; 2 * 32];
+        p.pull(&mut out);
+        let mut played = out.clone();
+        // Frames 400..740 are lost.
+        p.push(Instant::now(), 740, &triangle(740, 340));
+        while p.stats().underruns == 0 {
+            p.pull(&mut out);
+            played.extend_from_slice(&out);
+        }
+        assert!(largest_step(&played) <= FADE_STEP);
+        let silent = played.windows(2 * 300).any(|w| w.iter().all(|&s| s == 0.0));
+        assert!(silent, "the gap plays as silence");
+    }
+
+    #[test]
+    fn the_fade_after_a_gap_carries_on_into_the_next_datagram() {
+        let mut p = playout(96, 96);
+        // 400-frame blocks go out as 340 + 60 frames.
+        p.push(Instant::now(), 0, &triangle(0, 400));
+        let mut out = vec![0.0; 2 * 32];
+        p.pull(&mut out);
+        let mut played = out.clone();
+        // Frames 400..740 are lost; the 60 after them are shorter than the fade-in.
+        for (first, frames) in [(740, 60), (800, 340), (1140, 60)] {
+            p.push(Instant::now(), first, &triangle(first, frames));
+        }
+        while p.stats().underruns == 0 {
+            p.pull(&mut out);
+            played.extend_from_slice(&out);
+        }
+        assert!(largest_step(&played) <= FADE_STEP);
+    }
+
+    #[test]
+    fn a_restarted_capture_fades_across_the_join() {
+        let mut p = playout(96, 96);
+        p.push(Instant::now(), 1_000_000, &triangle(1_000_000, 400));
+        let mut out = vec![0.0; 2 * 32];
+        p.pull(&mut out);
+        let mut played = out.clone();
+        p.push(Instant::now(), 0, &triangle(0, 400));
+        while p.stats().underruns == 0 {
+            p.pull(&mut out);
+            played.extend_from_slice(&out);
+        }
+        assert!(largest_step(&played) <= FADE_STEP);
+    }
+
+    /// Blocks arriving exactly on time into a device whose period is longer than a block plus
+    /// the margin never run dry, from the very start.
+    #[test]
+    fn starts_without_underruns_when_a_period_outlasts_a_block() {
+        for (block, period) in [(96, 480), (96, 336), (192, 1024)] {
+            let mut p = playout(block, period);
+            let input = pcm(block as usize, 1000);
+            let mut out = vec![0.0; period as usize * 2];
+            let (block_us, period_us) = (f64::from(block) / 0.048, f64::from(period) / 0.048);
+            let (mut blocks, mut pulls) = (0u64, 0u64);
+            while (pulls as f64) * period_us < 10e6 {
+                if blocks as f64 * block_us <= pulls as f64 * period_us {
+                    p.push(Instant::now(), blocks * u64::from(block), &input);
+                    blocks += 1;
+                } else {
+                    p.pull(&mut out);
+                    pulls += 1;
+                }
+            }
+            assert_eq!(p.stats().underruns, 0, "block {block}, period {period}");
+        }
+    }
+
+    #[test]
+    fn a_skip_dips_instead_of_jumping() {
+        let mut p = playout(96, 96);
+        let mut position = 0;
+        let mut played = Vec::new();
+        let mut out = vec![0.0; 2 * 96];
+        for tick in 0..1000 {
+            // 50 ms arrives at once, more than the controller sheds by rate.
+            let frames = if tick == 300 { 96 + 2400 } else { 96 };
+            p.push(Instant::now(), position, &triangle(position, frames));
+            position += frames as u64;
+            p.pull(&mut out);
+            played.extend_from_slice(&out);
+        }
+        assert!(p.stats().skipped_ms > 20.0);
+        assert_eq!(p.stats().underruns, 0);
+        assert!(largest_step(&played) <= FADE_STEP);
     }
 
     #[test]

@@ -288,6 +288,8 @@ mod tests {
         lock(&state).on_link_event(Event::Format(FORMAT));
         lock(&state).on_link_event(audio(0, &pcm));
         let mut out = vec![0.0; 2 * 128];
+        // The first period fades in.
+        render.render(&mut out);
         render.render(&mut out);
         assert!(out.iter().all(|&s| s == 0.25));
         assert_eq!(

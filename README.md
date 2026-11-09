@@ -281,7 +281,14 @@ These come from the prototype receiver; the desktop app's playout follows them.
 - **The controller is proportional**, so an output whose clock drifts settles above the margin
   by about 20 ms per 1 % of drift: 0.2 ms for a typical 100 ppm, but several ms for a virtual
   device that runs 0.3 % slow.
-- **After an underrun, refill to one block plus the margin**, not a fixed amount.
+- **After an underrun, refill to one block, one output period and the margin**, not a fixed
+  amount, and drop whatever arrives beyond that before playing again, so a stall costs latency
+  only while it lasts. The margin is the level after a pull, so before one it needs a period more.
+- **No abrupt edges.** Playback fades out over 1 ms before the buffer runs dry, from a 1 ms
+  reserve, and fades in over 2 ms when it restarts. A skip fades out, jumps and fades in, and
+  where the stream breaks (a lost datagram's silence, or a capture restarting) the audio either
+  side fades too. The reserve has a cost: a delay that drains the buffer to within 1 ms of empty
+  dips the level briefly, where without it the audio would have played on untouched.
 - **UDP over Wi-Fi.** Each datagram carries its frame position, so a lost datagram becomes
   silence of the right length instead of a retransmit stall. The receiver sends HELLO and the
   server answers, which also passes desktop firewalls as reply traffic.
