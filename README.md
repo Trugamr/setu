@@ -19,6 +19,7 @@
 </p>
 
 <p align="center">
+  <a href="#quick-start">Quick start</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#vban">VBAN</a> ·
   <a href="#measurements">Measurements</a> ·
@@ -28,67 +29,129 @@
 
 ---
 
-Setu streams a Meta Quest 3's audio to a PC with as little delay as the headset allows. An
-earlier prototype measured about 20 ms behind the headset's own speakers over USB and 25–35 ms
-over Wi-Fi (estimates, see [Measurements](#measurements)). The headset keeps playing while it
-streams. Play it with Setu's desktop app, or with any [VBAN](#vban) receiver such as Voicemeeter.
-Setu means "bridge"; audio is the first thing it carries.
+Setu streams a Meta Quest 3's audio to a PC with as little delay as the headset allows: about
+20 ms behind the headset's own speakers over USB and 25–35 ms over Wi-Fi, as measured on an
+earlier prototype (estimates, see [Measurements](#measurements)). The headset keeps playing while
+it streams. Play it with Setu's desktop app, or with any [VBAN](#vban) receiver such as
+Voicemeeter. Setu means "bridge"; audio is the first thing it carries.
 
-**Status: work in progress.** The capture server, the protocol, VBAN output and the desktop
-receiver work. The desktop app has a window: connect to the headset, watch the level and the
-delay, pick the output. The agent shows the server's status and holds the VBAN settings, but
-cannot start the server yet. The agent's start flow and the installers are being built, so parts
-of "How it works" describe the design rather than finished code.
+**Status: work in progress.** Working: the capture server, the protocol, VBAN output, the agent
+(start and stop the server, VBAN settings) and the desktop app (connect, level and delay, output
+device). Not built yet: the installers, so setup needs a development machine, and discovery, so
+the desktop app asks for the headset's address.
+
+## Quick start
+
+Needs the [build tools](#build) and a headset in Developer Mode.
+
+1. **Once, over USB:** connect the headset and run `task agent:setup`. On the headset, tick
+   "Always allow from this computer" and choose Allow. Unplug the cable.
+2. **On the headset:** open Setu and tap Start. The first start after each boot asks to allow
+   wireless debugging on this network; choose Allow.
+3. **On the PC:** run `task desktop:run`, enter the headset's address and connect. The agent
+   shows the address under VBAN, as "IP address from".
+
+To play through Voicemeeter instead of the desktop app, see [VBAN](#vban).
 
 ## How it works
 
-The low-latency capture path needs a process running as the adb shell user, which only adbd can
-start. Setu sets that up once over USB, after which the headset can start it on its own.
+```mermaid
+flowchart LR
+  subgraph quest ["Meta Quest 3"]
+    direction TB
+    agent["<b>Agent</b><br/>Android app"]
+    adbd["<b>adbd</b><br/>wireless debugging"]
+    server["<b>Capture server</b><br/>adb shell user"]
+    engine["<b>Horizon OS audio</b><br/>every app's playback"]
+    agent -- "① connect with<br/>its own adb key" --> adbd
+    adbd -- "② launch,<br/>detached" --> server
+    engine -- "③ capture in<br/>2 ms blocks" --> server
+    agent <-. "status, VBAN settings<br/>(loopback UDP)" .-> server
+  end
+  subgraph pc ["PC"]
+    desktop["<b>Setu desktop app</b><br/>jitter buffer → output"]
+    vban["<b>VBAN receiver</b><br/>e.g. Voicemeeter"]
+  end
+  desktop -- "HELLO" --> server
+  server == "④ AUDIO<br/>UDP 27184" ==> desktop
+  server == "VBAN<br/>UDP 6980" ==> vban
+```
 
-```
- Quest 3                                                PC
- ┌──────────────────────────────────┐                   ┌─────────────────────────┐
- │ Agent app (you open it, or it    │                   │ Desktop app             │
- │ starts after boot)               │                   │  discovers the headset  │
- │  turns on wireless debugging,    │                   │  sends HELLO every 1 s  │
- │  connects to its own adbd with   │                   │  jitter buffer → output │
- │  its own key, launches ──────┐   │                   └────────────▲────────────┘
- │                              ▼   │     UDP 27184                  │
- │  capture server (shell user) ────┼────────────────────────────────┘
- └──────────────────────────────────┘
-```
+Low-latency capture needs a process running as the adb shell user, and only adbd starts those.
+So the agent, an ordinary app, connects to its own headset's adbd over wireless debugging and
+launches the capture server through it (① ②). The server is detached, so it keeps running after
+the agent turns wireless debugging off again. It captures playback in 2 ms blocks (③), where
+Android's default is 40 ms, and sends each block to the desktop app and to a VBAN receiver (④).
+The PC needs no adb.
 
 | Piece | What it is |
 |---|---|
-| Agent (`apps/agent`) | Android app, Kotlin and Compose. Starts the capture server, shows its status and keeps it in step with the settings, such as where to send VBAN. |
-| Capture server (`apps/agent/.../server`) | Java, shipped inside the agent's APK, run with `app_process` using the APK as its classpath. Captures playback and streams it to the desktop app and to a VBAN receiver. |
-| Desktop app (`apps/desktop`) | Rust, with a [GPUI](https://www.gpui.rs) window. Finds the headset, receives the stream and plays it. Windows first, then Linux. |
-| Installers (planned) | A PC installer inside the desktop app, and a browser installer over WebUSB. Both only install the APK and run the setup routine it contains, so they cannot drift apart. |
+| Agent (`apps/agent`) | Android app, Kotlin and Compose. Starts and stops the capture server, shows its status and keeps it in step with the settings, such as where to send VBAN. |
+| Capture server (`apps/agent/.../server`) | Java, shipped inside the agent's APK and run with `app_process` using the APK as its classpath. Captures playback and streams it to the desktop app and to a VBAN receiver. |
+| Desktop app (`apps/desktop`) | Rust, with a [GPUI](https://www.gpui.rs) window and `setu-cli`. Receives the stream and plays it. Windows first, then Linux. |
 | Protocol (`protocol`) | The wire format, with byte fixtures that the Java and Rust sides both test against. |
+| Installers (planned) | A PC installer inside the desktop app, and a browser installer over WebUSB. Both only install the APK and run the setup routine it contains, so they cannot drift apart. |
 
-### One-time setup (USB)
+### Starting the server
 
-1. Install the agent and grant it `WRITE_SECURE_SETTINGS` (`pm grant`), so it can turn on
-   wireless debugging.
-2. Set `adb_allowed_connection_time` to `0`, so an authorized key never expires (the default is
-   7 days).
-3. Authorize the agent's own adb key: `adb tcpip 5555`, the agent connects to
-   `127.0.0.1:5555`, and the user ticks "Always allow" on the headset's prompt. Then `adb usb`.
-   An approved key is accepted over USB, legacy TCP and wireless debugging alike.
+Wireless debugging only accepts adb keys the headset has already allowed, so setup has the
+headset allow the agent's key once, over USB. After that the agent starts the server on its own.
 
-### Each session
+```mermaid
+sequenceDiagram
+  actor you as You
+  participant pc as PC (task agent:setup)
+  participant agent as Agent
+  participant adbd
+  participant server as Capture server
 
-The agent sets `adb_wifi_enabled = 1` and finds adbd's TLS port over mDNS
-(`_adb-tls-connect._tcp`). It then connects with its key and launches the server detached
-(`setsid nohup`), so the server keeps running after wireless debugging is turned off again.
-After that, any PC on the network can receive audio; PCs need no adb.
+  rect rgba(128, 128, 128, 0.12)
+    note over pc, adbd: Once, over USB
+    pc ->> adbd: install the agent, grant WRITE_SECURE_SETTINGS
+    pc ->> adbd: adb_allowed_connection_time = 0, adb tcpip 5555
+    pc ->> agent: open with APPROVE
+    agent ->> adbd: connect to 127.0.0.1:5555 with the agent's key
+    adbd -->> you: "Allow USB debugging?"
+    you ->> adbd: Always allow
+    agent ->> adbd: back to USB only (adb usb)
+  end
 
-Limits found on Horizon OS:
+  rect rgba(128, 128, 128, 0.12)
+    note over you, server: Each time you tap Start
+    you ->> agent: Start
+    agent ->> adbd: adb_wifi_enabled = 1
+    adbd -->> you: "Allow wireless debugging?" (first start after a boot)
+    agent ->> adbd: find the TLS port over mDNS, connect with the agent's key
+    agent ->> adbd: shell: setsid nohup app_process … Server udp
+    adbd ->> server: launch
+    agent ->> adbd: adb_wifi_enabled back off
+    agent ->> server: STATUS_REQUEST
+    server -->> agent: STATUS
+  end
+```
+
+Setup grants `WRITE_SECURE_SETTINGS`, so the agent can turn wireless debugging on, and sets
+`adb_allowed_connection_time` to `0`, so an allowed key never expires (the default is 7 days).
+It then opens adbd's legacy TCP port, because only that port shows the "Allow debugging?"
+prompt for an unknown key. An allowed key is accepted over USB, legacy TCP and wireless
+debugging alike.
+
+### Streaming
+
+The desktop app sends HELLO to the server's UDP port every 0.5 s. The server answers with FORMAT
+and streams AUDIO to whichever receiver sent HELLO most recently; when HELLOs stop for 3 s it
+releases the capture. Each AUDIO datagram carries its frame position, so a lost datagram plays as
+silence of the right length instead of stalling for a retransmit, and the stream passes the PC's
+firewall as reply traffic. The desktop app's jitter buffer then holds as little audio as the
+measured jitter allows (see [Receiver design notes](#receiver-design-notes)). The
+[protocol spec](protocol/README.md) has the details.
+
+### Horizon OS limits on wireless debugging
 
 - **One tap per boot.** Trusted Wi-Fi networks are cleared at every boot, so the first start
   after a boot shows Meta's "Allow wireless debugging" dialog. Horizon OS writes system XML as
   text (`persist.sys.binary_xml=0`); AOSP's keystore reader then treats the whitespace after
-  `<keyStore>` as a tag and skips every entry. Authorized adb keys survive because they are
+  `<keyStore>` as a tag and skips every entry. Allowed adb keys survive because they are
   reloaded from `adb_keys`. Within a boot, Wi-Fi drops and sleep recover silently.
 - **Not at boot by itself.** Android tries to restore wireless debugging before Wi-Fi is up and
   gives up, so the agent has to turn it on after Wi-Fi connects.
@@ -227,6 +290,7 @@ the desktop app and adb use their Windows binaries (see the variables at the top
 task build                    # agent APK and desktop app
 task test                     # JVM and Rust tests
 task agent:install            # install the agent on a USB-connected headset
+task agent:setup              # install, then the one-time setup (see Quick start)
 task agent:server -- probe 6  # run the server's latency probe from the installed APK
 task desktop:run              # open the desktop app's window
 task desktop:cli -- devices   # list output devices
@@ -246,17 +310,17 @@ task desktop:cli -- disconnect
 ```
 
 Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames] [--vban
-host[:port][/name]]`,
-`adb [blockFrames]`, `probe [clicks] [blockFrames]`, `bursts [seconds] [blockFrames]`,
-`adb-wifi-trust <bssid>`, `adb-revoke-keys`.
+host[:port][/name]]`, `adb [blockFrames]`, `probe [clicks] [blockFrames]`, `bursts [seconds] [blockFrames]`,
+`adb-wifi-trust <bssid>`, `adb-revoke-keys`. The agent launches `udp` with the defaults and
+logs to `/data/local/tmp/setu-server.log`.
 
 ## Roadmap
 
-1. Agent: start and stop the server itself. With the browser installer, this makes VBAN work
-   with no Setu software on the PC. The agent then passes the server a secret that control
-   messages and local receivers must carry.
+1. Agent: pass the server a secret that control messages and local receivers must carry, so
+   other apps on the headset cannot redirect the stream.
 2. Desktop app: a tray icon, so it can play with the window closed.
 3. Installers: setup routine in the APK, then the PC installer, then the browser installer.
+   With the browser installer, VBAN works with no Setu software on the PC.
 4. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
    address from the last Setu receiver, and find VBAN receivers with VBAN's PING0 service.
 
