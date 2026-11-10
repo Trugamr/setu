@@ -243,7 +243,7 @@ impl Playout {
         if let Some(control) = &mut self.control {
             let ahead = self.ring.level() as i64 - skip as i64;
             let late = (late_s * control.tuning.in_rate).round() as i64;
-            control.arrived(ahead + late);
+            control.arrived(ahead, late);
         }
         if skip > 0 && skip >= frames {
             return;
@@ -479,8 +479,11 @@ struct Control {
     tuning: Tuning,
     playing: bool,
     /// Safety margin in input frames: the configured margin and the deadband, grown by
-    /// underruns the allowance did not foresee.
+    /// underruns no late datagram explains.
     margin: u64,
+    /// The margin and the target before the last underrun grew the margin, until the datagram
+    /// the buffer ran dry waiting for arrives.
+    backed_off: Option<(u64, u64)>,
     /// Input frames kept for datagrams arriving late, from the worst recent lateness worth
     /// covering.
     allowance: u64,
@@ -502,6 +505,7 @@ impl Control {
     fn new(tuning: Tuning) -> Self {
         Control {
             margin: tuning.min_margin,
+            backed_off: None,
             allowance: 0,
             tuning,
             playing: false,
@@ -525,9 +529,18 @@ impl Control {
         self.allowance = self.allowance.max(cover);
     }
 
-    /// A datagram arrived that would have found `on_time_ahead` input frames buffered ahead of
-    /// it had it come on time.
-    fn arrived(&mut self, on_time_ahead: i64) {
+    /// A datagram arrived `late` input frames late, finding `ahead` input frames buffered ahead
+    /// of it.
+    fn arrived(&mut self, ahead: i64, late: i64) {
+        if let Some((margin, target)) = self.backed_off.take() {
+            // The datagram the buffer ran dry waiting for. Late by about the target or more, its
+            // delay explains the underrun, and the allowance either covers such a delay or
+            // leaves it out by design: the margin need not grow for it.
+            if late + self.tuning.reserve as i64 >= target as i64 {
+                self.margin = margin;
+            }
+        }
+        let on_time_ahead = ahead + late;
         if self.playing {
             self.window_min = Some(
                 self.window_min
@@ -556,13 +569,15 @@ impl Control {
         self.tuning.step * (1.0 + self.rate_adjust)
     }
 
-    /// The buffer ran dry: a block arrived later than the target covers, so back off.
+    /// The buffer ran dry, so back off until the next datagram shows whether its delay
+    /// explains it.
     fn underrun(&mut self) {
         let t = &self.tuning;
         self.playing = false;
         self.gain = 0.0;
         self.pending_skip = 0;
         self.calm_frames = 0;
+        self.backed_off = Some((self.margin, self.target()));
         self.margin = (self.margin + t.backoff).min(t.max_target);
     }
 
@@ -1102,11 +1117,35 @@ mod tests {
         let late = |i: u64| 1e3 * rng() + if i % 5000 == 2500 { 60e3 } else { 0.0 };
         let mut most = 0;
         stream(&mut p, 120, late, |_, p| {
-            most = most.max(p.control.as_ref().unwrap().allowance);
+            let c = p.control.as_ref().unwrap();
+            most = most.max(c.target() - c.tuning.min_margin);
         });
         let most_ms = most as f64 / 48.0;
-        assert!(most_ms < 1.5, "allowance reached {most_ms} ms");
+        assert!(most_ms < 1.5, "target grew by {most_ms} ms");
         assert!(p.stats().jitter_peak_ms > 50.0, "the stalls are measured");
+    }
+
+    #[test]
+    fn an_underrun_no_late_datagram_explains_grows_the_margin() {
+        let mut p = playout(96, 128);
+        let (start, input, mut out) = (Instant::now(), pcm(96, 1000), vec![0.0; 256]);
+        let mut pulled = 0;
+        // Every block on time, and at 1 s the output pulls 50 ms at once.
+        for i in 0..1000u64 {
+            p.push(start + Duration::from_micros(i * 2000), i * 96, &input);
+            while pulled < i * 96 {
+                p.pull(&mut out);
+                pulled += 128;
+            }
+            if i == 500 {
+                for _ in 0..20 {
+                    p.pull(&mut out);
+                }
+            }
+        }
+        let c = p.control.as_ref().unwrap();
+        assert!(p.stats().underruns > 0);
+        assert_eq!(c.margin, c.tuning.min_margin + c.tuning.backoff);
     }
 
     #[test]

@@ -290,8 +290,9 @@ These come from the prototype receiver; the desktop app's playout follows them.
 - **Deadband of min(block, output period).** The measured minimum moves by up to that much as
   arrivals drift against the output's pull grid; without the deadband the controller oscillates.
 - **Margin** = configured margin (2 ms by default) + min(block, period). It grows 2 ms per
-  underrun the allowance did not cover, within the target's ceiling, and decays 0.5 ms after
-  each 15 s without one.
+  underrun that no late datagram explains, such as an output pulling in a burst, within the
+  target's ceiling, and decays 0.5 ms after each 15 s without one. A delay explains an
+  underrun when the datagram the buffer ran dry waiting for arrives about a target late.
 - **The controller is proportional**, so an output whose clock drifts settles above the target
   by about 20 ms per 1 % of drift: 0.2 ms for a typical 100 ppm, but several ms for a virtual
   device that runs 0.3 % slow.
