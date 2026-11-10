@@ -44,7 +44,7 @@ export function StatusCard({ card, onAction }: { card: Card; onAction?: () => vo
           className={`mt-4 h-10 w-full cursor-pointer rounded-control text-row font-semibold transition-colors ${
             card.action.style === "secondary"
               ? "bg-transparent text-cream inset-ring inset-ring-edge hover:bg-ink-hover"
-              : "bg-signal text-ink hover:bg-signal-hover active:bg-signal-pressed"
+              : "bg-signal-fill text-cream hover:bg-signal-fill-hover active:bg-signal-fill-pressed"
           }`}
         >
           {card.action.label}

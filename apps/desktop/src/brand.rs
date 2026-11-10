@@ -14,7 +14,8 @@ pub fn hsla(token: u32) -> Hsla {
 }
 
 /// Recolours the component theme in the brand: dark only, Signal as the one accent, Edge
-/// outlining every control, Cream for focus. Text on Signal is Ink, since Cream on red is 3:1.
+/// outlining every control, Cream for focus. Primary buttons fill with the deeper SignalFill
+/// under Cream text; Ink on Signal reads muddy and Cream on Signal is 3:1.
 /// Controls are 4 round, popovers 8, as in [`dimens`].
 pub fn apply(cx: &mut App) {
     Theme::change(ThemeMode::Dark, None, cx);
@@ -40,14 +41,14 @@ pub fn apply(cx: &mut App) {
         c.title_bar = hsla(INK);
         c.window_border = hsla(LINE);
 
-        c.primary = hsla(SIGNAL);
-        c.primary_hover = hsla(SIGNAL_HOVER);
-        c.primary_active = hsla(SIGNAL_PRESSED);
-        c.primary_foreground = hsla(INK);
-        c.button_primary = hsla(SIGNAL);
-        c.button_primary_hover = hsla(SIGNAL_HOVER);
-        c.button_primary_active = hsla(SIGNAL_PRESSED);
-        c.button_primary_foreground = hsla(INK);
+        c.primary = hsla(SIGNAL_FILL);
+        c.primary_hover = hsla(SIGNAL_FILL_HOVER);
+        c.primary_active = hsla(SIGNAL_FILL_PRESSED);
+        c.primary_foreground = hsla(CREAM);
+        c.button_primary = hsla(SIGNAL_FILL);
+        c.button_primary_hover = hsla(SIGNAL_FILL_HOVER);
+        c.button_primary_active = hsla(SIGNAL_FILL_PRESSED);
+        c.button_primary_foreground = hsla(CREAM);
 
         c.secondary = hsla(INK_HIGH);
         c.secondary_hover = hsla(INK_HOVER);

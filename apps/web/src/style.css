@@ -20,8 +20,9 @@
   --color-line: var(--line);
   --color-edge: var(--edge);
   --color-cream-muted: var(--cream-muted);
-  --color-signal-hover: var(--signal-hover);
-  --color-signal-pressed: var(--signal-pressed);
+  --color-signal-fill: var(--signal-fill);
+  --color-signal-fill-hover: var(--signal-fill-hover);
+  --color-signal-fill-pressed: var(--signal-fill-pressed);
   --color-transparent: transparent;
 
   /* Horizon OS's own greys, only for drawing its "Allow USB debugging?" panel as the headset

@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="672" viewBox="0 0 760 672" role="img" aria-label="Setu colour tokens">
-<rect width="760" height="672" rx="16" fill="#15141A"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="724" viewBox="0 0 760 724" role="img" aria-label="Setu colour tokens">
+<rect width="760" height="724" rx="16" fill="#15141A"/>
 <g font-family="Segoe UI, system-ui, -apple-system, sans-serif">
 <rect x="24" y="30" width="40" height="40" rx="10" fill="#15141A" stroke="#4A4851"/>
 <text x="80" y="48" font-size="15" font-weight="600" fill="#F5ECDC">Ink<tspan fill="#A9A398" font-weight="400" dx="10">#15141A</tspan></text>
-<text x="80" y="66" font-size="12.5" fill="#A9A398">Page background, the icon tile, text on Signal and on Cream</text>
+<text x="80" y="66" font-size="12.5" fill="#A9A398">Page background, the icon tile, text on Cream</text>
 <rect x="24" y="82" width="40" height="40" rx="10" fill="#F5ECDC" stroke="#4A4851"/>
 <text x="80" y="100" font-size="15" font-weight="600" fill="#F5ECDC">Cream<tspan fill="#A9A398" font-weight="400" dx="10">#F5ECDC</tspan></text>
-<text x="80" y="118" font-size="12.5" fill="#A9A398">Text, the grille, focus, the status card while sound flows, and on switches</text>
+<text x="80" y="118" font-size="12.5" fill="#A9A398">Text, the grille, focus, the status card while sound flows, on switches and on SignalFill</text>
 <rect x="24" y="134" width="40" height="40" rx="10" fill="#FF3B2F" stroke="#4A4851"/>
 <text x="80" y="152" font-size="15" font-weight="600" fill="#F5ECDC">Signal<tspan fill="#A9A398" font-weight="400" dx="10">#FF3B2F</tspan></text>
 <text x="80" y="170" font-size="12.5" fill="#A9A398">The one accent: the power light, the action that starts things, errors</text>
@@ -31,11 +31,14 @@
 <rect x="24" y="498" width="40" height="40" rx="10" fill="#A9A398" stroke="#4A4851"/>
 <text x="80" y="516" font-size="15" font-weight="600" fill="#F5ECDC">CreamMuted<tspan fill="#A9A398" font-weight="400" dx="10">#A9A398</tspan></text>
 <text x="80" y="534" font-size="12.5" fill="#A9A398">Secondary text and placeholders</text>
-<rect x="24" y="550" width="40" height="40" rx="10" fill="#FF5A4F" stroke="#4A4851"/>
-<text x="80" y="568" font-size="15" font-weight="600" fill="#F5ECDC">SignalHover<tspan fill="#A9A398" font-weight="400" dx="10">#FF5A4F</tspan></text>
-<text x="80" y="586" font-size="12.5" fill="#A9A398">Signal under the pointer</text>
-<rect x="24" y="602" width="40" height="40" rx="10" fill="#F0382C" stroke="#4A4851"/>
-<text x="80" y="620" font-size="15" font-weight="600" fill="#F5ECDC">SignalPressed<tspan fill="#A9A398" font-weight="400" dx="10">#F0382C</tspan></text>
-<text x="80" y="638" font-size="12.5" fill="#A9A398">Signal while pressed</text>
+<rect x="24" y="550" width="40" height="40" rx="10" fill="#C4261C" stroke="#4A4851"/>
+<text x="80" y="568" font-size="15" font-weight="600" fill="#F5ECDC">SignalFill<tspan fill="#A9A398" font-weight="400" dx="10">#C4261C</tspan></text>
+<text x="80" y="586" font-size="12.5" fill="#A9A398">Filled Signal buttons, deep enough for Cream text</text>
+<rect x="24" y="602" width="40" height="40" rx="10" fill="#CC2A1F" stroke="#4A4851"/>
+<text x="80" y="620" font-size="15" font-weight="600" fill="#F5ECDC">SignalFillHover<tspan fill="#A9A398" font-weight="400" dx="10">#CC2A1F</tspan></text>
+<text x="80" y="638" font-size="12.5" fill="#A9A398">SignalFill under the pointer</text>
+<rect x="24" y="654" width="40" height="40" rx="10" fill="#B32218" stroke="#4A4851"/>
+<text x="80" y="672" font-size="15" font-weight="600" fill="#F5ECDC">SignalFillPressed<tspan fill="#A9A398" font-weight="400" dx="10">#B32218</tspan></text>
+<text x="80" y="690" font-size="12.5" fill="#A9A398">SignalFill while pressed</text>
 </g>
 </svg>

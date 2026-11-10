@@ -35,7 +35,7 @@ export interface Card {
   title: string;
   sentence: string;
   grille: Grille;
-  /** The button, or none. Primary is Signal, the action that starts things; secondary an outline. */
+  /** The button, or none. Primary is SignalFill, the action that starts things; secondary an outline. */
   action?: { label: string; style: "primary" | "secondary" };
 }
 

@@ -6,9 +6,9 @@ import androidx.compose.ui.graphics.Color
 
 /** Setu's colour tokens. See design/brand/README.md for where each goes. */
 object Palette {
-    /** Page background, the icon tile, text on Signal and on Cream. */
+    /** Page background, the icon tile, text on Cream. */
     val Ink = Color(0xFF15141A)
-    /** Text, the grille, focus, the status card while sound flows, and on switches. */
+    /** Text, the grille, focus, the status card while sound flows, on switches and on SignalFill. */
     val Cream = Color(0xFFF5ECDC)
     /** The one accent: the power light, the action that starts things, errors. */
     val Signal = Color(0xFFFF3B2F)
@@ -26,8 +26,10 @@ object Palette {
     val Edge = Color(0xFF75727D)
     /** Secondary text and placeholders. */
     val CreamMuted = Color(0xFFA9A398)
-    /** Signal under the pointer. */
-    val SignalHover = Color(0xFFFF5A4F)
-    /** Signal while pressed. */
-    val SignalPressed = Color(0xFFF0382C)
+    /** Filled Signal buttons, deep enough for Cream text. */
+    val SignalFill = Color(0xFFC4261C)
+    /** SignalFill under the pointer. */
+    val SignalFillHover = Color(0xFFCC2A1F)
+    /** SignalFill while pressed. */
+    val SignalFillPressed = Color(0xFFB32218)
 }

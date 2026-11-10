@@ -6,17 +6,18 @@ import androidx.compose.runtime.Composable
 
 /**
  * Every Material role mapped to [Palette], so no default purple or pink shows through.
- * Text on Signal is Ink, since Cream on red is 3:1. Control outlines (text fields, outline
- * buttons, the off switch) are `outline`, in Edge, which keeps 3:1 on every surface; `outlineVariant`
- * is for dividers. Containers are Ink steps rather than tints, keeping Signal the one accent.
- * See design/brand/README.md.
+ * Text on Signal is Ink; the card's filled button uses SignalFill under Cream instead, since Ink
+ * on Signal reads muddy. Control outlines (text fields, outline buttons, the off switch) are
+ * `outline`, in Edge, which keeps 3:1 on every surface; `outlineVariant` is for dividers.
+ * Containers are Ink steps rather than tints, keeping Signal the one accent. See
+ * design/brand/README.md.
  */
 private val colors = darkColorScheme(
     primary = Palette.Signal,
     onPrimary = Palette.Ink,
     primaryContainer = Palette.InkHigh,
     onPrimaryContainer = Palette.Cream,
-    inversePrimary = Palette.SignalPressed,
+    inversePrimary = Palette.SignalFill,
     secondary = Palette.Cream,
     onSecondary = Palette.Ink,
     secondaryContainer = Palette.InkHigh,

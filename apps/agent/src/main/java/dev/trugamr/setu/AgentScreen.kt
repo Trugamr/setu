@@ -233,8 +233,8 @@ private fun CardButton(action: CardAction, look: Look, onClick: () -> Unit) {
             enabled = action.enabled,
             shape = Shapes.Control,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Palette.Signal,
-                contentColor = Palette.Ink,
+                containerColor = Palette.SignalFill,
+                contentColor = Palette.Cream,
                 disabledContainerColor = Palette.InkHigh,
                 disabledContentColor = Palette.CreamMuted,
             ),

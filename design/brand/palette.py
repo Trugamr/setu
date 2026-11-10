@@ -9,8 +9,8 @@ refuses to write anything while a pairing below falls short of its minimum.
 # (name, hex, use). Names are CamelCase; each platform derives its own spelling.
 TOKENS = [
     # The brand.
-    ("Ink", "#15141A", "Page background, the icon tile, text on Signal and on Cream"),
-    ("Cream", "#F5ECDC", "Text, the grille, focus, the status card while sound flows, and on switches"),
+    ("Ink", "#15141A", "Page background, the icon tile, text on Cream"),
+    ("Cream", "#F5ECDC", "Text, the grille, focus, the status card while sound flows, on switches and on SignalFill"),
     ("Signal", "#FF3B2F", "The one accent: the power light, the action that starts things, errors"),
     # Steps up from Ink for the UI.
     ("InkRaised", "#1F1E25", "Cards, groups, dialogs, popovers and menus"),
@@ -20,8 +20,9 @@ TOKENS = [
     ("Line", "#4A4851", "Popover outlines, and secondary text on Cream. Never a control's outline"),
     ("Edge", "#75727D", "Outlines of controls: inputs, selects, outline buttons, off switches and their thumbs"),
     ("CreamMuted", "#A9A398", "Secondary text and placeholders"),
-    ("SignalHover", "#FF5A4F", "Signal under the pointer"),
-    ("SignalPressed", "#F0382C", "Signal while pressed"),
+    ("SignalFill", "#C4261C", "Filled Signal buttons, deep enough for Cream text"),
+    ("SignalFillHover", "#CC2A1F", "SignalFill under the pointer"),
+    ("SignalFillPressed", "#B32218", "SignalFill while pressed"),
 ]
 
 HEX = {name: hex_ for name, hex_, _ in TOKENS}
@@ -45,9 +46,9 @@ PAIRS = [
     ("Cream", "Ink", TEXT, "The Stop button on that card"),
     ("Signal", "Ink", TEXT, "Error text"),
     ("Signal", "InkRaised", TEXT, "Error text on a card or in a dialog"),
-    ("Ink", "Signal", TEXT, "Primary button label"),
-    ("Ink", "SignalHover", TEXT, "Primary button label, hovered"),
-    ("Ink", "SignalPressed", TEXT, "Primary button label, pressed"),
+    ("Cream", "SignalFill", TEXT, "Primary button label"),
+    ("Cream", "SignalFillHover", TEXT, "Primary button label, hovered"),
+    ("Cream", "SignalFillPressed", TEXT, "Primary button label, pressed"),
     ("Cream", "Cream 25% over Ink", TEXT, "Selected text"),
     ("Cream", "Cream 25% over InkRaised", TEXT, "Selected text on a card or in a dialog"),
     ("Edge", "Ink", CONTROL, "Input, select and outline button outlines"),
