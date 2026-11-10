@@ -1,21 +1,24 @@
 //! Playout: the jitter buffer between the network and the audio device.
 //!
 //! The headset sends audio one capture block at a time, so the buffer level is a sawtooth and
-//! latency is set by its bottom. The controller watches the lowest level of each half-second
-//! window and nudges the playback rate (±0.5 %, linearly interpolated) until that minimum
-//! settles at the margin. That keeps one block plus the margin buffered whatever the block
-//! size, and absorbs the clock drift between headset and PC. A lost datagram becomes silence
-//! of the same length, so timing survives loss. `Jitter` measures how late each datagram
-//! arrives.
+//! latency is set by its bottom. `Jitter` measures how late each datagram arrives, and as each
+//! one arrives the playout notes how much it would have found buffered ahead of it had it come
+//! on time: the level plus its lateness. That figure does not move with jitter, so the
+//! controller can steer it without chasing every late datagram. It nudges the playback rate
+//! (±0.5 %, linearly interpolated) until the lowest such figure of each half-second window
+//! settles at the target: the margin, plus an allowance for the worst lateness of the last two
+//! minutes. Whatever the block size, that keeps the margin to spare when the worst recent delay
+//! comes again, and it absorbs the clock drift between headset and PC. A lost datagram becomes
+//! silence of the same length, so timing survives loss.
 //!
 //! Running dry, restarting, skipping and losing a datagram never cut the audio abruptly.
 //! Playback fades out over [`FADE_OUT_MS`] before the buffer runs dry, from a reserve kept for
 //! it, and fades in over [`FADE_IN_MS`] when it starts again. A skip fades out, jumps and fades
 //! back in. Where the stream itself breaks, at a lost datagram's silence or a position jump too
-//! large to conceal, the audio either side fades too. A new format or output still restarts
-//! playback at once. Playback restarts at one block, one output period and the margin,
-//! dropping whatever piled up beyond that while it was stopped, so a stall costs latency only
-//! while it lasts.
+//! large to conceal, the audio either side fades too. A new format or output restarts playback
+//! at once. Playback restarts at one block, one output period and the target, dropping
+//! whatever piled up beyond that while it was stopped, so a stall costs latency only while it
+//! lasts.
 //!
 //! `Playout` is plain single-threaded state with no I/O. The receiver shares it between the
 //! network and device threads behind a mutex, held only to copy a datagram in or a device
@@ -35,10 +38,16 @@ const CAPACITY_FRAMES: usize = 1 << 16;
 const MAX_RATE_ADJUST: f64 = 0.005;
 /// An excess beyond this is skipped at once instead of played out faster.
 const SKIP_THRESHOLD_MS: f64 = 20.0;
-/// Each underrun grows the margin by this much...
+/// The jitter allowance covers lateness up to this much, and the target as a whole stays
+/// within this beyond the deadband: past it an occasional dropout costs less than the constant
+/// delay.
+const MAX_COVER_MS: f64 = 40.0;
+/// Once a delay is forgotten the allowance falls at half the fastest rate the controller sheds
+/// at, so it is shed by rate alone, without a skip, unless clock drift already takes more than
+/// half the rate range.
+const ALLOWANCE_DECAY_MS_PER_S: f64 = MAX_RATE_ADJUST * 1000.0 / 2.0;
+/// Each underrun grows the margin by this much, up to the [`MAX_COVER_MS`] ceiling...
 const UNDERRUN_BACKOFF_MS: f64 = 2.0;
-/// ...up to this much beyond the deadband...
-const MAX_MARGIN_MS: f64 = 40.0;
 /// ...and it shrinks back by a step after this long without one.
 const MARGIN_DECAY_AFTER_S: f64 = 15.0;
 const MARGIN_DECAY_STEP_MS: f64 = 0.5;
@@ -79,8 +88,9 @@ pub struct PlayoutStats {
     /// Lowest and highest buffer level over the last half second.
     pub buffer_min_ms: f64,
     pub buffer_max_ms: f64,
-    /// The buffer minimum the controller steers to.
-    pub margin_ms: f64,
+    /// What the controller keeps buffered ahead of an on-time datagram: the safety margin plus
+    /// the allowance for jitter.
+    pub target_ms: f64,
     /// Playback rate offset, e.g. 0.002 plays 0.2 % fast.
     pub rate_adjust: f64,
     /// The most any datagram arrived late over the last half second, measured against the
@@ -100,7 +110,7 @@ pub struct PlayoutStats {
 pub enum PlayoutState {
     /// Waiting for the stream format or the output device.
     Idle,
-    /// Filling to one block plus the margin before playing.
+    /// Filling to one block, one output period and the target before playing.
     Buffering,
     Playing,
 }
@@ -163,7 +173,7 @@ impl Playout {
             next_position: None,
             control: None,
             fade_in: None,
-            jitter: Jitter::new(),
+            jitter: Jitter::new(MAX_COVER_MS / 1000.0),
             window: Window::new(0),
             last_window: Window::new(0),
             totals: Totals::default(),
@@ -188,7 +198,7 @@ impl Playout {
     }
 
     /// Plays into a device of this format, e.g. after the output (re)opened. Buffered audio is
-    /// kept; playback restarts once one block plus the margin is buffered.
+    /// kept; playback restarts once one block, one output period and the target are buffered.
     pub fn set_output(&mut self, output: OutputFormat) {
         self.output = Some(output);
         self.retune();
@@ -230,6 +240,11 @@ impl Playout {
         let stream_s = frame_position as f64 / f64::from(format.sample_rate);
         let late_s = self.jitter.arrive(arrived, stream_s);
         self.window.late_s = self.window.late_s.max(late_s);
+        if let Some(control) = &mut self.control {
+            let ahead = self.ring.level() as i64 - skip as i64;
+            let late = (late_s * control.tuning.in_rate).round() as i64;
+            control.arrived(ahead + late);
+        }
         if skip > 0 && skip >= frames {
             return;
         }
@@ -260,6 +275,9 @@ impl Playout {
             return;
         };
         let channels = control.tuning.out_channels;
+        let cover = (self.jitter.cover() * control.tuning.in_rate).round() as u64;
+        // A new delay counts before playback restarts, so a stall's own burst is kept for it.
+        control.cover(cover);
         if control.should_play(self.ring.level()) {
             let step = control.step();
             let frames = out.len() / channels;
@@ -295,7 +313,7 @@ impl Playout {
         }
         let level = self.ring.level();
         self.window.min_level = self.window.min_level.min(level);
-        if control.after_pull((out.len() / channels) as u64, level) {
+        if control.after_pull((out.len() / channels) as u64, cover) {
             self.last_window = self.window;
             self.window = Window::new(level);
         }
@@ -315,7 +333,7 @@ impl Playout {
             },
             buffer_min_ms: to_ms(window.min_level),
             buffer_max_ms: to_ms(window.max_level),
-            margin_ms: to_ms(self.control.as_ref().map_or(0, |c| c.margin)),
+            target_ms: to_ms(self.control.as_ref().map_or(0, Control::target)),
             rate_adjust: self.control.as_ref().map_or(0.0, |c| c.rate_adjust),
             jitter_ms: window.late_s * 1000.0,
             jitter_peak_ms: self.jitter.peak() * 1000.0,
@@ -460,13 +478,18 @@ impl Ring {
 struct Control {
     tuning: Tuning,
     playing: bool,
-    /// Target buffer minimum, in input frames.
+    /// Safety margin in input frames: the configured margin and the deadband, grown by
+    /// underruns the allowance did not foresee.
     margin: u64,
+    /// Input frames kept for datagrams arriving late, from the worst recent lateness worth
+    /// covering.
+    allowance: u64,
     /// Output frames played since the last underrun or margin decay.
     calm_frames: u64,
     rate_adjust: f64,
-    /// Lowest post-pull level in the current window.
-    window_min: u64,
+    /// The least an arriving datagram would have found buffered ahead of it in the current
+    /// window, had it come on time.
+    window_min: Option<i64>,
     /// Output frames pulled in the current window.
     window_pulled: u64,
     /// Playback gain, 0 to 1, which moves by at most a fade step per output frame.
@@ -479,27 +502,50 @@ impl Control {
     fn new(tuning: Tuning) -> Self {
         Control {
             margin: tuning.min_margin,
+            allowance: 0,
             tuning,
             playing: false,
             calm_frames: 0,
             rate_adjust: 0.0,
-            window_min: u64::MAX,
+            window_min: None,
             window_pulled: 0,
             gain: 0.0,
             pending_skip: 0,
         }
     }
 
+    /// What the controller keeps buffered ahead of an on-time datagram, in input frames.
+    fn target(&self) -> u64 {
+        (self.margin + self.allowance).min(self.tuning.max_target)
+    }
+
+    /// Raises the allowance at once to `cover`, the worst recent lateness worth covering, in
+    /// input frames.
+    fn cover(&mut self, cover: u64) {
+        self.allowance = self.allowance.max(cover);
+    }
+
+    /// A datagram arrived that would have found `on_time_ahead` input frames buffered ahead of
+    /// it had it come on time.
+    fn arrived(&mut self, on_time_ahead: i64) {
+        if self.playing {
+            self.window_min = Some(
+                self.window_min
+                    .map_or(on_time_ahead, |m| m.min(on_time_ahead)),
+            );
+        }
+    }
+
     /// Whether to play this period. Once stopped, playback restarts when `level` reaches one
-    /// block, one output period and the margin, and drops anything beyond that first: what
-    /// piled up while stopped would only add latency. The margin is steered as the level after
-    /// a pull, so before one it needs a period more.
+    /// block, one output period and the target, and drops anything beyond that first: what
+    /// piled up while stopped would only add latency. The target is steered as the level a
+    /// datagram finds, which a pull has just lowered, so before one it needs a period more.
     fn should_play(&mut self, level: u64) -> bool {
-        let start = self.tuning.block + self.tuning.period + self.margin;
+        let start = self.tuning.block + self.tuning.period + self.target();
         if !self.playing && level >= start {
             self.playing = true;
             self.pending_skip = level - start;
-            self.window_min = u64::MAX;
+            self.window_min = None;
             self.window_pulled = 0;
         }
         self.playing
@@ -510,21 +556,21 @@ impl Control {
         self.tuning.step * (1.0 + self.rate_adjust)
     }
 
-    /// The buffer ran dry: blocks arrive later than the margin covers, so back off.
+    /// The buffer ran dry: a block arrived later than the target covers, so back off.
     fn underrun(&mut self) {
         let t = &self.tuning;
         self.playing = false;
         self.gain = 0.0;
         self.pending_skip = 0;
         self.calm_frames = 0;
-        self.margin = (self.margin + t.backoff).min(t.max_margin);
+        self.margin = (self.margin + t.backoff).min(t.max_target);
     }
 
-    /// Records the post-pull `level` (the bottom of the sawtooth) after `frames` output
-    /// frames. Returns true at the end of each window, after steering.
-    fn after_pull(&mut self, frames: u64, level: u64) -> bool {
+    /// Counts `frames` output frames pulled. At the end of each window, lets the allowance fall
+    /// toward `cover`, the worst recent lateness worth covering in input frames, steers, and
+    /// returns true.
+    fn after_pull(&mut self, frames: u64, cover: u64) -> bool {
         let t = &self.tuning;
-        self.window_min = self.window_min.min(level);
         self.window_pulled += frames;
         if self.playing {
             // A transient spike grows the margin on underrun; win it back once playback has
@@ -538,20 +584,26 @@ impl Control {
         if self.window_pulled < t.window_frames {
             return false;
         }
-        if self.playing {
-            self.pending_skip = self.steer();
+        // Up at once in `cover`, down gently here.
+        self.allowance = cover.max(self.allowance.saturating_sub(t.allowance_decay));
+        match (self.playing, self.window_min) {
+            (true, Some(min)) => self.pending_skip = self.steer(min),
+            // No arrivals to steer by: play at the nominal rate and let underruns deal with
+            // the silence.
+            (true, None) => self.rate_adjust = 0.0,
+            (false, _) => {}
         }
-        self.window_min = u64::MAX;
+        self.window_min = None;
         self.window_pulled = 0;
         true
     }
 
-    /// Sets the playback rate from the window's minimum level and returns frames to skip.
-    /// Within [margin, margin + quantum] the minimum moves with arrival phase, not with the
-    /// true level, so that band is on target.
-    fn steer(&mut self) -> u64 {
+    /// Sets the playback rate from the window's minimum on-time figure and returns frames to
+    /// skip. Within [target, target + quantum] the minimum moves with arrival phase, not with
+    /// the true level, so that band is on target.
+    fn steer(&mut self, window_min: i64) -> u64 {
         let t = &self.tuning;
-        let excess = self.window_min as i64 - self.margin as i64;
+        let excess = window_min - self.target() as i64;
         let quantum = t.quantum as i64;
         let mut skip = 0;
         self.rate_adjust = if excess > t.skip_threshold as i64 + quantum {
@@ -584,7 +636,11 @@ struct Tuning {
     /// period). It is part of the margin and the controller's deadband.
     quantum: u64,
     min_margin: u64,
-    max_margin: u64,
+    /// The most the target, and the margin within it, may grow to: [`MAX_COVER_MS`] beyond the
+    /// deadband, or the configured margin if that is more.
+    max_target: u64,
+    /// How far the allowance may fall per window.
+    allowance_decay: u64,
     backoff: u64,
     decay_step: u64,
     skip_threshold: u64,
@@ -609,6 +665,7 @@ impl Tuning {
         let step = in_rate / out_rate;
         let out_frames = |ms: f64| (ms * out_rate / 1000.0).max(1.0);
         let reserve = (out_frames(FADE_OUT_MS) * step * (1.0 + MAX_RATE_ADJUST)).ceil() as u64 + 2;
+        let min_margin = frames(margin_ms + quantum_ms).max(reserve);
         Tuning {
             in_rate,
             step,
@@ -616,8 +673,9 @@ impl Tuning {
             block: u64::from(format.block_frames),
             period: (f64::from(output.period_frames) * step).ceil() as u64,
             quantum: frames(quantum_ms),
-            min_margin: frames(margin_ms + quantum_ms).max(reserve),
-            max_margin: frames(MAX_MARGIN_MS + quantum_ms),
+            min_margin,
+            max_target: frames(MAX_COVER_MS + quantum_ms).max(min_margin),
+            allowance_decay: frames(ALLOWANCE_DECAY_MS_PER_S * WINDOW_S),
             backoff: frames(UNDERRUN_BACKOFF_MS),
             decay_step: frames(MARGIN_DECAY_STEP_MS),
             skip_threshold: frames(SKIP_THRESHOLD_MS),
@@ -657,8 +715,10 @@ mod tests {
         value.to_le_bytes().repeat(frames * 2)
     }
 
+    const MARGIN_MS: f64 = 1.5;
+
     fn playout(block_frames: u32, period_frames: u32) -> Playout {
-        let mut p = Playout::new(1.5);
+        let mut p = Playout::new(MARGIN_MS);
         p.set_format(format(block_frames)).unwrap();
         p.set_output(output(48000, 2, period_frames));
         p
@@ -666,7 +726,7 @@ mod tests {
 
     #[test]
     fn silent_until_format_and_output_are_known() {
-        let mut p = Playout::new(1.5);
+        let mut p = Playout::new(MARGIN_MS);
         p.push(Instant::now(), 0, &pcm(960, 1000));
         let mut out = [1.0; 64];
         p.pull(&mut out);
@@ -693,7 +753,7 @@ mod tests {
 
     #[test]
     fn extra_output_channels_are_silent() {
-        let mut p = Playout::new(1.5);
+        let mut p = Playout::new(MARGIN_MS);
         p.set_format(format(96)).unwrap();
         p.set_output(output(48000, 4, 96));
         p.push(Instant::now(), 0, &pcm(400, 16384));
@@ -770,7 +830,7 @@ mod tests {
         p.push(Instant::now(), 400, &pcm(1440, 16384));
         p.pull(&mut out);
         let control = p.control.as_ref().unwrap();
-        let target = control.tuning.block + control.tuning.period + control.margin;
+        let target = control.tuning.block + control.tuning.period + control.target();
         assert!(p.ring.level() < target, "{} buffered", p.ring.level());
         assert!(p.stats().skipped_ms > 20.0);
     }
@@ -952,12 +1012,121 @@ mod tests {
 
     #[test]
     fn only_16_bit_pcm_is_supported() {
-        let mut p = Playout::new(1.5);
+        let mut p = Playout::new(MARGIN_MS);
         let wide = Format {
             bytes_per_sample: 3,
             ..format(96)
         };
         assert_eq!(p.set_format(wide), Err(UnsupportedFormat(wide)));
+    }
+
+    /// Streams blocks of `p`'s format into its output, which pulls on a clock 100 ppm fast,
+    /// for `seconds`. Block `i` arrives `late(i)` µs after it was captured, and never before
+    /// the block ahead of it. Calls `each_second` with the playout every second.
+    fn stream(
+        p: &mut Playout,
+        seconds: u64,
+        mut late: impl FnMut(u64) -> f64,
+        mut each_second: impl FnMut(u64, &Playout),
+    ) {
+        let (block, output) = (p.format.unwrap().block_frames, p.output.unwrap());
+        let block_us = f64::from(block) * 1e6 / 48000.0;
+        let period_us = f64::from(output.period_frames) * 1e6 / f64::from(output.sample_rate);
+        let period_us = period_us / 1.0001;
+        let input = pcm(block as usize, 1000);
+        let mut out = vec![0.0; output.period_frames as usize * usize::from(output.channels)];
+        let start = Instant::now();
+        let (mut blocks, mut next_block, mut next_pull, mut second) = (0u64, 0.0f64, 0.0, 1);
+        while next_pull < seconds as f64 * 1e6 {
+            if next_block <= next_pull {
+                let at = start + Duration::from_secs_f64(next_block / 1e6);
+                p.push(at, blocks * u64::from(block), &input);
+                blocks += 1;
+                next_block = next_block.max(blocks as f64 * block_us + late(blocks));
+            } else {
+                p.pull(&mut out);
+                next_pull += period_us;
+                if next_pull >= second as f64 * 1e6 {
+                    each_second(second, p);
+                    second += 1;
+                }
+            }
+        }
+    }
+
+    /// A xorshift generator of uniform numbers in [0, 1).
+    fn uniform() -> impl FnMut() -> f64 {
+        let mut x = 0x2545_f491_4f6c_dd1d_u64;
+        move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            (x >> 11) as f64 / (1u64 << 53) as f64
+        }
+    }
+
+    #[test]
+    fn rides_out_recurring_stalls_once_it_has_seen_one() {
+        let mut p = playout(96, 128);
+        let mut rng = uniform();
+        // Up to 3 ms of jitter, and a stall every 10 s: 35 ms first, then 15-35 ms.
+        let late = |i: u64| {
+            let stall = match i {
+                2500 => 35e3,
+                _ if i % 5000 == 2500 => 15e3 + 20e3 * rng(),
+                _ => 0.0,
+            };
+            3e3 * rng() + stall
+        };
+        stream(&mut p, 180, late, |_, _| {});
+        let stats = p.stats();
+        assert_eq!(stats.underruns, 1, "only the first stall: {stats:?}");
+        assert!(stats.buffer_min_ms < 45.0, "{stats:?}");
+    }
+
+    #[test]
+    fn covers_a_second_stall_soon_after_the_first() {
+        let mut p = playout(96, 128);
+        let mut rng = uniform();
+        // 30 ms stalls at 10 s and 12 s.
+        let late = |i: u64| 1e3 * rng() + if i == 5000 || i == 6000 { 30e3 } else { 0.0 };
+        stream(&mut p, 20, late, |_, _| {});
+        assert_eq!(p.stats().underruns, 1);
+    }
+
+    #[test]
+    fn does_not_buffer_for_stalls_too_long_to_cover() {
+        let mut p = playout(96, 128);
+        let mut rng = uniform();
+        // A 60 ms stall every 10 s.
+        let late = |i: u64| 1e3 * rng() + if i % 5000 == 2500 { 60e3 } else { 0.0 };
+        let mut most = 0;
+        stream(&mut p, 120, late, |_, p| {
+            most = most.max(p.control.as_ref().unwrap().allowance);
+        });
+        let most_ms = most as f64 / 48.0;
+        assert!(most_ms < 1.5, "allowance reached {most_ms} ms");
+        assert!(p.stats().jitter_peak_ms > 50.0, "the stalls are measured");
+    }
+
+    #[test]
+    fn sheds_a_forgotten_stall_without_skipping() {
+        let mut p = playout(96, 128);
+        let mut rng = uniform();
+        let late = |i: u64| 1e3 * rng() + if i == 2500 { 30e3 } else { 0.0 };
+        let (mut at_10_s, mut at_60_s) = (None, None);
+        stream(&mut p, 240, late, |second, p| match second {
+            10 => at_10_s = Some(p.stats()),
+            60 => at_60_s = Some(p.stats()),
+            _ => {}
+        });
+        let (at_10_s, at_60_s, end) = (at_10_s.unwrap(), at_60_s.unwrap(), p.stats());
+        assert!(at_60_s.target_ms > 30.0, "covers the stall: {at_60_s:?}");
+        // Back to the margin, the 2 ms deadband and the everyday jitter.
+        let settled = MARGIN_MS + 2.0 + end.jitter_peak_ms;
+        assert!(end.target_ms < settled + 0.1, "forgets it: {end:?}");
+        assert_eq!(end.skipped_ms, at_10_s.skipped_ms);
+        assert_eq!(end.underruns, at_10_s.underruns);
     }
 
     /// Simulates capture blocks arriving with jitter into a device pulling fixed periods on a
@@ -983,58 +1152,29 @@ mod tests {
     }
 
     fn simulate(name: &str, block: u32, out_rate: u32, period: u32, jitter_us: f64) {
-        const MARGIN_MS: f64 = 1.5;
         let mut p = Playout::new(MARGIN_MS);
         p.set_format(format(block)).unwrap();
         p.set_output(output(out_rate, 2, period));
         let block_us = f64::from(block) * 1e6 / 48000.0;
         let period_us = f64::from(period) * 1e6 / f64::from(out_rate);
-        let input = pcm(block as usize, 1000);
-        let mut out = vec![0.0; period as usize * 2];
         let quantum_ms = block_us.min(period_us) / 1000.0;
         let ceiling_ms = MARGIN_MS + 2.0 * quantum_ms + jitter_us / 1000.0 + 3.0;
-
-        // Event-driven timeline in microseconds. Blocks leave on the headset's clock and each
-        // arrives late by up to `jitter_us`, never before the previous one. The PC's clock runs
-        // 100 ppm fast.
-        let mut rng = 0x2545_f491_4f6c_dd1d_u64;
-        let mut uniform = move || {
-            rng ^= rng << 13;
-            rng ^= rng >> 7;
-            rng ^= rng << 17;
-            (rng >> 11) as f64 / (1u64 << 53) as f64
-        };
-        let mut blocks = 0u64;
-        let mut next_block = 0.0f64;
-        let mut next_pull = 0.0f64;
-        let pull_step = period_us / 1.0001;
-        let mut settled_underruns = None;
-        let mut next_check = 6e6;
-        let mut late_windows = 0;
-        let start = Instant::now();
-        let mut now = 0.0;
-        while now < 60e6 {
-            if next_block <= next_pull {
-                now = next_block;
-                let at = start + Duration::from_secs_f64(now / 1e6);
-                p.push(at, blocks * u64::from(block), &input);
-                blocks += 1;
-                next_block = next_block.max(blocks as f64 * block_us + uniform() * jitter_us);
-            } else {
-                now = next_pull;
-                p.pull(&mut out);
-                next_pull += pull_step;
-            }
-            if settled_underruns.is_none() && now > 5e6 {
-                settled_underruns = Some(p.stats().underruns);
-            }
-            if now >= next_check {
-                next_check += 1e6;
-                if p.stats().buffer_min_ms > ceiling_ms {
+        let mut rng = uniform();
+        let (mut settled_underruns, mut late_windows) = (None, 0);
+        stream(
+            &mut p,
+            60,
+            |_| rng() * jitter_us,
+            |second, p| {
+                let stats = p.stats();
+                if second == 5 {
+                    settled_underruns = Some(stats.underruns);
+                }
+                if second > 5 && stats.buffer_min_ms > ceiling_ms {
                     late_windows += 1;
                 }
-            }
-        }
+            },
+        );
         let stats = p.stats();
         let underruns = stats.underruns - settled_underruns.unwrap();
         assert_eq!(underruns, 0, "{name}: underruns after settling");

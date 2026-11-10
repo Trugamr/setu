@@ -16,7 +16,11 @@
 //! restarts from it rather than counting it. A step the other way lowers the floor at once.
 //!
 //! [`Jitter::peak`] is the worst lateness over the last [`PEAK_SLOTS`] × [`PEAK_SLOT_S`] seconds
-//! of the stream: how much buffer would have ridden out every delay that recent.
+//! of the stream. [`Jitter::cover`] is the same over the lateness a buffer is willing to cover,
+//! up to a limit: how much buffer would have ridden out every delay that recent and that small.
+//! A delay beyond the limit costs less as an occasional dropout than as constant latency. The
+//! backlog that arrives behind such a delay is left out too: it arrives in a burst, late by less
+//! and less, and would otherwise count the delay as the limit itself.
 
 use std::time::Instant;
 
@@ -32,14 +36,24 @@ pub struct Jitter {
     /// Negated transits, so their maximum is the floor.
     floor: RollingMax<FLOOR_SLOTS>,
     peak: RollingMax<PEAK_SLOTS>,
+    /// Lateness worth covering, in seconds.
+    cover_limit_s: f64,
+    cover: RollingMax<PEAK_SLOTS>,
+    /// Stream times `[from, until)` held up behind the last delay beyond the cover limit: the
+    /// frames that would have arrived on time by the time it did.
+    backlog: Option<(f64, f64)>,
 }
 
 impl Jitter {
-    pub fn new() -> Self {
+    /// Measures lateness, and covers it up to `cover_limit_s` seconds.
+    pub fn new(cover_limit_s: f64) -> Self {
         Jitter {
             origin: None,
             floor: RollingMax::new(FLOOR_SLOT_S),
             peak: RollingMax::new(PEAK_SLOT_S),
+            cover_limit_s,
+            cover: RollingMax::new(PEAK_SLOT_S),
+            backlog: None,
         }
     }
 
@@ -58,6 +72,13 @@ impl Jitter {
             late = 0.0;
         }
         self.peak.add(now, late);
+        if late > self.cover_limit_s {
+            self.backlog = Some((stream_s, stream_s + late));
+        }
+        let held_up = self
+            .backlog
+            .is_some_and(|(from, until)| (from..until).contains(&stream_s));
+        self.cover.add(now, if held_up { 0.0 } else { late });
         late
     }
 
@@ -66,11 +87,11 @@ impl Jitter {
     pub fn peak(&self) -> f64 {
         self.peak.max().max(0.0)
     }
-}
 
-impl Default for Jitter {
-    fn default() -> Self {
-        Self::new()
+    /// The worst lateness within the cover limit over the last two minutes of the stream, in
+    /// seconds: the buffer worth keeping for late datagrams.
+    pub fn cover(&self) -> f64 {
+        self.cover.max().max(0.0)
     }
 }
 
@@ -129,6 +150,7 @@ mod tests {
     use std::time::Duration;
 
     const BLOCK_S: f64 = 0.002;
+    const COVER_LIMIT_S: f64 = 0.04;
 
     /// Feeds `blocks` 2 ms blocks from `first`, each arriving `delay(i)` seconds after it was
     /// captured on a headset clock that runs `ppm` slow, and returns each one's lateness.
@@ -152,7 +174,7 @@ mod tests {
 
     #[test]
     fn a_steady_stream_is_never_late() {
-        let mut j = Jitter::new();
+        let mut j = Jitter::new(COVER_LIMIT_S);
         let late = feed(&mut j, Instant::now(), 0, 1000, 0.0, |_| 0.0);
         assert!(late.iter().all(|&l| l.abs() < 1e-6));
         assert!(j.peak() < 1e-6);
@@ -160,7 +182,7 @@ mod tests {
 
     #[test]
     fn a_late_datagram_counts_against_the_on_time_ones() {
-        let mut j = Jitter::new();
+        let mut j = Jitter::new(COVER_LIMIT_S);
         let late = feed(&mut j, Instant::now(), 0, 1000, 0.0, |i| match i {
             500 => 0.012,
             501 => 0.010,
@@ -174,7 +196,7 @@ mod tests {
 
     #[test]
     fn the_first_datagram_being_late_does_not_count_later_ones_early() {
-        let mut j = Jitter::new();
+        let mut j = Jitter::new(COVER_LIMIT_S);
         let late = feed(&mut j, Instant::now(), 0, 100, 0.0, |i| {
             if i == 0 { 0.020 } else { 0.0 }
         });
@@ -183,8 +205,63 @@ mod tests {
     }
 
     #[test]
+    fn cover_leaves_out_lateness_beyond_its_limit() {
+        let mut j = Jitter::new(COVER_LIMIT_S);
+        feed(&mut j, Instant::now(), 0, 1000, 0.0, |i| match i {
+            200 => 0.030,
+            600 => 0.060,
+            _ => 0.0,
+        });
+        assert!((j.peak() - 0.060).abs() < 1e-6);
+        assert!((j.cover() - 0.030).abs() < 1e-6);
+    }
+
+    #[test]
+    fn cover_leaves_out_the_backlog_behind_a_long_delay() {
+        let mut j = Jitter::new(COVER_LIMIT_S);
+        // A 60 ms stall: block 500 arrives 60 ms late, the backlog behind it in one burst.
+        let late = feed(&mut j, Instant::now(), 0, 1000, 0.0, |i| match i {
+            500..530 => (530 - i) as f64 * BLOCK_S,
+            _ => 0.0,
+        });
+        assert!(
+            (late[510] - 0.040).abs() < 1e-6,
+            "the burst passes the limit"
+        );
+        assert!((j.peak() - 0.060).abs() < 1e-6);
+        assert!(j.cover() < 1e-6, "{}", j.cover());
+    }
+
+    #[test]
+    fn cover_keeps_a_delay_within_its_limit() {
+        let mut j = Jitter::new(COVER_LIMIT_S);
+        let late = feed(&mut j, Instant::now(), 0, 1000, 0.0, |i| match i {
+            500..515 => (515 - i) as f64 * BLOCK_S,
+            _ => 0.0,
+        });
+        assert!((late[500] - 0.030).abs() < 1e-6);
+        assert!((j.cover() - 0.030).abs() < 1e-6);
+    }
+
+    #[test]
+    fn a_restart_ends_the_backlog() {
+        let mut j = Jitter::new(COVER_LIMIT_S);
+        let start = Instant::now();
+        feed(&mut j, start, 0, 1000, 0.0, |i| match i {
+            900..930 => (930 - i) as f64 * BLOCK_S,
+            _ => 0.0,
+        });
+        // A new capture numbers from 0 again; its own 20 ms delay counts.
+        let restart = start + Duration::from_secs(3);
+        feed(&mut j, restart, 0, 100, 0.0, |i| {
+            if i == 50 { 0.020 } else { 0.0 }
+        });
+        assert!((j.cover() - 0.020).abs() < 1e-6, "{}", j.cover());
+    }
+
+    #[test]
     fn the_peak_is_forgotten_after_two_minutes() {
-        let mut j = Jitter::new();
+        let mut j = Jitter::new(COVER_LIMIT_S);
         let start = Instant::now();
         feed(&mut j, start, 0, 1, 0.0, |_| 0.0);
         feed(&mut j, start, 1, 1, 0.0, |_| 0.015);
@@ -205,7 +282,7 @@ mod tests {
     #[test]
     fn clock_drift_adds_at_most_two_seconds_of_it() {
         for ppm in [-300.0, 300.0] {
-            let mut j = Jitter::new();
+            let mut j = Jitter::new(COVER_LIMIT_S);
             let blocks_per_s = (1.0 / BLOCK_S) as u64;
             feed(&mut j, Instant::now(), 0, 60 * blocks_per_s, ppm, |_| 0.0);
             let bound = ppm.max(0.0) * 1e-6 * FLOOR_SLOTS as f64 * FLOOR_SLOT_S;
@@ -215,7 +292,7 @@ mod tests {
 
     #[test]
     fn an_outage_is_not_jitter() {
-        let mut j = Jitter::new();
+        let mut j = Jitter::new(COVER_LIMIT_S);
         // 300 ms without datagrams, then the backlog in one burst.
         let late = feed(&mut j, Instant::now(), 0, 1000, 0.0, |i| match i {
             500..650 => (650 - i) as f64 * BLOCK_S,
@@ -228,7 +305,7 @@ mod tests {
 
     #[test]
     fn a_step_in_the_stream_clock_is_adopted_rather_than_counted() {
-        let mut j = Jitter::new();
+        let mut j = Jitter::new(COVER_LIMIT_S);
         // The headset drops 0.5 s of captured frames: every later transit is 0.5 s higher.
         let late = feed(&mut j, Instant::now(), 0, 1000, 0.0, |i| {
             if i >= 500 { 0.5 } else { 0.0 }
@@ -239,7 +316,7 @@ mod tests {
 
     #[test]
     fn a_restarted_stream_is_not_late() {
-        let mut j = Jitter::new();
+        let mut j = Jitter::new(COVER_LIMIT_S);
         let start = Instant::now();
         feed(&mut j, start, 0, 1000, 0.0, |_| 0.0);
         // A new capture numbers from 0 again, two seconds of stream time later.
@@ -251,7 +328,7 @@ mod tests {
 
     #[test]
     fn a_stream_that_jumps_ahead_is_not_late() {
-        let mut j = Jitter::new();
+        let mut j = Jitter::new(COVER_LIMIT_S);
         let start = Instant::now();
         feed(&mut j, start, 0, 1000, 0.0, |_| 0.0);
         let late = feed(

@@ -206,7 +206,7 @@ mod tests {
                     state: PlayoutState::Idle,
                     buffer_min_ms: 0.0,
                     buffer_max_ms: 0.0,
-                    margin_ms: 0.0,
+                    target_ms: 0.0,
                     rate_adjust: 0.0,
                     jitter_ms: 0.0,
                     jitter_peak_ms: 0.0,

@@ -13,8 +13,8 @@ use crate::output::{self, Output, OutputFormat, OutputOptions, OutputState, Rend
 use crate::playout::{Playout, PlayoutStats};
 use crate::protocol::Format;
 
-/// Default safety margin over Wi-Fi, beyond one capture block and one output period.
-pub const DEFAULT_MARGIN_MS: f64 = 4.0;
+/// Default safety margin beyond the measured jitter, one capture block and one output period.
+pub const DEFAULT_MARGIN_MS: f64 = 2.0;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Config {

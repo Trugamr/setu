@@ -113,11 +113,11 @@ pub fn summarize(status: Option<&Status>, error: Option<&str>) -> Summary {
     };
     let p = &status.playout;
     let stats = format!(
-        "buffer {:.0}–{:.0} ms · block {:.0} ms · margin {:.1} ms · jitter {:.1} ms, peak {:.1} ms · rate {:+.2}% · underruns {}",
+        "buffer {:.0}–{:.0} ms · block {:.0} ms · target {:.1} ms · jitter {:.1} ms, peak {:.1} ms · rate {:+.2}% · underruns {}",
         p.buffer_min_ms,
         p.buffer_max_ms,
         format.block_ms(),
-        p.margin_ms,
+        p.target_ms,
         p.jitter_ms,
         p.jitter_peak_ms,
         p.rate_adjust * 100.0,
@@ -134,9 +134,9 @@ pub fn summarize(status: Option<&Status>, error: Option<&str>) -> Summary {
         },
     ];
     let footer = format!(
-        "Block {:.0} ms, margin {:.1} ms, rate {:+.2}%",
+        "Block {:.0} ms, target {:.1} ms, rate {:+.2}%",
         format.block_ms(),
-        p.margin_ms,
+        p.target_ms,
         p.rate_adjust * 100.0,
     );
     if p.state != PlayoutState::Playing {
@@ -239,7 +239,7 @@ mod tests {
                 state,
                 buffer_min_ms: 12.0,
                 buffer_max_ms: 18.0,
-                margin_ms: 4.0,
+                target_ms: 4.0,
                 rate_adjust: 0.0001,
                 jitter_ms: 3.0,
                 jitter_peak_ms: 9.5,
@@ -292,7 +292,7 @@ mod tests {
         assert_eq!(
             s.stats.as_deref(),
             Some(
-                "buffer 12–18 ms · block 10 ms · margin 4.0 ms · jitter 3.0 ms, peak 9.5 ms · rate +0.01% · underruns 2"
+                "buffer 12–18 ms · block 10 ms · target 4.0 ms · jitter 3.0 ms, peak 9.5 ms · rate +0.01% · underruns 2"
             )
         );
         assert_eq!(
@@ -310,7 +310,7 @@ mod tests {
         );
         assert_eq!(
             s.footer.as_deref(),
-            Some("Block 10 ms, margin 4.0 ms, rate +0.01%")
+            Some("Block 10 ms, target 4.0 ms, rate +0.01%")
         );
         assert_eq!(s.phase.look(), Look::Flowing);
     }

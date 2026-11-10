@@ -274,18 +274,31 @@ These come from the prototype receiver; the desktop app's playout follows them.
 
 - **The jitter buffer controls its minimum, not its average.** Block arrivals make the buffer
   level a sawtooth, and latency is set by its bottom. Playback rate is nudged (±0.5 %, linear
-  interpolation) so the minimum over each 0.5 s window settles at the margin.
+  interpolation) so the minimum over each 0.5 s window settles at the target.
+- **It steers what an on-time datagram would find, not the level itself.** Each datagram's
+  lateness is its transit (arrival minus stream time) above the lowest transit of the last 2 s.
+  The level it finds plus its lateness is what it would have found on time, which does not move
+  with jitter, so the controller does not chase each late datagram.
+- **Target** = margin + jitter allowance, at most 40 ms beyond the deadband. The allowance is
+  the worst lateness of the last 2 minutes among datagrams no more than 40 ms late, leaving out
+  the backlog behind a longer delay, which costs less as an occasional dropout than as constant
+  latency. It rises before playback restarts, so a stall's own burst is kept for it, and falls
+  at 2.5 ms/s, slowly enough to shed by rate without a skip unless clock drift already takes
+  more than half the ±0.5 %. A datagram over 100 ms late marks an outage, not jitter. In
+  simulation, 15–35 ms stalls every 10 s gave 3 underruns in 20 minutes instead of 27, for 7 ms
+  more delay.
 - **Deadband of min(block, output period).** The measured minimum moves by up to that much as
   arrivals drift against the output's pull grid; without the deadband the controller oscillates.
-- **Margin** = configured margin + min(block, period). It grows 2 ms per underrun and decays
-  0.5 ms after each 15 s without one. The default is 4 ms over Wi-Fi (the prototype used
-  1.5 ms over USB).
-- **The controller is proportional**, so an output whose clock drifts settles above the margin
+- **Margin** = configured margin (2 ms by default) + min(block, period). It grows 2 ms per
+  underrun the allowance did not cover, within the target's ceiling, and decays 0.5 ms after
+  each 15 s without one.
+- **The controller is proportional**, so an output whose clock drifts settles above the target
   by about 20 ms per 1 % of drift: 0.2 ms for a typical 100 ppm, but several ms for a virtual
   device that runs 0.3 % slow.
-- **After an underrun, refill to one block, one output period and the margin**, not a fixed
+- **After an underrun, refill to one block, one output period and the target**, not a fixed
   amount, and drop whatever arrives beyond that before playing again, so a stall costs latency
-  only while it lasts. The margin is the level after a pull, so before one it needs a period more.
+  only while it lasts. The target is the level after a pull, so before one it needs a period
+  more.
 - **No abrupt edges.** Playback fades out over 1 ms before the buffer runs dry, from a 1 ms
   reserve, and fades in over 2 ms when it restarts. A skip fades out, jumps and fades in, and
   where the stream breaks (a lost datagram's silence, or a capture restarting) the audio either
