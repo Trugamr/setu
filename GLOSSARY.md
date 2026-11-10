@@ -6,6 +6,9 @@ The words Setu's code and docs use for its parts.
 
 **Agent**: the Android app installed on the headset. It sets up and starts the capture server.
 
+**Installer**: the browser page (`apps/web`) that installs the agent over WebUSB and runs its
+setup, as `task agent:setup` does with adb.
+
 **Capture server**: the process on the headset that captures playback and streams it to receivers.
 It runs as the adb shell user, never inside the agent's process.
 

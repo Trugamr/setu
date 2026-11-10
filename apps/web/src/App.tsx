@@ -1,11 +1,12 @@
 import { AnimatePresence, MotionConfig } from "motion/react";
 import { useState } from "react";
-import { SOURCE_URL, card, section, steps } from "./card";
+import { SOURCE_URL, page } from "./page";
 import { HowItWorks, SectionRows } from "./components/Extras";
 import { StatusCard } from "./components/StatusCard";
 import { Steps } from "./components/Steps";
 import { runSetup, type Status } from "./setup";
-import { fetchApk, webUsb } from "./webusb";
+import { fetchApk } from "./apk";
+import { webUsb } from "./webusb";
 
 const usb = webUsb();
 const supported = usb !== undefined;
@@ -28,8 +29,7 @@ export function App() {
     }
   }
 
-  const shown = card(status, supported);
-  const extra = section(status, supported);
+  const { card, steps, section } = page(status, supported);
   return (
     <MotionConfig reducedMotion="user">
       <main className="mx-auto w-full max-w-column px-4 pt-10 pb-12">
@@ -38,10 +38,10 @@ export function App() {
           <p className="text-label text-cream-muted">Headset setup</p>
         </header>
 
-        <StatusCard card={shown} onAction={running ? undefined : start} />
-        <Steps rows={steps(status)} />
+        <StatusCard card={card} onAction={running ? undefined : start} />
+        <Steps rows={steps} />
         <AnimatePresence mode="wait" initial={false}>
-          {extra && <SectionRows key={extra.title} section={extra} />}
+          {section && <SectionRows key={section.title} section={section} />}
         </AnimatePresence>
         <HowItWorks />
 

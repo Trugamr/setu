@@ -1,11 +1,27 @@
-// What the installer's page shows, worked out from a Status without the DOM, so the wording and
-// every choice of what to show can be tested; components/ only lays it out. The card and rows
-// follow the apps' (design/brand/README.md).
+// What the installer's page shows for a Status, worked out without the DOM so the wording and
+// every choice that depends on the status can be tested; components/ lays it out. The card and
+// rows follow the apps' (design/brand/README.md).
 
 import { STEPS, type Status, type Step } from "./setup";
 
-/** Plain: nothing to do on the headset. Waiting: the headset is asking the user something. */
-export type Look = "plain" | "waiting";
+/** Everything on the page that changes with the status. */
+export interface Page {
+  card: Card;
+  steps: StepRow[];
+  /** The group under the steps, or none while setup runs. */
+  section?: Section;
+}
+
+/** [supported]: whether this browser has WebUSB. */
+export function page(status: Status, supported: boolean): Page {
+  return { card: card(status, supported), steps: steps(status), section: section(status, supported) };
+}
+
+/**
+ * Plain: nothing to do on the headset. Waiting: the headset is asking the user something, and the
+ * card is outlined. Problem: the sentence says what went wrong, in Signal.
+ */
+export type Look = "plain" | "waiting" | "problem";
 
 /**
  * The status card's grille. Off; sweeping while something runs with nothing to measure; full
@@ -18,8 +34,6 @@ export interface Card {
   look: Look;
   title: string;
   sentence: string;
-  /** Whether the sentence says what went wrong. */
-  problem: boolean;
   grille: Grille;
   /** The button, or none. Primary is Signal, the action that starts things; secondary an outline. */
   action?: { label: string; style: "primary" | "secondary" };
@@ -30,8 +44,8 @@ export const SOURCE_URL = "https://github.com/Trugamr/setu";
 export const ALWAYS_ALLOW_LABEL = "Always allow from this computer";
 const ALWAYS_ALLOW = `“${ALWAYS_ALLOW_LABEL}”`;
 
-export function card(status: Status, supported: boolean): Card {
-  const plain = { look: "plain" as const, problem: false, grille: "off" as const };
+function card(status: Status, supported: boolean): Card {
+  const plain = { look: "plain" as const, grille: "off" as const };
   if (!supported) {
     return {
       ...plain,
@@ -86,7 +100,7 @@ export function card(status: Status, supported: boolean): Card {
             : reason.kind === "notAllowed"
               ? "The headset didn't allow Setu to start without the cable."
               : sentenceCase(reason.message),
-        problem: true,
+        look: "problem",
         action: { label: "Try again", style: "primary" },
       };
     }
@@ -136,7 +150,7 @@ const ON_THE_HEADSET = (why: string): Help => ({
 });
 
 /** Where each step stands. A failed step stays current, so the list shows where it stopped. */
-export function steps(status: Status): StepRow[] {
+function steps(status: Status): StepRow[] {
   const at = status.kind === "done" ? STEPS.length : status.kind === "idle" ? -1 : STEPS.indexOf(status.step);
   return STEPS.map((step, i) => {
     const state: StepState = i < at ? "done" : i === at ? "current" : "todo";
@@ -215,7 +229,7 @@ export interface Section {
   rows: Row[];
 }
 
-export function section(status: Status, supported: boolean): Section | undefined {
+function section(status: Status, supported: boolean): Section | undefined {
   if (!supported || status.kind === "idle") {
     return {
       title: "Before you start",

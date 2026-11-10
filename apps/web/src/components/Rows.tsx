@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Icon as IconName } from "../card";
+import type { Icon as IconName, StepState } from "../page";
 import { Icon } from "../icons";
 
 /** A list's label, inset to line up with the text in its rows, as in the apps. */
@@ -16,7 +16,10 @@ export function Group({ children, as: Tag = "ul" }: { children: ReactNode; as?: 
   );
 }
 
-export type TileLook = "plain" | "done" | "current" | "todo";
+export type TileLook = "plain" | StepState;
+
+/** Lines up what sits under a row with the row's text: past its 40 tile and their 12 gap. */
+export const PAST_TILE = "pl-13";
 
 /** An icon tile, a title over a secondary line, and something at the end. */
 export function RowLine({

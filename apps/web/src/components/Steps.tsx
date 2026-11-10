@@ -1,7 +1,7 @@
-import type { Help, StepRow } from "../card";
+import type { Help, StepRow } from "../page";
 import { HeadsetPrompt } from "./HeadsetPrompt";
 import { Collapse } from "./motion";
-import { Group, RowLine, SectionLabel } from "./Rows";
+import { Group, PAST_TILE, RowLine, SectionLabel } from "./Rows";
 
 /** The four steps, each saying why it is there. The current one opens to say what to do now. */
 export function Steps({ rows }: { rows: StepRow[] }) {
@@ -39,8 +39,7 @@ function HelpPanel({ help }: { help: Help }) {
   const List = help.ordered ? "ol" : "ul";
   return (
     <div className="flex flex-col gap-4 px-4 pb-4">
-      {/* pl-13: past the step's 40 tile and its 12 gap, to its text. */}
-      <List className="flex flex-col gap-2 pl-13 text-sentence text-pretty">
+      <List className={`flex flex-col gap-2 ${PAST_TILE} text-sentence text-pretty`}>
         {help.items.map((item, i) => (
           <li key={item} className="flex gap-3">
             {help.ordered ? (

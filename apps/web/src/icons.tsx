@@ -12,7 +12,7 @@ import {
   RectangleGoggles,
   ShieldCheck,
 } from "lucide-react";
-import type { Icon as IconName } from "./card";
+import type { Icon as IconName } from "./page";
 
 /** Lucide's line icons, at the weight of the apps' drawn ones. */
 const ICONS: Record<IconName | "chevron", LucideIcon> = {

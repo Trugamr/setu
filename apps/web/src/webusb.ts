@@ -6,11 +6,13 @@ import AdbWebCredentialStore from "@yume-chan/adb-credential-web";
 import { AdbDaemonWebUsbDevice, AdbDaemonWebUsbDeviceManager } from "@yume-chan/adb-daemon-webusb";
 import { PackageManager } from "@yume-chan/android-bin";
 import type { ReadableStream as TangoReadableStream } from "@yume-chan/stream-extra";
-import { HeadsetBusy, isApk, sleep, type Apk, type Headset, type Usb } from "./setup";
+import { HeadsetBusy, sleep, type Apk, type Headset, type Usb } from "./setup";
 
 const credentials = new AdbWebCredentialStore("Setu installer");
 /** How long authentication runs before the headset is taken to be asking to allow this browser. */
 const ASKING_AFTER_MS = 1000;
+/** How often to look for the headset back on USB while adbd restarts. */
+const RECONNECT_POLL_MS = 500;
 
 /** WebUSB, or undefined when the browser has none. */
 export function webUsb(): Usb | undefined {
@@ -33,7 +35,7 @@ export function webUsb(): Usb | undefined {
             // connection: try again.
           }
         }
-        await sleep(500);
+        await sleep(RECONNECT_POLL_MS);
       }
       throw new Error("The headset didn't come back on USB. Check the cable, then try again.");
     },
@@ -113,13 +115,3 @@ class UsbHeadset implements Headset {
   }
 }
 
-/** The agent's APK, served next to the page. */
-export async function fetchApk(): Promise<Apk> {
-  const response = await fetch(`${import.meta.env.BASE_URL}setu-agent.apk`);
-  if (!response.ok) throw new Error(`couldn't download Setu (${response.status})`);
-  const blob = await response.blob();
-  if (!isApk(new Uint8Array(await blob.slice(0, 4).arrayBuffer()))) {
-    throw new Error("couldn't download Setu: the page has no APK next to it");
-  }
-  return { size: blob.size, stream: () => blob.stream() };
-}

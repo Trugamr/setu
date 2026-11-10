@@ -6,7 +6,6 @@ import {
   SETUP_DONE,
   TCP_PORT_PROP,
   installFailure,
-  isApk,
   runSetup,
   type Apk,
   type Headset,
@@ -249,13 +248,5 @@ describe("installFailure", () => {
 
   it("passes on output that isn't pm's", () => {
     expect(installFailure("device offline")).toBe("device offline");
-  });
-});
-
-describe("isApk", () => {
-  it("knows an APK by its zip header, and a page served in its place by its lack of one", () => {
-    expect(isApk(new Uint8Array([0x50, 0x4b, 0x03, 0x04]))).toBe(true);
-    expect(isApk(new TextEncoder().encode("<!doctype html>"))).toBe(false);
-    expect(isApk(new Uint8Array())).toBe(false);
   });
 });

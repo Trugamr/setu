@@ -219,14 +219,6 @@ function failure(e: unknown): Failure {
   return { kind: "error", message: e instanceof Error ? e.message : String(e) };
 }
 
-/**
- * Whether a file starts as an APK does, with a zip's local header. A server without the APK may
- * answer its URL with a page instead, as Vite's does.
- */
-export function isApk(start: Uint8Array): boolean {
-  return start[0] === 0x50 && start[1] === 0x4b && start[2] === 0x03 && start[3] === 0x04;
-}
-
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

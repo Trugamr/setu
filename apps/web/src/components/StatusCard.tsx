@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
-import type { Card, Grille as GrilleState } from "../card";
+import type { Card, Grille as GrilleState } from "../page";
 import { QUICK } from "./motion";
 
 const COLUMNS = 5;
@@ -11,13 +11,12 @@ const SWEEP_MS = 1600;
 
 /** The apps' status card: a title and a sentence, the grille, and one action. */
 export function StatusCard({ card, onAction }: { card: Card; onAction?: () => void }) {
-  const waiting = card.look === "waiting";
   const lit = useLit(card.grille);
   return (
     <section
       aria-live="polite"
       className={`flex flex-col rounded-card bg-ink-raised p-4 outline-2 -outline-offset-2 transition-colors duration-200 ${
-        waiting ? "outline-cream" : "outline-transparent"
+        card.look === "waiting" ? "outline-cream" : "outline-transparent"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
@@ -31,7 +30,7 @@ export function StatusCard({ card, onAction }: { card: Card; onAction?: () => vo
             transition={QUICK}
           >
             <h2 className="font-display text-status-title">{card.title}</h2>
-            <p className={`text-sentence text-pretty ${card.problem ? "text-signal" : "text-cream-muted"}`}>
+            <p className={`text-sentence text-pretty ${card.look === "problem" ? "text-signal" : "text-cream-muted"}`}>
               {card.sentence}
             </p>
           </motion.div>

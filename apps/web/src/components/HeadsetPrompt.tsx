@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { ALWAYS_ALLOW_LABEL } from "../card";
+import { ALWAYS_ALLOW_LABEL } from "../page";
 import { Icon } from "../icons";
 import { EASE } from "./motion";
 

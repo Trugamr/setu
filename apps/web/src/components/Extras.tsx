@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useState } from "react";
-import type { Section } from "../card";
+import type { Section } from "../page";
 import { Icon } from "../icons";
 import { Collapse, QUICK } from "./motion";
 import { Group, RowLine, SectionLabel } from "./Rows";
@@ -9,7 +9,6 @@ import { Group, RowLine, SectionLabel } from "./Rows";
 export function SectionRows({ section }: { section: Section }) {
   return (
     <motion.div
-      key={section.title}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
