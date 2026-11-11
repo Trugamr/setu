@@ -27,13 +27,11 @@ use windows::Win32::System::Com::{
     CLSCTX_ALL, COINIT_MULTITHREADED, CoCreateInstance, CoInitializeEx, CoTaskMemFree,
     CoUninitialize, STGM_READ,
 };
-use windows::Win32::System::Threading::{
-    AVRT_PRIORITY_CRITICAL, AvRevertMmThreadCharacteristics, AvSetMmThreadCharacteristicsW,
-    AvSetMmThreadPriority, CreateEventW, SetEvent, WaitForMultipleObjects,
-};
-use windows::core::{Interface, w};
+use windows::Win32::System::Threading::{CreateEventW, SetEvent, WaitForMultipleObjects};
+use windows::core::Interface;
 
 use super::{Devices, Error, Event, OutputFormat, OutputInfo, OutputOptions, Render};
+use crate::priority::{Priority, ProAudio};
 
 /// Wait between attempts to reopen a failed device.
 const RETRY: Duration = Duration::from_millis(500);
@@ -82,7 +80,7 @@ pub fn run(
     stop: &Stop,
 ) -> Result<(), Error> {
     let _com = Com::init()?;
-    let _priority = ProAudio::register();
+    let _priority = ProAudio::register(Priority::Critical);
     let enumerator = enumerator()?;
     let mut opened = false;
     loop {
@@ -603,29 +601,6 @@ impl Drop for Com {
     fn drop(&mut self) {
         if self.initialized {
             unsafe { CoUninitialize() };
-        }
-    }
-}
-
-/// The current thread registered with MMCSS as "Pro Audio", reverted on drop. Without MMCSS
-/// the thread keeps its normal priority.
-struct ProAudio(Option<HANDLE>);
-
-impl ProAudio {
-    fn register() -> Self {
-        let mut index = 0;
-        let handle = unsafe { AvSetMmThreadCharacteristicsW(w!("Pro Audio"), &mut index) }.ok();
-        if let Some(handle) = handle {
-            let _ = unsafe { AvSetMmThreadPriority(handle, AVRT_PRIORITY_CRITICAL) };
-        }
-        ProAudio(handle)
-    }
-}
-
-impl Drop for ProAudio {
-    fn drop(&mut self) {
-        if let Some(handle) = self.0 {
-            let _ = unsafe { AvRevertMmThreadCharacteristics(handle) };
         }
     }
 }

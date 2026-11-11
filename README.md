@@ -307,7 +307,13 @@ These come from the prototype receiver; the desktop app's playout follows them.
   dips the level briefly, where without it the audio would have played on untouched.
 - **UDP over Wi-Fi.** Each datagram carries its frame position, so a lost datagram becomes
   silence of the right length instead of a retransmit stall. The receiver sends HELLO and the
-  server answers, which also passes desktop firewalls as reply traffic.
+  server answers, which also passes desktop firewalls as reply traffic. The server marks its
+  datagrams DSCP CS6, which the headset's Wi-Fi sends as voice (WMM AC_VO), as it does EF. For
+  a PC on Wi-Fi, most access points map CS6 to voice and EF to video; one following RFC 8325
+  maps CS6 to best effort.
+- **The desktop's threads on the audio path run as "Pro Audio" under MMCSS.** The output
+  thread at critical priority, as any delay there is a gap; the link thread at high, as a delay
+  there stamps a datagram late and counts as jitter, which the buffer covers with latency.
 
 ## Repository layout
 

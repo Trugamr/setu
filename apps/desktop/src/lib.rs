@@ -7,6 +7,7 @@
 //! - [`playout`]: the jitter buffer and rate controller between network and device, which
 //!   measures how late datagrams arrive with `jitter`.
 //! - [`output`]: the audio device, behind a platform adapter.
+//! - `priority`: the scheduling priority of the link's and the output's threads.
 //!
 //! [`Session`] is the app around a receiver, which the front ends (the window in `main.rs` and
 //! `setu-cli`) host:
@@ -21,6 +22,7 @@ mod jitter;
 pub mod link;
 pub mod output;
 pub mod playout;
+mod priority;
 pub mod protocol;
 pub mod receiver;
 pub mod session;

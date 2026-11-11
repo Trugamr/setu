@@ -14,6 +14,7 @@ use std::time::{Duration, Instant};
 
 use socket2::{Domain, Protocol, Socket, Type};
 
+use crate::priority::{Priority, ProAudio};
 use crate::protocol::{self, Audio, Format, Message};
 
 /// Well inside the server's 3-second stale timeout, so one lost HELLO never stops the stream.
@@ -53,7 +54,10 @@ impl Link {
         let stop = Arc::new(AtomicBool::new(false));
         let thread = thread::Builder::new().name("setu-link".into()).spawn({
             let stop = stop.clone();
-            move || run(&socket, &hello, &stop, &mut on_event)
+            move || {
+                let _priority = ProAudio::register(Priority::High);
+                run(&socket, &hello, &stop, &mut on_event)
+            }
         })?;
         Ok(Link {
             stop,
