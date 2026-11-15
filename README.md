@@ -51,7 +51,9 @@ Voicemeeter.
 </p>
 
 **Status: work in progress.** Streaming, VBAN and both apps work. The desktop app asks for the
-headset's address, as it can't find the headset on its own yet.
+headset's address, as it can't find the headset on its own yet. Tested only with a Meta Quest 3
+on Horizon OS build 52641960031600520 (Android 14), in November 2026. Other headsets and Horizon
+OS versions may work but are untested.
 
 ## Quick start
 
