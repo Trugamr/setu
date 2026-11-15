@@ -4,6 +4,15 @@ plugins {
     id("com.android.compose.screenshot") version "0.0.1-alpha16"
 }
 
+/** The agent's version, `-Psetu.version=1.2.3` (a release passes its tag), or 0.1.0. */
+val agentVersion: String = providers.gradleProperty("setu.version").getOrElse("0.1.0")
+
+/** 1.2.3 becomes 10203, so each release's version code is higher than the last. */
+fun agentVersionCode(version: String): Int {
+    val (major, minor, patch) = version.substringBefore('-').split('.').map(String::toInt)
+    return major * 10000 + minor * 100 + patch
+}
+
 android {
     namespace = "dev.trugamr.setu"
     compileSdk = 37
@@ -13,14 +22,31 @@ android {
         // Quest 3 runs Horizon OS on Android 14 (API 34).
         minSdk = 31
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = agentVersionCode(agentVersion)
+        versionName = agentVersion
+    }
+
+    // The release key comes from the environment (CI decodes it from a secret); without it the
+    // release APK is built unsigned.
+    val keystore = providers.environmentVariable("SETU_KEYSTORE").orNull
+    signingConfigs {
+        if (keystore != null) {
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = providers.environmentVariable("SETU_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("SETU_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("SETU_KEY_PASSWORD").get()
+            }
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 takes the APK from about 37 MB to 4 MB, under the 25 MiB a Cloudflare static
+            // asset may be, so the browser installer can serve it next to the page.
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

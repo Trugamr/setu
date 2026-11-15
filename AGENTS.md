@@ -5,6 +5,10 @@ before changing the capture path.
 
 - Build, test and run through `task` (`task --list`). Under WSL it routes to Windows `cargo.exe`
   and `adb.exe` (WSL has no USB) and gives the JVM `-Djava.net.preferIPv4Stack=true`.
+- CI (`.github/workflows`) can't use the Taskfile, which is WSL-only, so it calls `gradlew`, `pnpm`
+  and `cargo` directly. When a task's command changes, change the workflows to match.
+- Release builds of the agent run R8. Code reached only by reflection or through `app_process`
+  needs a keep rule in `proguard-rules.pro`.
 - The capture server (`apps/agent/.../server`) runs as the adb shell user via `app_process`,
   never inside the app process.
 - Agent tests are plain JVM tests: keep tested logic free of `android.*`, with the platform behind

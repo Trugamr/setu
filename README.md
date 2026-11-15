@@ -363,6 +363,21 @@ host[:port][/name]]`, `adb [blockFrames]`, `probe [clicks] [blockFrames]`, `burs
 `adb-wifi-trust <bssid>`, `adb-revoke-keys`, `setup`. The agent launches `udp` with the defaults and
 logs to `/data/local/tmp/setu-server.log`. A new server ends any Setu server holding its port.
 
+### Releases
+
+CI (`.github/workflows/ci.yml`) tests and builds the agent, the browser installer and the
+desktop app on every push to main and every pull request. Pushing a version tag releases it:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+The release workflow builds the agent's APK, minified with R8 and signed with the release key,
+and the desktop app for Windows x64 and arm64. It attaches them to a GitHub release, then
+deploys the browser installer with that same APK to https://setu.trugamr.dev, a Cloudflare
+Worker that serves only static assets (`apps/web/wrangler.jsonc`). The secrets it needs are
+listed at the top of `.github/workflows/release.yml`.
+
 ## Roadmap
 
 1. Agent: pass the server a secret that control messages and local receivers must carry, so

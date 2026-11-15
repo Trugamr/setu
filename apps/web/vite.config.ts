@@ -4,8 +4,13 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
-/** The agent's debug APK, as `task agent:build` leaves it. */
-const AGENT_APK = fileURLToPath(new URL("../agent/build/outputs/apk/debug/setu-agent-debug.apk", import.meta.url));
+/**
+ * The agent's APK: `SETU_AGENT_APK` when set, as CI sets it to the release build, or the debug
+ * APK `task agent:build` leaves.
+ */
+const AGENT_APK =
+  process.env.SETU_AGENT_APK ??
+  fileURLToPath(new URL("../agent/build/outputs/apk/debug/setu-agent-debug.apk", import.meta.url));
 const APK_NAME = "setu-agent.apk";
 
 /**
