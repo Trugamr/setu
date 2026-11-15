@@ -16,6 +16,7 @@
   <img alt="Status: work in progress" src="https://img.shields.io/badge/status-work_in_progress-FF3B2F?labelColor=15141A">
   <img alt="Headset: Meta Quest 3" src="https://img.shields.io/badge/headset-Meta_Quest_3-F5ECDC?labelColor=15141A">
   <img alt="PC: Windows" src="https://img.shields.io/badge/PC-Windows-F5ECDC?labelColor=15141A">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-F5ECDC?labelColor=15141A">
 </p>
 
 <p align="center">
@@ -415,3 +416,8 @@ Open questions:
 - AOSP sources consulted: `AdbDebuggingManager.java` and `AdbService.java` in
   `frameworks/base`, `daemon/auth.cpp` in `packages/modules/adb`, and `adbd_auth.cpp` in
   `frameworks/native`.
+
+## License
+
+[MIT](LICENSE). Files adapted from scrcpy say so at the top and keep its
+[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) license.
