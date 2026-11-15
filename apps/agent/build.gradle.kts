@@ -4,12 +4,15 @@ plugins {
     id("com.android.compose.screenshot") version "0.0.1-alpha16"
 }
 
-/** The agent's version, `-Psetu.version=1.2.3` (a release passes its tag), or 0.1.0. */
+/** The agent's version, `-Psetu.version=1.2.3` (a release passes Cargo.toml's), or 0.1.0. */
 val agentVersion: String = providers.gradleProperty("setu.version").getOrElse("0.1.0")
 
 /** 1.2.3 becomes 10203, so each release's version code is higher than the last. */
 fun agentVersionCode(version: String): Int {
-    val (major, minor, patch) = version.substringBefore('-').split('.').map(String::toInt)
+    val parts = Regex("""(\d+)\.(\d+)\.(\d+)""").matchEntire(version)?.groupValues?.drop(1)?.map(String::toInt)
+    require(parts != null) { "setu.version must be major.minor.patch, such as 1.2.3, not \"$version\"" }
+    val (major, minor, patch) = parts
+    require(minor < 100 && patch < 100) { "setu.version's minor and patch must be under 100, not \"$version\"" }
     return major * 10000 + minor * 100 + patch
 }
 
@@ -24,6 +27,8 @@ android {
         targetSdk = 34
         versionCode = agentVersionCode(agentVersion)
         versionName = agentVersion
+        // The Quest is arm64; other ABIs' native libraries would only grow the APK.
+        ndk { abiFilters += "arm64-v8a" }
     }
 
     // The release key comes from the environment (CI decodes it from a secret); without it the

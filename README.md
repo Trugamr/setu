@@ -45,24 +45,29 @@ Voicemeeter. Setu means "bridge"; audio is the first thing it carries.
 
 **Status: work in progress.** Working: the capture server, the protocol, VBAN output, the agent
 (start and stop the server, VBAN settings), the desktop app (connect, level and delay, output
-device) and the browser installer. Not built yet: hosting for the installer and release builds,
-so setup still needs a development machine, the PC installer, and discovery, so the desktop app
-asks for the headset's address.
+device), the browser installer at https://setu.trugamr.dev, and release builds. Not built yet:
+the PC installer, and discovery, so the desktop app asks for the headset's address.
 
 ## Quick start
 
-Needs the [build tools](#build) and a headset in Developer Mode.
+Needs a headset in Developer Mode, a USB cable, and a Windows PC with Chrome or Edge.
 
-1. **Once, over USB:** connect the headset and run `task web:dev`, then open
-   http://localhost:5173 in Chrome or Edge and choose Connect. Or run `task agent:setup`, which
-   takes the same steps with adb. On the headset, choose "Always allow from this computer" each
-   time it asks. Unplug the cable.
-2. **On the headset:** open Setu and tap Start. The first start after each boot asks to allow
-   wireless debugging on this network; choose Allow.
-3. **On the PC:** run `task desktop:run`, enter the headset's address and connect. The agent
-   shows the address under VBAN, as "IP address from".
+1. **Once, over USB:** connect the headset, open https://setu.trugamr.dev and choose Connect.
+   On the headset, choose "Always allow from this computer" each time it asks. Unplug the cable.
+2. **On the headset:** open Setu (Library, under Unknown sources) and tap Start. The first start
+   after each boot asks to allow wireless debugging on this network; choose Allow.
+3. **On the PC:** download `setu-<version>-windows-x64.zip` (`arm64` for an Arm PC) from the
+   [latest release](https://github.com/Trugamr/setu/releases/latest), extract it and run
+   `setu.exe`. Enter the headset's address and connect; the agent shows it under VBAN, as
+   "IP address from".
+   - The exe isn't code-signed, so Windows SmartScreen warns about it: choose More info, then
+     Run anyway.
+   - Allow Setu through Windows Firewall when it asks, at least on private networks. Without
+     that it receives nothing.
 
-To play through Voicemeeter instead of the desktop app, see [VBAN](#vban).
+To play through Voicemeeter instead of the desktop app, see [VBAN](#vban). To run from source,
+`task agent:setup`, `task web:dev` and `task desktop:run` take the place of these steps (see
+[Build](#build)).
 
 ## How it works
 
@@ -366,7 +371,10 @@ logs to `/data/local/tmp/setu-server.log`. A new server ends any Setu server hol
 ### Releases
 
 CI (`.github/workflows/ci.yml`) tests and builds the agent, the browser installer and the
-desktop app on every push to main and every pull request. Pushing a version tag releases it:
+desktop app on every push to main and every pull request.
+
+The version lives in `Cargo.toml` (`workspace.package.version`), and the agent takes the same
+one. To release, bump it in a commit, then tag that commit:
 
 ```bash
 git tag v0.2.0 && git push origin v0.2.0
@@ -375,16 +383,16 @@ git tag v0.2.0 && git push origin v0.2.0
 The release workflow builds the agent's APK, minified with R8 and signed with the release key,
 and the desktop app for Windows x64 and arm64. It attaches them to a GitHub release, then
 deploys the browser installer with that same APK to https://setu.trugamr.dev, a Cloudflare
-Worker that serves only static assets (`apps/web/wrangler.jsonc`). The secrets it needs are
-listed at the top of `.github/workflows/release.yml`.
+Worker that serves only static assets (`apps/web/wrangler.jsonc`). Running the workflow by hand
+(`gh workflow run release.yml`) builds everything and stops before the release and the deploy.
+The secrets it needs are listed at the top of `.github/workflows/release.yml`.
 
 ## Roadmap
 
 1. Agent: pass the server a secret that control messages and local receivers must carry, so
    other apps on the headset cannot redirect the stream.
 2. Desktop app: a tray icon, so it can play with the window closed.
-3. Installers: host the browser installer with a release APK, so VBAN works with no Setu
-   software on the PC, then the PC installer.
+3. A PC installer inside the desktop app, taking the same steps as the browser installer.
 4. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
    address from the last Setu receiver, and find VBAN receivers with VBAN's PING0 service.
 
