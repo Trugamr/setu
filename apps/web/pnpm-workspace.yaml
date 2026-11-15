@@ -1,0 +1,5 @@
+# Install scripts pnpm may run. Wrangler's esbuild and workerd ship their binaries as optional
+# platform packages, and deploying static assets runs neither, so their scripts stay off.
+allowBuilds:
+  esbuild: false
+  workerd: false

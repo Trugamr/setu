@@ -1,0 +1,10 @@
+// The browser installer on Cloudflare: a Worker with only static assets, the built page and
+// the agent's APK, served at setu.trugamr.dev. The release workflow deploys it.
+{
+  "name": "setu",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "setu.trugamr.dev", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false
+}
