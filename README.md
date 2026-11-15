@@ -33,7 +33,7 @@ Setu streams a Meta Quest 3's audio to a PC with as little delay as the headset 
 20 ms behind the headset's own speakers over USB and 25–35 ms over Wi-Fi, as measured on an
 earlier prototype (estimates, see [Measurements](#measurements)). The headset keeps playing while
 it streams. Play it with Setu's desktop app, or with any [VBAN](#vban) receiver such as
-Voicemeeter. Setu means "bridge"; audio is the first thing it carries.
+Voicemeeter.
 
 <p align="center">
   <img src="docs/screenshots/agent.png" width="302" alt="The agent on the headset: a cream Sending card with its block size, receivers and the headset's address, and Stop; below it the outputs, the desktop app connected and VBAN on, and the VBAN settings.">
@@ -43,16 +43,21 @@ Voicemeeter. Setu means "bridge"; audio is the first thing it carries.
   <sub>The agent on the headset, sending, and the desktop app on the PC, playing it.</sub>
 </p>
 
-**Status: work in progress.** Working: the capture server, the protocol, VBAN output, the agent
-(start and stop the server, VBAN settings), the desktop app (connect, level and delay, output
-device), the browser installer at https://setu.trugamr.dev, and release builds. Not built yet:
-the PC installer, and discovery, so the desktop app asks for the headset's address.
+<p align="center">
+  <a href="https://setu.trugamr.dev"><b>Install on your Quest</b></a> ·
+  <a href="https://github.com/Trugamr/setu/releases/latest"><b>Download for Windows</b></a> ·
+  <a href="#build">Build it yourself</a>
+</p>
+
+**Status: work in progress.** Streaming, VBAN and both apps work. The desktop app asks for the
+headset's address, as it can't find the headset on its own yet.
 
 ## Quick start
 
 Needs a headset in Developer Mode, a USB cable, and a Windows PC with Chrome or Edge.
 
-1. **Once, over USB:** connect the headset, open https://setu.trugamr.dev and choose Connect.
+1. **Once, over USB:** connect the headset, open [setu.trugamr.dev](https://setu.trugamr.dev)
+   and choose Connect.
    On the headset, choose "Always allow from this computer" each time it asks. Unplug the cable.
 2. **On the headset:** open Setu (Library, under Unknown sources) and tap Start. The first start
    after each boot asks to allow wireless debugging on this network; choose Allow.
@@ -65,9 +70,9 @@ Needs a headset in Developer Mode, a USB cable, and a Windows PC with Chrome or 
    - Allow Setu through Windows Firewall when it asks, at least on private networks. Without
      that it receives nothing.
 
-To play through Voicemeeter instead of the desktop app, see [VBAN](#vban). To run from source,
-`task agent:setup`, `task web:dev` and `task desktop:run` take the place of these steps (see
-[Build](#build)).
+To play through Voicemeeter instead of the desktop app, see [VBAN](#vban). To build it
+yourself, see [Build](#build): `task agent:setup` and `task desktop:run` take the place of
+steps 1 and 3.
 
 ## How it works
 
@@ -106,7 +111,7 @@ The PC needs no adb.
 | Capture server (`apps/agent/.../server`) | Java, shipped inside the agent's APK and run with `app_process` using the APK as its classpath. Captures playback and streams it to the desktop app and to a VBAN receiver. |
 | Desktop app (`apps/desktop`) | Rust, with a [GPUI](https://www.gpui.rs) window and `setu-cli`. Receives the stream and plays it. Windows first, then Linux. |
 | Protocol (`protocol`) | The wire format, with byte fixtures that the Java and Rust sides both test against. |
-| Browser installer (`apps/web`) | A page that installs the agent over WebUSB and runs the setup routine inside its APK (`Server setup`), so it and `task agent:setup` cannot drift apart. A PC installer inside the desktop app is planned, the same way. |
+| Browser installer (`apps/web`) | A page that installs the agent over WebUSB and runs the setup routine inside its APK (`Server setup`), so it and `task agent:setup` cannot drift apart. |
 
 ### Starting the server
 
@@ -270,8 +275,6 @@ Compared with the desktop app:
   rate and without retries.
 - **No audience check.** The server captures for as long as VBAN is on, whether anyone listens or
   not.
-- **Any app on the headset can redirect it.** The server takes control messages from loopback,
-  which includes every app with network access, not only the agent.
 
 ## Receiver design notes
 
@@ -334,9 +337,9 @@ These come from the prototype receiver; the desktop app's playout follows them.
 ## Build
 
 Needs [Task](https://taskfile.dev), JDK 21, the Android SDK (`ANDROID_HOME`, default
-`~/Android/Sdk`), Rust, and Node with pnpm for the browser installer. The Taskfile targets WSL: the agent builds with Linux tools, while
-the desktop app and adb use their Windows binaries (see the variables at the top of
-`Taskfile.yml`).
+`~/Android/Sdk`), Rust, and Node with pnpm for the browser installer. The Taskfile targets WSL:
+the agent builds with Linux tools, while the desktop app and adb use their Windows binaries
+(see the variables at the top of `Taskfile.yml`).
 
 ```bash
 task build                    # agent APK and desktop app
@@ -364,9 +367,10 @@ task desktop:cli -- disconnect
 ```
 
 Server commands (`task agent:server -- <command>`): `udp [port] [blockFrames] [--vban
-host[:port][/name]]`, `adb [blockFrames]`, `probe [clicks] [blockFrames]`, `bursts [seconds] [blockFrames]`,
-`adb-wifi-trust <bssid>`, `adb-revoke-keys`, `setup`. The agent launches `udp` with the defaults and
-logs to `/data/local/tmp/setu-server.log`. A new server ends any Setu server holding its port.
+host[:port][/name]]`, `adb [blockFrames]`, `probe [clicks] [blockFrames]`,
+`bursts [seconds] [blockFrames]`, `adb-wifi-trust <bssid>`, `adb-revoke-keys`, `setup`. The agent
+launches `udp` with the defaults and logs to `/data/local/tmp/setu-server.log`. A new server ends
+any Setu server holding its port.
 
 ### Releases
 
@@ -389,11 +393,9 @@ The secrets it needs are listed at the top of `.github/workflows/release.yml`.
 
 ## Roadmap
 
-1. Agent: pass the server a secret that control messages and local receivers must carry, so
-   other apps on the headset cannot redirect the stream.
-2. Desktop app: a tray icon, so it can play with the window closed.
-3. A PC installer inside the desktop app, taking the same steps as the browser installer.
-4. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
+1. Desktop app: a tray icon, so it can play with the window closed.
+2. A PC installer inside the desktop app, taking the same steps as the browser installer.
+3. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
    address from the last Setu receiver, and find VBAN receivers with VBAN's PING0 service.
 
 Open questions:
