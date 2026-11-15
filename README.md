@@ -52,8 +52,8 @@ Voicemeeter.
 
 **Status: work in progress.** Streaming, VBAN and both apps work. The desktop app asks for the
 headset's address, as it can't find the headset on its own yet. Tested only with a Meta Quest 3
-on Horizon OS build 52641960031600520 (Android 14), in November 2026. Other headsets and Horizon
-OS versions may work but are untested.
+on Horizon OS 2.9 (build 52641960031600520), the latest release in November 2026. Other headsets
+and Horizon OS versions may work but are untested.
 
 ## Quick start
 
@@ -235,7 +235,8 @@ every 1.9–2.1 ms). Arrival jitter at the PC, as each block's deviation from it
 | Wi-Fi 6 at −42 dBm, PC wired (UDP) | 6–20 ms | 38.7 ms |
 
 The end-to-end figures at the top add the measured buffer levels to the headset-side delay; true
-speaker-to-ear latency has not been measured. Virtual audio mixers on the PC can add delay of
+speaker-to-ear latency has not been measured; the debug mode on the [roadmap](#roadmap) is for
+that. Virtual audio mixers on the PC can add delay of
 their own, so play to a hardware output for the lowest latency.
 
 ### Other approaches and why they fell short
@@ -397,8 +398,11 @@ The secrets it needs are listed at the top of `.github/workflows/release.yml`.
 ## Roadmap
 
 1. Desktop app: a tray icon, so it can play with the window closed.
-2. A PC installer inside the desktop app, taking the same steps as the browser installer.
-3. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
+2. A debug mode that measures exact end-to-end latency, by syncing the headset's and the PC's
+   clocks over the stream, and shows each stage's delay and the stream's health live, so a
+   problem report carries numbers instead of "it sounds late".
+3. A PC installer inside the desktop app, taking the same steps as the browser installer.
+4. Discovery and receiver approval, start at login, a Linux backend. For VBAN: fill in the PC's
    address from the last Setu receiver, and find VBAN receivers with VBAN's PING0 service.
 
 Open questions:
@@ -407,7 +411,6 @@ Open questions:
   does not show.
 - Approving a waiting adb key from the shell (`IAdbManager.allowDebugging`) would remove the
   tap during setup; untested.
-- Measure true end-to-end latency by clock-syncing headset and PC over the stream.
 
 ## Credits
 
